@@ -3,7 +3,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
-namespace CutFreePets.Rope
+using CutFreePets.Rope;
+
+namespace CutFreePets.Cut
 {
     /// <summary>
     /// Pure touch and mouse swipe cut controller supporting both Unity's New Input System and legacy Input.

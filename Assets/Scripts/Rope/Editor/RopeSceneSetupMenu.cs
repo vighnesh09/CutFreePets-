@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using CutFreePets.Rope;
 using CutFreePets.Gameplay;
+using CutFreePets.Cut;
 
 namespace CutFreePets.Editor
 {
