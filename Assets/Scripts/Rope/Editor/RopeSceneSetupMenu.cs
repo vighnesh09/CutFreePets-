@@ -9,8 +9,7 @@ namespace CutFreePets.Editor
 {
     public static class RopeSceneSetupMenu
     {
-        [MenuItem("Tools/Cut Free Pets/Setup Clean 1-Rope 1-Box Demo", false, 1)]
-        [MenuItem("Cut Free Pets/Setup Clean 1-Rope 1-Box Demo", false, 1)]
+        [MenuItem("Cut Free Pets/Setup 1-Rope Cage Level", false, 1)]
         public static void SetupHangingBoxDemo()
         {
             Undo.IncrementCurrentGroup();
@@ -21,7 +20,7 @@ namespace CutFreePets.Editor
             string[] oldNames = new string[] { 
                 "CutTheRope_Demo", "HangingBox_Level", "CutTheRope_Level", "RopeDemo_Setup", "RopeDemo",
                 "Peg_TopAnchor", "Obstacle_Peg", "Pet_Target", "Peg_Top", "Weight_Bottom",
-                "TopMiddle_Hanger", "Hanging_Box", "Rope", "SwipeCutBlade", "Directional Light"
+                "TopMiddle_Hanger", "Hanging_Box", "Pet_Cage", "Rope", "SwipeCutBlade", "Directional Light"
             };
             foreach (string name in oldNames)
             {
@@ -107,23 +106,34 @@ namespace CutFreePets.Editor
             RopeHanger hanger = hangerObj.AddComponent<RopeHanger>();
             hanger.SetupVisuals();
 
-            // 7. ONE Lower Hanging Box (Square)
-            GameObject boxObj = new GameObject("Hanging_Box");
-            boxObj.transform.parent = root.transform;
-            boxObj.transform.position = new Vector3(0f, 0.6f, 0f);
+            // 7. ONE Hanging Pet Cage (Clear thin-wire cage for animated pet inside)
+            // 7. ONE Hanging Pet Cage (Clear thin-wire cage for animated pet inside)
+            GameObject cageObj = new GameObject("Pet_Cage");
+            cageObj.transform.parent = root.transform;
+            cageObj.transform.position = new Vector3(0f, 0.8f, 0f);
 
-            BoxCollider2D boxCol = boxObj.AddComponent<BoxCollider2D>();
-            boxCol.size = new Vector2(0.85f, 0.85f);
+            BoxCollider2D cageCol = cageObj.AddComponent<BoxCollider2D>();
+            // Full sprite extents (3.22m x 3.31m at 256 PPU): bottom edge is at Y = -1.655m
+            // When resting on the platform (platform top at Y = -2.3m), the cage rests flush at Y = -0.645m
+            cageCol.size = new Vector2(3.22f, 3.31f);
+            cageCol.offset = Vector2.zero;
 
-            HangingBox hangingBox = boxObj.AddComponent<HangingBox>();
+            PetCage petCage = cageObj.AddComponent<PetCage>();
+            petCage.SetupVisuals();
+
+            // Dedicated top ring hook point where rope binds
+            GameObject ringHookObj = new GameObject("TopRing_Hook");
+            ringHookObj.transform.parent = cageObj.transform;
+            ringHookObj.transform.localPosition = new Vector3(0f, 1.65f, 0f);
+            ringHookObj.transform.localRotation = Quaternion.identity;
 
             // 8. Ground Floor Platform below for landing (Sized for portrait width)
             GameObject floorObj = new GameObject("Ground_Platform");
             floorObj.transform.parent = root.transform;
-            floorObj.transform.position = new Vector3(0f, -3.2f, 0f);
+            floorObj.transform.position = new Vector3(0f, -2.6f, 0f);
 
             BoxCollider2D floorCol = floorObj.AddComponent<BoxCollider2D>();
-            floorCol.size = new Vector2(4.5f, 0.5f);
+            floorCol.size = new Vector2(4.5f, 0.6f);
 
             SpriteRenderer floorRend = floorObj.AddComponent<SpriteRenderer>();
             floorRend.color = new Color(0.28f, 0.35f, 0.45f);
@@ -135,18 +145,18 @@ namespace CutFreePets.Editor
             floorTex.SetPixels(cols);
             floorTex.Apply();
             floorRend.sprite = Sprite.Create(floorTex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
-            floorObj.transform.localScale = new Vector3(4.5f, 0.5f, 1f);
+            floorObj.transform.localScale = new Vector3(4.5f, 0.6f, 1f);
 
-            // 9. ONE Braided Rope Connecting Hanger -> Box
+            // 9. ONE Braided Rope Connecting Top Hanger -> Cage Top Ring Hook
             GameObject ropeObj = new GameObject("Rope");
             ropeObj.transform.parent = root.transform;
             ropeObj.transform.position = hangerObj.transform.position;
 
             VerletRope rope = ropeObj.AddComponent<VerletRope>();
-            rope.Setup(hangerObj.transform, boxObj.transform, config);
+            rope.Setup(hangerObj.transform, ringHookObj.transform, config);
 
-            // Link rope to HangingBox so it drops when cut
-            hangingBox.AttachRope(rope);
+            // Link rope to PetCage so it drops when cut
+            petCage.AttachRope(rope);
 
             // 10. Swipe Cut Blade (Pure touch/mouse swipe, zero scissors)
             GameObject bladeObj = new GameObject("SwipeCutBlade");
@@ -171,49 +181,6 @@ namespace CutFreePets.Editor
                 "• Floor Platform: Sized for portrait width\n" +
                 "• Direct touch swipe slicing active!",
                 "Great!"
-            );
-        }
-
-        [MenuItem("Tools/Cut Free Pets/Set Mobile Vertical Screen (Portrait 9:16)", false, 2)]
-        [MenuItem("Cut Free Pets/Set Mobile Vertical Screen (Portrait 9:16)", false, 2)]
-        public static void SetMobileVerticalFraming()
-        {
-            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
-            PlayerSettings.allowedAutorotateToPortrait = true;
-            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
-            PlayerSettings.allowedAutorotateToLandscapeLeft = false;
-            PlayerSettings.allowedAutorotateToLandscapeRight = false;
-
-            Camera cam = Camera.main;
-            if (cam != null)
-            {
-                Undo.RecordObject(cam, "Set Mobile Vertical Camera");
-                Undo.RecordObject(cam.transform, "Set Mobile Vertical Camera Position");
-                cam.orthographic = true;
-                cam.orthographicSize = 5.0f;
-                cam.transform.position = new Vector3(0f, 0.6f, -10f);
-            }
-
-            GameObject hanger = GameObject.Find("TopMiddle_Hanger");
-            if (hanger != null)
-            {
-                Undo.RecordObject(hanger.transform, "Move Hanger for Mobile");
-                hanger.transform.position = new Vector3(0f, 4.2f, 0f);
-            }
-
-            GameObject floor = GameObject.Find("Ground_Platform");
-            if (floor != null)
-            {
-                Undo.RecordObject(floor.transform, "Adjust Floor for Mobile");
-                floor.transform.position = new Vector3(0f, -3.2f, 0f);
-                floor.transform.localScale = new Vector3(4.5f, 0.5f, 1f);
-            }
-
-            EditorUtility.DisplayDialog(
-                "Mobile Vertical Screen Configured!",
-                "Camera and elements framed for Vertical Mobile (Portrait 9:16)!\n\n" +
-                "Tip: In the Game View window, set the aspect ratio dropdown at the top to '9:16' or 'Portrait'.",
-                "OK"
             );
         }
 
