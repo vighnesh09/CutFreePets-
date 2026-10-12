@@ -122,7 +122,7 @@ namespace CutFreePets.Editor
             // Mount the animated Cat inside the cage at the pet slot
             GameObject catObj = new GameObject("Cat_Character");
             catObj.transform.parent = petCage.PetSlot;
-            catObj.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+            catObj.transform.localPosition = Vector3.zero;
             catObj.transform.localRotation = Quaternion.identity;
             catObj.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
