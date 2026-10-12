@@ -19,23 +19,53 @@ namespace CutFreePets.Editor
 
             // 1. Clean up ALL previous old demo roots and loose objects in scene
             string[] oldNames = new string[] { 
-                "HangingBox_Level", "CutTheRope_Level", "RopeDemo_Setup", "RopeDemo",
-                "Peg_TopAnchor", "Obstacle_Peg", "Pet_Target", "Peg_Top", "Weight_Bottom"
+                "CutTheRope_Demo", "HangingBox_Level", "CutTheRope_Level", "RopeDemo_Setup", "RopeDemo",
+                "Peg_TopAnchor", "Obstacle_Peg", "Pet_Target", "Peg_Top", "Weight_Bottom",
+                "TopMiddle_Hanger", "Hanging_Box", "Rope", "SwipeCutBlade", "Directional Light"
             };
             foreach (string name in oldNames)
             {
-                GameObject old = GameObject.Find(name);
-                if (old != null) Undo.DestroyObjectImmediate(old);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj != null && obj.name == name)
+                    {
+                        Undo.DestroyObjectImmediate(obj);
+                    }
+                }
+            }
+
+            // Clean up ANY existing SpriteRenderers using the peg disc sprite in the scene
+            Sprite pegDiscSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Peg_Disc_Albedo.png");
+            if (pegDiscSprite == null)
+            {
+                foreach (var asset in AssetDatabase.LoadAllAssetsAtPath("Assets/Art/Rope/Peg_Disc_Albedo.png"))
+                {
+                    if (asset is Sprite s)
+                    {
+                        pegDiscSprite = s;
+                        break;
+                    }
+                }
+            }
+            if (pegDiscSprite != null)
+            {
+                foreach (var sr in Object.FindObjectsByType<SpriteRenderer>())
+                {
+                    if (sr != null && sr.sprite == pegDiscSprite)
+                    {
+                        Undo.DestroyObjectImmediate(sr.gameObject);
+                    }
+                }
             }
 
             // Clean up any other objects having RopeHanger or VerletRope
             foreach (var h in Object.FindObjectsByType<RopeHanger>())
             {
-                Undo.DestroyObjectImmediate(h.gameObject);
+                if (h != null) Undo.DestroyObjectImmediate(h.gameObject);
             }
             foreach (var r in Object.FindObjectsByType<VerletRope>())
             {
-                Undo.DestroyObjectImmediate(r.gameObject);
+                if (r != null) Undo.DestroyObjectImmediate(r.gameObject);
             }
 
             // 2. Config & Braided Material

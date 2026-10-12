@@ -58,6 +58,17 @@ namespace CutFreePets.Rope
             if (knotSprite == null)
             {
                 knotSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Knot_Ring_Albedo.png");
+                if (knotSprite == null)
+                {
+                    foreach (var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Art/Rope/Knot_Ring_Albedo.png"))
+                    {
+                        if (asset is Sprite s)
+                        {
+                            knotSprite = s;
+                            break;
+                        }
+                    }
+                }
             }
 #endif
             if (ropeMaterial != null && lineRenderer != null)

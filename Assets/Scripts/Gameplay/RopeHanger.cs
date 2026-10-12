@@ -49,11 +49,22 @@ namespace CutFreePets.Gameplay
             if (pegRenderer.sprite == null)
             {
                 pegRenderer.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Peg_Disc_Albedo.png");
+                if (pegRenderer.sprite == null)
+                {
+                    foreach (var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Art/Rope/Peg_Disc_Albedo.png"))
+                    {
+                        if (asset is Sprite s)
+                        {
+                            pegRenderer.sprite = s;
+                            break;
+                        }
+                    }
+                }
             }
 #endif
             if (pegRenderer != null)
             {
-                pegRenderer.color = pegColor;
+                pegRenderer.color = Color.white; // Render the crisp golden disc texture exactly as authored
                 pegRenderer.sortingOrder = 10;
                 transform.localScale = Vector3.one * (pegRadius * 2f);
             }

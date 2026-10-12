@@ -52,6 +52,10 @@ namespace CutFreePets.Gameplay
 
         private void Awake()
         {
+            // Clean up any legacy prototype objects if they linger in the scene
+            GameObject legacyDemo = GameObject.Find("CutTheRope_Demo");
+            if (legacyDemo != null) Destroy(legacyDemo);
+
             rb2D = GetComponent<Rigidbody2D>();
             col2D = GetComponent<Collider2D>();
             ConfigurePhysics();
