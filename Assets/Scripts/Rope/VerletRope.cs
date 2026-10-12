@@ -5,9 +5,17 @@ using UnityEngine;
 namespace CutFreePets.Rope
 {
     /// <summary>
-    /// Professional Verlet-based physics rope with obstacle collision, dynamic tension,
-    /// stretch feedback, and clean cutting support (Cut the Rope feel).
+    /// Professional Cut the Rope physics component.
+    /// Handles:
+    /// - Verlet physics with tunable elasticity & high-accuracy solver
+    /// - Two-way Rigidbody coupling (tension spring pulling on connected objects)
+    /// - 2D & 3D obstacle collision (wraps around pegs, posts, pins)
+    /// - Real-time continuous tension & stretch measurement
+    /// - Instant segment cutting with dual physical falling remnants
+    /// - Reusable everywhere across levels and prefabs
     /// </summary>
+    [SelectionBase]
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(RopeRenderer))]
     public class VerletRope : MonoBehaviour
     {
@@ -15,33 +23,43 @@ namespace CutFreePets.Rope
         [SerializeField] private RopeConfig config;
 
         [Header("Anchors")]
-        [Tooltip("Fixed anchor or origin transform (e.g., ceiling peg, wall hook).")]
+        [Tooltip("Fixed anchor transform (e.g. wall pin, ceiling peg).")]
         [SerializeField] private Transform startAnchor;
 
-        [Tooltip("End anchor or tied object transform (e.g., animal harness, weight).")]
+        [Tooltip("Connected target transform (e.g. cage, pet, candy, weight).")]
         [SerializeField] private Transform endAnchor;
 
-        [Tooltip("Anchor offsets in local space.")]
         [SerializeField] private Vector3 startOffset = Vector3.zero;
         [SerializeField] private Vector3 endOffset = Vector3.zero;
+
+        [Header("Anchor Rigidbody Physics Coupling")]
+        [Tooltip("Enable reactive spring tension force onto connected Rigidbodies (3D and 2D).")]
+        [SerializeField] private bool applyTensionForces = true;
+        [SerializeField] private float springStiffness = 300f;
+        [SerializeField] private float springDamping = 15f;
 
         [Header("State")]
         [SerializeField] private bool pinStart = true;
         [SerializeField] private bool pinEnd = true;
         [SerializeField] private bool isCut = false;
 
-        // Simulation nodes
+        // Particle simulation chain
         private readonly List<RopeParticle> particles = new List<RopeParticle>();
         private float segmentRestLength;
         private float initialTotalRestLength;
         private float currentTotalLength;
-        private float currentTensionRatio; // 1.0 = rest length, >1.0 = stretched
-        private Rigidbody startRigidbody;
-        private Rigidbody endRigidbody;
+        private float currentTensionRatio = 1.0f;
+
+        // Rigidbody caches (both 3D and 2D support)
+        private Rigidbody startRb3D;
+        private Rigidbody endRb3D;
+        private Rigidbody2D startRb2D;
+        private Rigidbody2D endRb2D;
         private RopeRenderer ropeRenderer;
 
-        // Collision cache buffer to avoid allocations
-        private readonly Collider[] hitColliders = new Collider[8];
+        // Non-alloc collision buffer
+        private readonly Collider[] colliders3D = new Collider[8];
+        private readonly Collider2D[] colliders2D = new Collider2D[8];
 
         // Events
         public event Action<VerletRope, int, Vector3> OnCut;
@@ -49,7 +67,7 @@ namespace CutFreePets.Rope
 
         #region Public Properties
 
-        public RopeConfig Config => config;
+        public RopeConfig Config { get => config; set => config = value; }
         public Transform StartAnchor { get => startAnchor; set => startAnchor = value; }
         public Transform EndAnchor { get => endAnchor; set => endAnchor = value; }
         public bool IsCut => isCut;
@@ -68,28 +86,52 @@ namespace CutFreePets.Rope
             ropeRenderer = GetComponent<RopeRenderer>();
             if (config == null)
             {
-                config = ScriptableObject.CreateInstance<RopeConfig>();
+#if UNITY_EDITOR
+                config = UnityEditor.AssetDatabase.LoadAssetAtPath<RopeConfig>("Assets/Settings/DefaultRopeConfig.asset");
+#endif
+                if (config == null) config = ScriptableObject.CreateInstance<RopeConfig>();
             }
 
-            CacheRigidbodies();
+            CacheConnectedBodies();
         }
 
         private void Start()
         {
-            if (particles.Count == 0)
+            if (particles.Count == 0 && (startAnchor != null || endAnchor != null))
             {
                 InitializeRope();
             }
         }
 
-        private void CacheRigidbodies()
+        public void CacheConnectedBodies()
         {
-            if (startAnchor != null) startRigidbody = startAnchor.GetComponentInParent<Rigidbody>();
-            if (endAnchor != null) endRigidbody = endAnchor.GetComponentInParent<Rigidbody>();
+            if (startAnchor != null)
+            {
+                startRb3D = startAnchor.GetComponentInParent<Rigidbody>();
+                startRb2D = startAnchor.GetComponentInParent<Rigidbody2D>();
+            }
+
+            if (endAnchor != null)
+            {
+                endRb3D = endAnchor.GetComponentInParent<Rigidbody>();
+                endRb2D = endAnchor.GetComponentInParent<Rigidbody2D>();
+            }
         }
 
         /// <summary>
-        /// Initializes particle chain between anchors.
+        /// Universal setup method to bind a rope between any two transforms programmatically or in prefabs.
+        /// </summary>
+        public void Setup(Transform startTransform, Transform endTransform, RopeConfig customConfig = null)
+        {
+            startAnchor = startTransform;
+            endAnchor = endTransform;
+            if (customConfig != null) config = customConfig;
+            CacheConnectedBodies();
+            InitializeRope();
+        }
+
+        /// <summary>
+        /// Generates the initial particle chain between anchors with natural catenary sag.
         /// </summary>
         public void InitializeRope()
         {
@@ -97,49 +139,36 @@ namespace CutFreePets.Rope
 
             Vector3 start = StartPosition;
             Vector3 end = EndPosition;
-            float distance = Vector3.Distance(start, end);
+            float straightDistance = Vector3.Distance(start, end);
 
-            int count = Mathf.Max(3, config.segmentCount);
-            float totalLength = distance * config.slackMultiplier;
-            segmentRestLength = totalLength / (count - 1);
+            int segments = config != null ? Mathf.Max(4, config.segmentCount) : 18;
+            float slack = config != null ? config.slackMultiplier : 1.0f;
+            float totalLength = straightDistance * slack;
+
+            segmentRestLength = totalLength / (segments - 1);
             initialTotalRestLength = totalLength;
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < segments; i++)
             {
-                float t = (float)i / (count - 1);
-                // Slight initial natural sag curve for visual polish
-                Vector3 initialPos = Vector3.Lerp(start, end, t);
-                if (config.slackMultiplier > 1f && i > 0 && i < count - 1)
+                float t = (float)i / (segments - 1);
+                Vector3 pos = Vector3.Lerp(start, end, t);
+
+                // Initial catenary sag when loose
+                if (slack > 1.0f && i > 0 && i < segments - 1)
                 {
-                    float sagFactor = Mathf.Sin(t * Mathf.PI);
-                    initialPos += Vector3.down * (distance * (config.slackMultiplier - 1f) * sagFactor);
+                    float sag = Mathf.Sin(t * Mathf.PI) * (straightDistance * (slack - 1.0f));
+                    pos += Vector3.down * sag;
                 }
 
-                RopeParticle p = new RopeParticle(initialPos, config.particleRadius);
-                particles.Add(p);
+                float radius = config != null ? config.particleRadius : 0.04f;
+                particles.Add(new RopeParticle(pos, radius));
             }
 
-            UpdatePinnedStates();
-            ropeRenderer?.Initialize(this);
-        }
-
-        /// <summary>
-        /// Explicit setup for spawning ropes dynamically in code or levels.
-        /// </summary>
-        public void Setup(Transform startTransform, Transform endTransform, RopeConfig ropeConfig = null)
-        {
-            startAnchor = startTransform;
-            endAnchor = endTransform;
-            if (ropeConfig != null) config = ropeConfig;
-            CacheRigidbodies();
-            InitializeRope();
-        }
-
-        private void UpdatePinnedStates()
-        {
-            if (particles.Count == 0) return;
             particles[0].IsPinned = pinStart;
             particles[particles.Count - 1].IsPinned = pinEnd;
+
+            if (ropeRenderer == null) ropeRenderer = GetComponent<RopeRenderer>();
+            ropeRenderer?.Initialize(this);
         }
 
         private void FixedUpdate()
@@ -148,7 +177,7 @@ namespace CutFreePets.Rope
 
             float dt = Time.fixedDeltaTime;
 
-            // 1. Update anchor positions
+            // 1. Anchor tracking
             if (pinStart && startAnchor != null)
             {
                 particles[0].Position = StartPosition;
@@ -161,42 +190,46 @@ namespace CutFreePets.Rope
                 particles[particles.Count - 1].PreviousPosition = EndPosition;
             }
 
-            // 2. Accumulate forces & Verlet Step
-            Vector3 gravityForce = config.gravity;
+            // 2. Gravity & Verlet Step
+            Vector3 gravity = config != null ? config.gravity : new Vector3(0f, -9.81f, 0f);
+            float damping = config != null ? config.damping : 0.98f;
+
             for (int i = 0; i < particles.Count; i++)
             {
                 RopeParticle p = particles[i];
                 if (!p.IsPinned)
                 {
-                    p.Acceleration += gravityForce;
-                    p.UpdateVerlet(dt, config.damping);
+                    p.Acceleration += gravity;
+                    p.UpdateVerlet(dt, damping);
                 }
             }
 
-            // 3. Solve distance constraints and collisions iteratively
-            int iterations = config.constraintIterations;
+            // 3. Distance constraint iterations & collision wrapping
+            int iterations = config != null ? config.constraintIterations : 16;
+            bool enableCol = config == null || config.enableCollision;
+
             for (int iter = 0; iter < iterations; iter++)
             {
                 SolveDistanceConstraints();
 
-                if (config.enableCollision)
+                if (enableCol)
                 {
                     SolveCollisions();
                 }
             }
 
-            // 4. Update Tension Calculation and apply physics feedback to attached Rigidbodies
-            CalculateTension();
-            ApplyTensionForces();
+            // 4. Measure stretch tension and apply physical pull force
+            MeasureTension();
+            if (applyTensionForces && !isCut)
+            {
+                ApplyConnectedForces();
+            }
         }
 
-        /// <summary>
-        /// Relaxation algorithm preserving segment lengths with elasticity.
-        /// </summary>
         private void SolveDistanceConstraints()
         {
             float targetRest = segmentRestLength;
-            float elasticityMultiplier = 1f - config.elasticity;
+            float compliance = config != null ? (1f - config.elasticity) : 0.98f;
 
             for (int i = 0; i < particles.Count - 1; i++)
             {
@@ -208,9 +241,8 @@ namespace CutFreePets.Rope
 
                 if (currentDist <= 0.0001f) continue;
 
-                // Difference between current distance and rest length
                 float diff = (currentDist - targetRest) / currentDist;
-                Vector3 correction = delta * (0.5f * diff * elasticityMultiplier);
+                Vector3 correction = delta * (0.5f * diff * compliance);
 
                 if (!p1.IsPinned && !p2.IsPinned)
                 {
@@ -228,136 +260,159 @@ namespace CutFreePets.Rope
             }
         }
 
-        /// <summary>
-        /// Resolves 3D collisions against colliders in the scene, pushing particles out of penetrating geometry.
-        /// </summary>
         private void SolveCollisions()
         {
-            float radius = config.particleRadius;
-            float skin = config.skinWidth;
-            LayerMask mask = config.collisionMask;
+            float radius = config != null ? config.particleRadius : 0.04f;
+            float skin = config != null ? config.skinWidth : 0.01f;
+            LayerMask mask = config != null ? config.collisionMask : ~0;
 
             for (int i = 0; i < particles.Count; i++)
             {
                 RopeParticle p = particles[i];
                 if (p.IsPinned) continue;
 
-                int hits = Physics.OverlapSphereNonAlloc(p.Position, radius + skin, hitColliders, mask, QueryTriggerInteraction.Ignore);
-                for (int h = 0; h < hits; h++)
+                // 3D Obstacle collision
+                int hits3D = Physics.OverlapSphereNonAlloc(p.Position, radius + skin, colliders3D, mask, QueryTriggerInteraction.Ignore);
+                for (int h = 0; h < hits3D; h++)
                 {
-                    Collider col = hitColliders[h];
+                    Collider col = colliders3D[h];
                     if (col == null) continue;
-
-                    // Exclude anchor colliders if attached directly
                     if (startAnchor != null && col.transform.IsChildOf(startAnchor)) continue;
                     if (endAnchor != null && col.transform.IsChildOf(endAnchor)) continue;
 
                     Vector3 closest = col.ClosestPoint(p.Position);
                     Vector3 pushDir = p.Position - closest;
                     float pushDist = pushDir.magnitude;
-
                     float requiredDist = radius + skin;
+
                     if (pushDist < requiredDist)
                     {
-                        Vector3 normal;
-                        if (pushDist > 0.0001f)
-                        {
-                            normal = pushDir / pushDist;
-                        }
-                        else
-                        {
-                            // If strictly inside, push upward or away from collider bounds center
-                            normal = (p.Position - col.bounds.center).normalized;
-                            if (normal.sqrMagnitude < 0.001f) normal = Vector3.up;
-                        }
-
+                        Vector3 normal = pushDist > 0.0001f ? (pushDir / pushDist) : Vector3.up;
                         p.Position = closest + normal * requiredDist;
 
-                        // Friction / damp velocity on contact
-                        Vector3 velocity = p.Position - p.PreviousPosition;
-                        velocity -= Vector3.Dot(velocity, normal) * normal; // remove normal velocity component
-                        p.PreviousPosition = p.Position - velocity * 0.85f;
+                        // Friction damping along surface
+                        Vector3 vel = p.Position - p.PreviousPosition;
+                        vel -= Vector3.Dot(vel, normal) * normal;
+                        p.PreviousPosition = p.Position - vel * 0.9f;
+                    }
+                }
+
+                // 2D Obstacle collision (if project uses 2D colliders)
+                ContactFilter2D filter = new ContactFilter2D { layerMask = mask, useLayerMask = true, useTriggers = false };
+                int hits2D = Physics2D.OverlapCircle(p.Position, radius + skin, filter, colliders2D);
+                for (int h = 0; h < hits2D; h++)
+                {
+                    Collider2D col2D = colliders2D[h];
+                    if (col2D == null) continue;
+                    if (startAnchor != null && col2D.transform.IsChildOf(startAnchor)) continue;
+                    if (endAnchor != null && col2D.transform.IsChildOf(endAnchor)) continue;
+
+                    Vector2 closest2D = col2D.ClosestPoint(p.Position);
+                    Vector2 pushDir2D = (Vector2)p.Position - closest2D;
+                    float pushDist2D = pushDir2D.magnitude;
+                    float requiredDist = radius + skin;
+
+                    if (pushDist2D < requiredDist)
+                    {
+                        Vector2 normal2D = pushDist2D > 0.0001f ? (pushDir2D / pushDist2D) : Vector2.up;
+                        p.Position = (Vector3)(closest2D + normal2D * requiredDist);
+
+                        Vector3 vel = p.Position - p.PreviousPosition;
+                        vel -= Vector3.Dot(vel, normal2D) * (Vector3)normal2D;
+                        p.PreviousPosition = p.Position - vel * 0.9f;
                     }
                 }
             }
         }
 
-        /// <summary>
-        /// Calculates current total length and tension ratio.
-        /// </summary>
-        private void CalculateTension()
+        private void MeasureTension()
         {
-            float lengthSum = 0f;
+            float len = 0f;
             for (int i = 0; i < particles.Count - 1; i++)
             {
-                lengthSum += Vector3.Distance(particles[i].Position, particles[i + 1].Position);
+                len += Vector3.Distance(particles[i].Position, particles[i + 1].Position);
             }
 
-            currentTotalLength = lengthSum;
-            currentTensionRatio = initialTotalRestLength > 0.001f ? currentTotalLength / initialTotalRestLength : 1f;
-
+            currentTotalLength = len;
+            currentTensionRatio = initialTotalRestLength > 0.0001f ? currentTotalLength / initialTotalRestLength : 1f;
             OnTensionChanged?.Invoke(currentTensionRatio);
         }
 
-        /// <summary>
-        /// Pulls dynamic Rigidbodies if the rope is stretched taut under load.
-        /// </summary>
-        private void ApplyTensionForces()
+        private void ApplyConnectedForces()
         {
-            if (isCut || currentTensionRatio <= 1.0f) return;
+            float stretch = currentTotalLength - initialTotalRestLength;
+            if (stretch <= 0f || particles.Count < 2) return;
 
-            float stretchExcess = currentTotalLength - initialTotalRestLength;
-            if (stretchExcess <= 0f) return;
+            float forceMag = stretch * springStiffness;
 
-            float springStiffness = 150f;
-            float forceMagnitude = stretchExcess * springStiffness;
-
-            // Apply force to End Rigidbody towards Start Anchor
-            if (endRigidbody != null && !endRigidbody.isKinematic && particles.Count >= 2)
+            // Apply to 3D End Rigidbody
+            if (endRb3D != null && !endRb3D.isKinematic)
             {
-                Vector3 pullDirection = (particles[particles.Count - 2].Position - particles[particles.Count - 1].Position).normalized;
-                endRigidbody.AddForceAtPosition(pullDirection * forceMagnitude, EndPosition);
+                Vector3 pullDir = (particles[particles.Count - 2].Position - particles[particles.Count - 1].Position).normalized;
+                Vector3 dampForce = -endRb3D.linearVelocity * springDamping;
+                endRb3D.AddForceAtPosition((pullDir * forceMag) + dampForce, EndPosition);
             }
 
-            // Apply opposite reaction force to Start Rigidbody if dynamic
-            if (startRigidbody != null && !startRigidbody.isKinematic && particles.Count >= 2)
+            // Apply to 2D End Rigidbody
+            if (endRb2D != null && endRb2D.bodyType == RigidbodyType2D.Dynamic)
             {
-                Vector3 pullDirection = (particles[1].Position - particles[0].Position).normalized;
-                startRigidbody.AddForceAtPosition(pullDirection * forceMagnitude, StartPosition);
+                Vector2 pullDir2D = (Vector2)(particles[particles.Count - 2].Position - particles[particles.Count - 1].Position).normalized;
+                Vector2 dampForce2D = -endRb2D.linearVelocity * springDamping;
+                endRb2D.AddForceAtPosition((pullDir2D * forceMag) + dampForce2D, EndPosition);
             }
         }
 
         /// <summary>
-        /// Cuts the rope at a specific world coordinate. 
-        /// Finds the closest segment and splits the rope realistically.
+        /// Cuts the rope when a swipe intersection passes through segment (a, b).
         /// </summary>
-        public bool CutAtPoint(Vector3 worldPoint, float cutTolerance = 0.5f)
+        public bool CutBetweenPoints(Vector2 swipeStart, Vector2 swipeEnd)
+        {
+            if (isCut || particles.Count < 2) return false;
+
+            for (int i = 0; i < particles.Count - 1; i++)
+            {
+                Vector2 pA = particles[i].Position;
+                Vector2 pB = particles[i + 1].Position;
+
+                if (LineSegmentsIntersect(swipeStart, swipeEnd, pA, pB, out Vector2 intersection))
+                {
+                    CutSegment(i, intersection);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Cuts the rope at nearest point to world position within cut tolerance.
+        /// </summary>
+        public bool CutAtPoint(Vector3 worldPoint, float tolerance = 0.35f)
         {
             if (isCut || particles.Count < 2) return false;
 
             int bestSegment = -1;
-            float minDistance = float.MaxValue;
-            Vector3 bestPointOnSegment = Vector3.zero;
+            float minDist = float.MaxValue;
+            Vector3 bestPoint = Vector3.zero;
 
             for (int i = 0; i < particles.Count - 1; i++)
             {
                 Vector3 pA = particles[i].Position;
                 Vector3 pB = particles[i + 1].Position;
-
                 Vector3 closest = ClosestPointOnSegment(pA, pB, worldPoint);
                 float dist = Vector3.Distance(closest, worldPoint);
 
-                if (dist < minDistance)
+                if (dist < minDist)
                 {
-                    minDistance = dist;
+                    minDist = dist;
                     bestSegment = i;
-                    bestPointOnSegment = closest;
+                    bestPoint = closest;
                 }
             }
 
-            if (bestSegment != -1 && minDistance <= cutTolerance)
+            if (bestSegment != -1 && minDist <= tolerance)
             {
-                CutSegment(bestSegment, bestPointOnSegment);
+                CutSegment(bestSegment, bestPoint);
                 return true;
             }
 
@@ -365,88 +420,101 @@ namespace CutFreePets.Rope
         }
 
         /// <summary>
-        /// Cuts the rope at a specific segment index.
-        /// Divides the rope into two dynamic falling pieces.
+        /// Splits the rope into two dynamic falling segments.
         /// </summary>
-        public void CutSegment(int segmentIndex, Vector3 cutWorldPoint)
+        public void CutSegment(int segmentIndex, Vector3 cutPoint)
         {
             if (isCut || segmentIndex < 0 || segmentIndex >= particles.Count - 1) return;
 
             isCut = true;
+            OnCut?.Invoke(this, segmentIndex, cutPoint);
 
-            // Trigger cut event
-            OnCut?.Invoke(this, segmentIndex, cutWorldPoint);
-
-            // Split into two halves:
-            // Half A remains on this VerletRope (from 0 to segmentIndex)
-            // Half B is spawned as a detached piece that swings/falls freely
-            List<RopeParticle> halfBParticles = new List<RopeParticle>();
-
-            // Insert cut world point as new end for half A
-            RopeParticle cutNodeA = new RopeParticle(cutWorldPoint, config.particleRadius);
-            RopeParticle cutNodeB = new RopeParticle(cutWorldPoint, config.particleRadius);
+            // Separate into top half (retained) and bottom half (spawned as severed piece)
+            List<RopeParticle> bottomHalf = new List<RopeParticle>();
+            RopeParticle cutA = new RopeParticle(cutPoint, config != null ? config.particleRadius : 0.04f);
+            RopeParticle cutB = new RopeParticle(cutPoint, config != null ? config.particleRadius : 0.04f);
 
             for (int i = segmentIndex + 1; i < particles.Count; i++)
             {
-                halfBParticles.Add(particles[i]);
+                bottomHalf.Add(particles[i]);
             }
 
-            // Truncate current rope to Half A
+            // Top half stays attached to peg, falls freely from cut
             int removeCount = particles.Count - (segmentIndex + 1);
             particles.RemoveRange(segmentIndex + 1, removeCount);
-            particles.Add(cutNodeA);
-            pinEnd = false; // End is now severed and falls freely!
+            particles.Add(cutA);
+            pinEnd = false; // severed end of top half falls freely
+            Destroy(gameObject, 2.5f); // Fade out top remnant after swinging
 
-            // Spawn Half B as detached rope object
-            if (halfBParticles.Count > 0)
+            // Spawn bottom severed piece attached to the box!
+            if (bottomHalf.Count > 0)
             {
-                SpawnSeveredHalf(cutNodeB, halfBParticles);
+                SpawnSeveredPiece(cutB, bottomHalf);
             }
 
-            // Recalculate rest length for remaining half
             initialTotalRestLength = segmentRestLength * Mathf.Max(1, particles.Count - 1);
         }
 
-        private void SpawnSeveredHalf(RopeParticle cutNodeB, List<RopeParticle> remainingParticles)
+        private void SpawnSeveredPiece(RopeParticle cutNodeB, List<RopeParticle> remainingNodes)
         {
-            GameObject severedObj = new GameObject($"{gameObject.name}_SeveredPiece");
-            severedObj.transform.position = cutNodeB.Position;
+            GameObject severed = new GameObject($"{gameObject.name}_SeveredPiece");
+            severed.transform.position = cutNodeB.Position;
 
-            VerletRope severedRope = severedObj.AddComponent<VerletRope>();
+            VerletRope severedRope = severed.AddComponent<VerletRope>();
             severedRope.config = config;
-            severedRope.pinStart = false; // severed end is free
-            severedRope.pinEnd = pinEnd;
+            severedRope.pinStart = false; // severed cut point is completely free
+            severedRope.pinEnd = true;    // attached firmly to the box / endAnchor!
+            severedRope.startAnchor = null;
             severedRope.endAnchor = endAnchor;
             severedRope.endOffset = endOffset;
+            severedRope.applyTensionForces = false; // no longer pulling on box once severed
             severedRope.isCut = true;
 
             severedRope.particles.Clear();
             severedRope.particles.Add(cutNodeB);
-            severedRope.particles.AddRange(remainingParticles);
+            severedRope.particles.AddRange(remainingNodes);
+            // Ensure last particle is marked pinned to follow box
+            severedRope.particles[severedRope.particles.Count - 1].IsPinned = true;
             severedRope.segmentRestLength = segmentRestLength;
             severedRope.initialTotalRestLength = segmentRestLength * (severedRope.particles.Count - 1);
 
-            // Copy material and renderer settings
-            RopeRenderer originalRend = GetComponent<RopeRenderer>();
-            RopeRenderer newRend = severedObj.GetComponent<RopeRenderer>();
-            if (originalRend != null && newRend != null)
+            RopeRenderer originalRenderer = GetComponent<RopeRenderer>();
+            RopeRenderer newRenderer = severed.GetComponent<RopeRenderer>();
+            if (originalRenderer != null && newRenderer != null)
             {
-                newRend.CopySettingsFrom(originalRend);
-                newRend.Initialize(severedRope);
+                newRenderer.CopySettingsFrom(originalRenderer, preserveEndKnot: true);
+                newRenderer.Initialize(severedRope);
             }
 
-            // Auto cleanup severed rope after a short duration if both ends are unpinned
-            Destroy(severedObj, 4.0f);
+            // Auto cleanup severed piece after falling with the box
+            Destroy(severed, 2.5f);
         }
 
         private Vector3 ClosestPointOnSegment(Vector3 a, Vector3 b, Vector3 p)
         {
             Vector3 ab = b - a;
-            float sqrLen = ab.sqrMagnitude;
-            if (sqrLen < 0.0001f) return a;
-
-            float t = Mathf.Clamp01(Vector3.Dot(p - a, ab) / sqrLen);
+            float sqr = ab.sqrMagnitude;
+            if (sqr < 0.0001f) return a;
+            float t = Mathf.Clamp01(Vector3.Dot(p - a, ab) / sqr);
             return a + t * ab;
+        }
+
+        private bool LineSegmentsIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)
+        {
+            intersection = Vector2.zero;
+            float d = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x);
+            if (Mathf.Abs(d) < 0.0001f) return false;
+
+            float u = ((p3.x - p1.x) * (p4.y - p3.y) - (p3.y - p1.y) * (p4.x - p3.x)) / d;
+            float v = ((p3.x - p1.x) * (p2.y - p1.y) - (p3.y - p1.y) * (p2.x - p1.x)) / d;
+
+            if (u >= 0f && u <= 1f && v >= 0f && v <= 1f)
+            {
+                intersection = p1 + u * (p2 - p1);
+                return true;
+            }
+
+            return false;
         }
 
         private void OnDrawGizmos()
@@ -455,22 +523,17 @@ namespace CutFreePets.Rope
             {
                 if (startAnchor != null && endAnchor != null)
                 {
-                    Gizmos.color = Color.yellow;
+                    Gizmos.color = new Color(0.9f, 0.75f, 0.5f, 0.8f);
                     Gizmos.DrawLine(StartPosition, EndPosition);
                 }
                 return;
             }
 
-            // Draw particle chain and tension color in editor
-            float tColor = Mathf.Clamp01((currentTensionRatio - 1f) / Mathf.Max(0.01f, (config != null ? config.maxTensionThreshold - 1f : 0.25f)));
-            Gizmos.color = Color.Lerp(Color.green, Color.red, tColor);
-
+            Gizmos.color = Color.Lerp(Color.yellow, Color.red, Mathf.Clamp01((currentTensionRatio - 1f) / 0.25f));
             for (int i = 0; i < particles.Count - 1; i++)
             {
                 Gizmos.DrawLine(particles[i].Position, particles[i + 1].Position);
-                Gizmos.DrawWireSphere(particles[i].Position, config != null ? config.particleRadius : 0.04f);
             }
-            Gizmos.DrawWireSphere(particles[particles.Count - 1].Position, config != null ? config.particleRadius : 0.04f);
         }
     }
 }

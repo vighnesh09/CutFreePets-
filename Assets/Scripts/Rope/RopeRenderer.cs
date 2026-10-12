@@ -1,78 +1,118 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace CutFreePets.Rope
 {
     /// <summary>
-    /// Renders a VerletRope using Catmull-Rom spline smoothing, dynamic width thinning on stretch,
-    /// tension vibration, and responsive visual feedback.
+    /// Professional Cut the Rope visual renderer with braided texture tiling,
+    /// dynamic Catmull-Rom spline curves, stretch strain thinning & trembling,
+    /// and end knot ring attached to the suspended object.
     /// </summary>
     [RequireComponent(typeof(LineRenderer))]
     public class RopeRenderer : MonoBehaviour
     {
-        [Header("Rendering Components")]
+        [Header("Components")]
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private Material ropeMaterial;
 
-        [Header("Appearance")]
-        [SerializeField] private AnimationCurve widthCurve = AnimationCurve.Constant(0f, 1f, 1f);
-        [SerializeField] private float textureTileFactor = 2.0f; // Texture wraps per unit length
+        [Header("Braided Texture & Width")]
+        [Tooltip("Base thickness of the rope when relaxed.")]
+        [SerializeField] private float baseThickness = 0.12f;
+
+        [Tooltip("Thickness ratio when under maximum tension (gets thinner under tension).")]
+        [Range(0.3f, 1f)]
+        [SerializeField] private float minStretchThicknessRatio = 0.55f;
+
+        [Tooltip("Number of braided texture repetitions per world unit.")]
+        [SerializeField] private float textureRepeatPerUnit = 4.0f;
+
+        [Header("End Knot Visuals")]
+        [Tooltip("Show tied knot ring at the end anchor.")]
+        [SerializeField] private bool showEndKnot = true;
+        [SerializeField] private Sprite knotSprite;
+
+        [Header("Spline Smoothing")]
+        [Range(2, 10)]
+        [SerializeField] private int splineSubdivisions = 5;
 
         private VerletRope rope;
-        private readonly List<Vector3> smoothedPoints = new List<Vector3>();
-        private MaterialPropertyBlock propertyBlock;
-        private static readonly int ColorProp = Shader.PropertyToID("_BaseColor");
-        private static readonly int MainColorProp = Shader.PropertyToID("_Color");
+        private readonly System.Collections.Generic.List<Vector3> smoothedPoints = new System.Collections.Generic.List<Vector3>();
+        private GameObject endKnotInstance;
+        private SpriteRenderer endKnotRenderer;
+
+        public bool ShowEndKnot { get => showEndKnot; set => showEndKnot = value; }
 
         private void Awake()
         {
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
-            propertyBlock = new MaterialPropertyBlock();
-            SetupLineRenderer();
+            ConfigureLineRenderer();
+            LoadDefaultAssetsIfMissing();
         }
 
-        private void SetupLineRenderer()
+        private void LoadDefaultAssetsIfMissing()
         {
-            lineRenderer.useWorldSpace = true;
-            lineRenderer.numCornerVertices = 4;
-            lineRenderer.numCapVertices = 4;
-            lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            lineRenderer.receiveShadows = false;
-
-            if (ropeMaterial != null)
+#if UNITY_EDITOR
+            if (ropeMaterial == null)
+            {
+                ropeMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Settings/Rope_Material.mat");
+            }
+            if (knotSprite == null)
+            {
+                knotSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Knot_Ring_Albedo.png");
+            }
+#endif
+            if (ropeMaterial != null && lineRenderer != null)
             {
                 lineRenderer.material = ropeMaterial;
             }
-            else if (lineRenderer.sharedMaterial == null)
-            {
-                // Assign standard URP unlit or lit material if available
-                Shader defaultShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
-                if (defaultShader != null)
-                {
-                    lineRenderer.material = new Material(defaultShader);
-                }
-            }
+        }
+
+        private void ConfigureLineRenderer()
+        {
+            lineRenderer.useWorldSpace = true;
+            lineRenderer.alignment = LineAlignment.View;
+            lineRenderer.textureMode = LineTextureMode.Tile;
+            lineRenderer.numCornerVertices = 6;
+            lineRenderer.numCapVertices = 6;
+            lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lineRenderer.receiveShadows = false;
         }
 
         public void Initialize(VerletRope targetRope)
         {
             rope = targetRope;
+            CreateEndAccessories();
         }
 
-        public void CopySettingsFrom(RopeRenderer source)
+        private void CreateEndAccessories()
+        {
+            if (showEndKnot && knotSprite != null && endKnotInstance == null)
+            {
+                endKnotInstance = new GameObject($"{gameObject.name}_EndKnot");
+                endKnotInstance.transform.parent = transform;
+                endKnotRenderer = endKnotInstance.AddComponent<SpriteRenderer>();
+                endKnotRenderer.sprite = knotSprite;
+                endKnotRenderer.sortingOrder = 7;
+                endKnotInstance.transform.localScale = Vector3.one * 0.38f;
+            }
+        }
+
+        public void CopySettingsFrom(RopeRenderer source, bool preserveEndKnot = false)
         {
             if (source == null) return;
+            baseThickness = source.baseThickness;
+            minStretchThicknessRatio = source.minStretchThicknessRatio;
+            textureRepeatPerUnit = source.textureRepeatPerUnit;
+            splineSubdivisions = source.splineSubdivisions;
+            showEndKnot = preserveEndKnot;
+            knotSprite = source.knotSprite;
             ropeMaterial = source.ropeMaterial;
-            widthCurve = source.widthCurve;
-            textureTileFactor = source.textureTileFactor;
 
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
-            if (source.lineRenderer != null && lineRenderer != null)
+            if (lineRenderer != null && source.lineRenderer != null)
             {
                 lineRenderer.sharedMaterial = source.lineRenderer.sharedMaterial;
-                lineRenderer.colorGradient = source.lineRenderer.colorGradient;
-                lineRenderer.numCornerVertices = source.lineRenderer.numCornerVertices;
-                lineRenderer.numCapVertices = source.lineRenderer.numCapVertices;
+                lineRenderer.textureMode = LineTextureMode.Tile;
+                lineRenderer.alignment = LineAlignment.View;
             }
         }
 
@@ -80,31 +120,21 @@ namespace CutFreePets.Rope
         {
             if (rope == null || rope.Particles == null || rope.Particles.Count < 2) return;
 
-            UpdateSpline();
-            UpdateVisualTension();
+            UpdateSplineMesh();
+            UpdateTensionFeedback();
+            UpdateKnotPosition();
         }
 
-        /// <summary>
-        /// Generates silky smooth Catmull-Rom spline points through raw particle nodes.
-        /// </summary>
-        private void UpdateSpline()
+        private void UpdateSplineMesh()
         {
             var particles = rope.Particles;
             int count = particles.Count;
             if (count < 2) return;
 
-            int subdivisions = rope.Config != null ? Mathf.Max(1, rope.Config.splineSubdivisions) : 4;
             smoothedPoints.Clear();
-
-            // Calculate tension jitter if over-stretched
-            float tensionRatio = rope.CurrentTensionRatio;
-            float tensionNorm = 0f;
-            if (rope.Config != null && rope.Config.maxTensionThreshold > 1.0f)
-            {
-                tensionNorm = Mathf.Clamp01((tensionRatio - 1.0f) / (rope.Config.maxTensionThreshold - 1.0f));
-            }
-
-            float vibrationMagnitude = (rope.Config != null ? rope.Config.tensionVibrationAmount : 0.015f) * tensionNorm;
+            float tension = rope.CurrentTensionRatio;
+            float tensionStrain = Mathf.Clamp01((tension - 1.0f) / 0.25f);
+            float vibrationAmp = tensionStrain * 0.018f;
 
             for (int i = 0; i < count - 1; i++)
             {
@@ -113,64 +143,69 @@ namespace CutFreePets.Rope
                 Vector3 p2 = particles[i + 1].Position;
                 Vector3 p3 = i < count - 2 ? particles[i + 2].Position : particles[i + 1].Position;
 
-                for (int step = 0; step < subdivisions; step++)
+                for (int step = 0; step < splineSubdivisions; step++)
                 {
-                    float t = (float)step / subdivisions;
+                    float t = (float)step / splineSubdivisions;
                     Vector3 point = EvaluateCatmullRom(p0, p1, p2, p3, t);
 
-                    // Add high tension strain vibration
-                    if (vibrationMagnitude > 0.0001f && i > 0 && i < count - 2)
+                    // High tension vibration tremble (Cut the Rope feel)
+                    if (vibrationAmp > 0.0005f && i > 0 && i < count - 2)
                     {
-                        float seed = (Time.time * 45f) + (i * 3.7f) + t;
-                        Vector3 jitter = new Vector3(
-                            Mathf.Sin(seed),
-                            Mathf.Cos(seed * 1.3f),
-                            0f
-                        ) * vibrationMagnitude;
-                        point += jitter;
+                        float jitter = Mathf.Sin((Time.time * 50f) + (i * 4f) + (t * 2f)) * vibrationAmp;
+                        Vector3 tangent = (p2 - p1).normalized;
+                        Vector3 normal = Vector3.Cross(tangent, Vector3.forward).normalized;
+                        point += normal * jitter;
                     }
 
                     smoothedPoints.Add(point);
                 }
             }
 
-            // Add final endpoint
             smoothedPoints.Add(particles[count - 1].Position);
 
-            // Apply to LineRenderer
             lineRenderer.positionCount = smoothedPoints.Count;
             lineRenderer.SetPositions(smoothedPoints.ToArray());
         }
 
-        /// <summary>
-        /// Adjusts thickness and color in response to stretch tension.
-        /// </summary>
-        private void UpdateVisualTension()
+        private void UpdateTensionFeedback()
         {
-            if (rope.Config == null) return;
-
             float tensionRatio = rope.CurrentTensionRatio;
-            float maxThreshold = rope.Config.maxTensionThreshold;
-            float tensionNorm = Mathf.Clamp01((tensionRatio - 1.0f) / Mathf.Max(0.01f, maxThreshold - 1.0f));
+            float tensionNormalized = Mathf.Clamp01((tensionRatio - 1.0f) / 0.25f);
 
-            // 1. Thickness thinning under tension (Poisson's ratio effect)
-            float baseWidth = rope.Config.baseWidth;
-            float stretchFactor = Mathf.Lerp(1.0f, rope.Config.minStretchWidthFactor, tensionNorm);
-            float currentWidth = baseWidth * stretchFactor;
+            // Dynamic thickness thinning under load
+            float currentThickness = Mathf.Lerp(baseThickness, baseThickness * minStretchThicknessRatio, tensionNormalized);
+            lineRenderer.startWidth = currentThickness;
+            lineRenderer.endWidth = currentThickness;
 
-            lineRenderer.startWidth = currentWidth;
-            lineRenderer.endWidth = currentWidth;
-            lineRenderer.widthCurve = widthCurve;
+            // Cut the Rope color tinting: Warm golden brown when normal, subtle reddish warning when strained
+            Color normalColor = rope.Config != null ? rope.Config.normalColor : new Color(0.92f, 0.78f, 0.58f);
+            Color strainColor = rope.Config != null ? rope.Config.highTensionColor : new Color(1f, 0.45f, 0.35f);
+            Color blendedColor = Color.Lerp(normalColor, strainColor, tensionNormalized);
 
-            // 2. Color gradient / tint response
-            Color targetColor = Color.Lerp(rope.Config.normalColor, rope.Config.highTensionColor, tensionNorm);
-            lineRenderer.startColor = targetColor;
-            lineRenderer.endColor = targetColor;
+            lineRenderer.startColor = blendedColor;
+            lineRenderer.endColor = blendedColor;
 
-            // 3. Texture UV tiling across length
+            // Texture UV tiling along length
             if (lineRenderer.material != null)
             {
-                lineRenderer.material.mainTextureScale = new Vector2(rope.CurrentTotalLength * textureTileFactor, 1f);
+                float totalLength = rope.CurrentTotalLength;
+                lineRenderer.material.mainTextureScale = new Vector2(totalLength * textureRepeatPerUnit, 1f);
+            }
+        }
+
+        private void UpdateKnotPosition()
+        {
+            if (!showEndKnot || endKnotInstance == null || rope.Particles == null || rope.Particles.Count < 2) return;
+
+            Vector3 endPos = rope.Particles[rope.Particles.Count - 1].Position;
+            Vector3 prevPos = rope.Particles[rope.Particles.Count - 2].Position;
+            endKnotInstance.transform.position = new Vector3(endPos.x, endPos.y, endPos.z - 0.01f);
+
+            Vector3 dir = (endPos - prevPos).normalized;
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                endKnotInstance.transform.rotation = Quaternion.Euler(0f, 0f, angle + 90f);
             }
         }
 
@@ -185,6 +220,11 @@ namespace CutFreePets.Rope
                 (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
                 (-p0 + 3f * p1 - 3f * p2 + p3) * t3
             );
+        }
+
+        private void OnDestroy()
+        {
+            if (endKnotInstance != null) Destroy(endKnotInstance);
         }
     }
 }
