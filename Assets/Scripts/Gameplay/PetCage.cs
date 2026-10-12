@@ -244,8 +244,8 @@ namespace CutFreePets.Gameplay
 
         /// <summary>
         /// Called when the cage touches the landing platform.
-        /// Shatters and breaks open the cage with physical scattering debris,
-        /// freeing the cat onto the platform!
+        /// Shatters and breaks open the cage with compact scattering debris,
+        /// and cleanly lands the cat directly onto the platform (no floating)!
         /// </summary>
         public void BreakAndFreePet(Collision2D collision = null)
         {
@@ -258,15 +258,30 @@ namespace CutFreePets.Gameplay
             if (col2D != null) col2D.enabled = false;
             if (rb2D != null) rb2D.simulated = false;
 
-            // Spawn dynamic scattering debris pieces
+            // Determine platform surface height (top of collider)
+            float platformTopY = -2.30f;
+            if (collision != null && collision.collider != null)
+            {
+                platformTopY = collision.collider.bounds.max.y;
+            }
+            else
+            {
+                RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 5f);
+                if (hit.collider != null)
+                {
+                    platformTopY = hit.collider.bounds.max.y;
+                }
+            }
+
+            // Spawn compact, cute scattering debris pieces (scaled small so they don't cover screen)
             if (enableBreakShatter && debrisSprites != null && debrisSprites.Length > 0)
             {
                 Vector2[] scatterDirections = new Vector2[] {
-                    new Vector2(0f, 1.25f),      // Top handle (upwards)
-                    new Vector2(0.4f, 0.95f),    // Door bars (front/up)
-                    new Vector2(-1.25f, 0.85f),  // Left pillar (left/up)
-                    new Vector2(1.25f, 0.85f),   // Right pillar (right/up)
-                    new Vector2(0f, 0.35f)       // Base tray (gentle pop)
+                    new Vector2(0f, 1.4f),       // Top handle (pops up)
+                    new Vector2(0.5f, 1.1f),     // Door bar (up-right)
+                    new Vector2(-1.4f, 1.0f),    // Left bracket (left-up)
+                    new Vector2(1.4f, 1.0f),     // Right bracket (right-up)
+                    new Vector2(0f, 0.4f)        // Base tray (subtle rattle)
                 };
 
                 for (int i = 0; i < debrisSprites.Length; i++)
@@ -275,28 +290,61 @@ namespace CutFreePets.Gameplay
                     if (deb == null) continue;
 
                     GameObject debObj = new GameObject($"Debris_{deb.name}");
-                    debObj.transform.position = transform.position;
+                    debObj.transform.position = transform.position + new Vector3(UnityEngine.Random.Range(-0.2f, 0.2f), UnityEngine.Random.Range(-0.1f, 0.1f), 0f);
                     debObj.transform.rotation = transform.rotation;
-                    debObj.transform.localScale = transform.localScale;
+                    // Scale small (0.45x) so shards are compact accents, not giant slabs!
+                    debObj.transform.localScale = transform.localScale * 0.45f;
 
                     SpriteRenderer sr = debObj.AddComponent<SpriteRenderer>();
                     sr.sprite = deb;
-                    sr.sortingOrder = 8;
+                    sr.sortingOrder = 9;
 
                     Rigidbody2D debRb = debObj.AddComponent<Rigidbody2D>();
-                    debRb.gravityScale = 1.6f;
+                    debRb.gravityScale = 2.0f;
                     Vector2 dir = (i < scatterDirections.Length) ? scatterDirections[i] : UnityEngine.Random.insideUnitCircle.normalized;
-                    debRb.linearVelocity = dir * debrisExplodeForce + new Vector2(UnityEngine.Random.Range(-0.4f, 0.4f), 0f);
-                    debRb.angularVelocity = UnityEngine.Random.Range(-180f, 180f);
+                    debRb.linearVelocity = dir * (debrisExplodeForce * 1.35f) + new Vector2(UnityEngine.Random.Range(-0.6f, 0.6f), 0f);
+                    debRb.angularVelocity = UnityEngine.Random.Range(-270f, 270f);
 
-                    StartCoroutine(FadeAndDestroyDebris(debObj, sr, 0.8f));
+                    StartCoroutine(FadeAndDestroyDebris(debObj, sr, 0.35f));
+                }
+
+                // Also spawn cute golden spark stars
+                Sprite sparkSprite = null;
+#if UNITY_EDITOR
+                sparkSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Snip_Spark.png");
+#endif
+                if (sparkSprite != null)
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        GameObject sparkObj = new GameObject("Spark_Debris");
+                        sparkObj.transform.position = transform.position + new Vector3(UnityEngine.Random.Range(-0.3f, 0.3f), UnityEngine.Random.Range(-0.2f, 0.2f), 0f);
+                        sparkObj.transform.localScale = Vector3.one * 0.5f;
+
+                        SpriteRenderer ssr = sparkObj.AddComponent<SpriteRenderer>();
+                        ssr.sprite = sparkSprite;
+                        ssr.sortingOrder = 10;
+                        ssr.color = new Color(1f, 0.9f, 0.3f, 1f);
+
+                        Rigidbody2D srb = sparkObj.AddComponent<Rigidbody2D>();
+                        srb.gravityScale = 0.8f;
+                        srb.linearVelocity = UnityEngine.Random.insideUnitCircle.normalized * 3.5f;
+                        StartCoroutine(FadeAndDestroyDebris(sparkObj, ssr, 0.25f));
+                    }
                 }
             }
 
-            // Free the cat on the platform and switch mood to Happy
+            // Ground the cat directly onto the platform (paws flush with platform surface)
             if (petSlot != null)
             {
                 petSlot.SetParent(null, true);
+
+                // Cat sprite paw offset from center is approx -0.72 units
+                float targetCatY = platformTopY + 0.72f;
+                Vector3 targetGroundedPos = new Vector3(transform.position.x, targetCatY, 0f);
+
+                StartCoroutine(SettleCatOnPlatform(petSlot, targetGroundedPos));
+
                 CatAnimationPlayer cat = petSlot.GetComponentInChildren<CatAnimationPlayer>();
                 if (cat != null)
                 {
@@ -309,21 +357,43 @@ namespace CutFreePets.Gameplay
                 OnLandedOnGoal?.Invoke(collision);
             }
 
-            Debug.Log("<color=green>[PetCage]</color> CAGE BROKE OPEN! Debris scattered and pet is freed!");
+            Debug.Log("<color=green>[PetCage]</color> CAGE BROKE OPEN! Cat landed safely on platform with compact debris burst!");
+        }
+
+        private System.Collections.IEnumerator SettleCatOnPlatform(Transform targetSlot, Vector3 targetPos)
+        {
+            Vector3 startPos = targetSlot.position;
+            float elapsed = 0f;
+            float duration = 0.18f;
+            while (elapsed < duration)
+            {
+                if (targetSlot == null) yield break;
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                // Crisp cartoon gravity drop
+                float curve = t * t;
+                targetSlot.position = Vector3.Lerp(startPos, targetPos, curve);
+                yield return null;
+            }
+            if (targetSlot != null) targetSlot.position = targetPos;
         }
 
         private System.Collections.IEnumerator FadeAndDestroyDebris(GameObject debObj, SpriteRenderer sr, float delay)
         {
             yield return new WaitForSeconds(delay);
-            float duration = 0.6f;
+            float duration = 0.35f;
             float elapsed = 0f;
             Color c = sr != null ? sr.color : Color.white;
+            Vector3 initScale = debObj != null ? debObj.transform.localScale : Vector3.one;
+
             while (elapsed < duration)
             {
                 if (sr == null || debObj == null) yield break;
                 elapsed += Time.deltaTime;
-                float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+                float t = Mathf.Clamp01(elapsed / duration);
+                float alpha = Mathf.Lerp(1f, 0f, t);
                 sr.color = new Color(c.r, c.g, c.b, alpha);
+                debObj.transform.localScale = Vector3.Lerp(initScale, Vector3.zero, t);
                 yield return null;
             }
             if (debObj != null) Destroy(debObj);
