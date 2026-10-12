@@ -41,6 +41,17 @@ namespace CutFreePets.Gameplay
         [SerializeField] private SpriteRenderer cageRenderer;
         [SerializeField] private Sprite cageSprite;
 
+        [Header("Idle Hanging Sway (Organic Pendulum)")]
+        [Tooltip("Enables subtle organic sway while suspended on rope (Cut the Rope feel).")]
+        [SerializeField] private bool enableIdleSway = true;
+        [SerializeField] private float idleSwayAngle = 2.4f; // Very gentle +/- 2.4 degrees
+        [SerializeField] private float idleSwaySpeed = 1.35f; // Calm natural pendulum frequency
+        [SerializeField] private float inAirTiltFactor = 4.0f; // Soft organic tilt during free fall
+
+        private float swayTimer = 0f;
+        private float currentSwayZ = 0f;
+        private Quaternion baseRotation = Quaternion.identity;
+
         // Connected ropes tracking
         private readonly List<VerletRope> connectedRopes = new List<VerletRope>();
         private Rigidbody2D rb2D;
@@ -140,6 +151,40 @@ namespace CutFreePets.Gameplay
                     slotObj.transform.localScale = Vector3.one;
                     petSlot = slotObj.transform;
                 }
+            }
+        }
+
+        private void Update()
+        {
+            if (isLanded) return;
+
+            if (!isFreeFalling && enableIdleSway && connectedRopes.Count > 0)
+            {
+                // Organic breathing pendulum sway while hanging
+                swayTimer += Time.deltaTime * idleSwaySpeed;
+                // Double harmonic (primary wave + subtle breathing secondary wave)
+                float targetAngle = (Mathf.Sin(swayTimer) * 0.75f + Mathf.Sin(swayTimer * 0.5f) * 0.25f) * idleSwayAngle;
+                currentSwayZ = Mathf.Lerp(currentSwayZ, targetAngle, Time.deltaTime * 3.5f);
+                transform.rotation = Quaternion.Euler(0f, 0f, currentSwayZ);
+            }
+            else if (isFreeFalling && rb2D != null)
+            {
+                // In free-fall: organic aerodynamic tilting based on horizontal drift/velocity
+                float targetFallTilt = Mathf.Clamp(-rb2D.linearVelocity.x * inAirTiltFactor, -10f, 10f);
+                currentSwayZ = Mathf.Lerp(currentSwayZ, targetFallTilt, Time.deltaTime * 4.5f);
+                transform.rotation = Quaternion.Euler(0f, 0f, currentSwayZ);
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (isLanded) return;
+
+            // When hanging, add subtle gentle pendulum lateral push so the rope slightly moves with the cage
+            if (!isFreeFalling && enableIdleSway && rb2D != null && connectedRopes.Count > 0)
+            {
+                float lateralPush = Mathf.Cos(swayTimer) * 0.18f;
+                rb2D.AddForce(new Vector2(lateralPush, 0f), ForceMode2D.Force);
             }
         }
 
