@@ -3,75 +3,80 @@ using UnityEngine;
 namespace CutFreePets.Rope
 {
     /// <summary>
-    /// Configurable parameters for rope physics, stretch, collision, and visual feedback.
+    /// Tuned physics, collision, tension, and rendering configuration for Cut the Rope feel.
     /// </summary>
     [CreateAssetMenu(fileName = "NewRopeConfig", menuName = "Cut Free Pets/Rope Config")]
     public class RopeConfig : ScriptableObject
     {
-        [Header("Structure")]
-        [Tooltip("Number of simulation segments between start and end anchors.")]
-        [Range(4, 50)]
-        public int segmentCount = 18;
+        [Header("Structure & Segments")]
+        [Tooltip("Number of simulation particles along the rope. Higher = silkier smooth curve.")]
+        [Range(8, 40)]
+        public int segmentCount = 24;
 
-        [Tooltip("Additional slack ratio at start (1.0 = taut, 1.2 = 20% extra slack).")]
-        [Range(0.8f, 1.5f)]
-        public float slackMultiplier = 1.0f;
+        [Tooltip("Additional slack ratio at start (1.0 = taut, 1.08 = natural slight hanging curve).")]
+        [Range(0.9f, 1.5f)]
+        public float slackMultiplier = 1.06f;
 
-        [Header("Physics & Solvers")]
-        [Tooltip("Higher iterations make the rope stiffer and less stretchy.")]
-        [Range(2, 40)]
-        public int constraintIterations = 16;
+        [Header("Physics Solver & Realism")]
+        [Tooltip("Substeps per physics update for ultra-stable, butter-smooth rope simulation without jitter.")]
+        [Range(1, 6)]
+        public int physicsSubsteps = 3;
 
-        [Tooltip("Damping factor for particle velocity. Lower = more air resistance.")]
-        [Range(0.85f, 0.999f)]
-        public float damping = 0.975f;
+        [Tooltip("Constraint solver passes per substep.")]
+        [Range(4, 30)]
+        public int constraintIterations = 18;
 
-        [Tooltip("Gravity acceleration applied to rope particles.")]
+        [Tooltip("Velocity air resistance damping. 0.985 gives organic Cut the Rope pendulum swing.")]
+        [Range(0.9f, 0.999f)]
+        public float damping = 0.986f;
+
+        [Tooltip("Bending stiffness (0 = limp string, 0.2 = natural springy rope).")]
+        [Range(0f, 0.3f)]
+        public float bendingStiffness = 0.08f;
+
+        [Tooltip("Compliance elasticity (stretch factor).")]
+        [Range(0f, 0.15f)]
+        public float elasticity = 0.015f;
+
+        [Tooltip("Gravity vector for rope particles.")]
         public Vector3 gravity = new Vector3(0f, -9.81f, 0f);
 
-        [Tooltip("Elasticity / compliance factor (0 = completely rigid, 0.1 = stretchy like rubber).")]
-        [Range(0f, 0.2f)]
-        public float elasticity = 0.02f;
-
-        [Header("Collision")]
-        [Tooltip("Enables 3D collision against world obstacles (pegs, walls, barriers).")]
+        [Header("Collision & Wrapping")]
+        [Tooltip("Enables collision wrapping around obstacles and pegs.")]
         public bool enableCollision = true;
 
-        [Tooltip("Collision layer mask for world obstacles.")]
         public LayerMask collisionMask = ~0;
 
-        [Tooltip("Collision radius for each rope particle.")]
-        [Range(0.01f, 0.25f)]
-        public float particleRadius = 0.04f;
+        [Range(0.01f, 0.2f)]
+        public float particleRadius = 0.035f;
 
-        [Tooltip("Extra skin buffer to prevent visual clipping through colliders.")]
         [Range(0.001f, 0.05f)]
         public float skinWidth = 0.01f;
 
         [Header("Visuals & Tension")]
         [Tooltip("Base thickness of the rope when relaxed.")]
-        public float baseWidth = 0.08f;
+        public float baseWidth = 0.12f;
 
-        [Tooltip("Thickness ratio when under maximum tension (rope thins as it stretches).")]
+        [Tooltip("Thickness ratio when under maximum tension (gets thinner under load).")]
         [Range(0.3f, 1f)]
-        public float minStretchWidthFactor = 0.65f;
+        public float minStretchWidthFactor = 0.58f;
 
-        [Tooltip("Tension ratio considered full stretch (e.g. 1.25 = 25% stretched beyond rest length).")]
+        [Tooltip("Stretch ratio considered full tension.")]
         public float maxTensionThreshold = 1.25f;
 
-        [Tooltip("Base color of the rope.")]
-        public Color normalColor = new Color(0.85f, 0.72f, 0.53f); // Warm natural hemp rope
+        [Tooltip("Natural golden-brown braided hemp color.")]
+        public Color normalColor = new Color(0.96f, 0.82f, 0.62f);
 
-        [Tooltip("Color tint when reaching high tension.")]
-        public Color highTensionColor = new Color(1f, 0.45f, 0.35f);
+        [Tooltip("Warning red-orange tint when strained.")]
+        public Color highTensionColor = new Color(1f, 0.38f, 0.26f);
 
-        [Tooltip("Subtle vibration amplitude when rope is under heavy tension.")]
+        [Tooltip("High-tension strain tremble amplitude.")]
         [Range(0f, 0.05f)]
-        public float tensionVibrationAmount = 0.015f;
+        public float tensionVibrationAmount = 0.014f;
 
         [Header("Spline Smoothing")]
-        [Tooltip("Subdivisions per segment for silky smooth Catmull-Rom spline curves.")]
+        [Tooltip("Subdivisions per segment for silky Catmull-Rom spline curves.")]
         [Range(2, 10)]
-        public int splineSubdivisions = 4;
+        public int splineSubdivisions = 6;
     }
 }

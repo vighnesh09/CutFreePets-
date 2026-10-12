@@ -132,31 +132,18 @@ namespace CutFreePets.Rope
             if (count < 2) return;
 
             smoothedPoints.Clear();
-            float tension = rope.CurrentTensionRatio;
-            float tensionStrain = Mathf.Clamp01((tension - 1.0f) / 0.25f);
-            float vibrationAmp = tensionStrain * 0.018f;
 
             for (int i = 0; i < count - 1; i++)
             {
-                Vector3 p0 = i > 0 ? particles[i - 1].Position : particles[i].Position;
+                Vector3 p0 = i > 0 ? particles[i - 1].Position : (particles[0].Position + (particles[0].Position - particles[1].Position));
                 Vector3 p1 = particles[i].Position;
                 Vector3 p2 = particles[i + 1].Position;
-                Vector3 p3 = i < count - 2 ? particles[i + 2].Position : particles[i + 1].Position;
+                Vector3 p3 = i < count - 2 ? particles[i + 2].Position : (particles[count - 1].Position + (particles[count - 1].Position - particles[count - 2].Position));
 
                 for (int step = 0; step < splineSubdivisions; step++)
                 {
                     float t = (float)step / splineSubdivisions;
                     Vector3 point = EvaluateCatmullRom(p0, p1, p2, p3, t);
-
-                    // High tension vibration tremble (Cut the Rope feel)
-                    if (vibrationAmp > 0.0005f && i > 0 && i < count - 2)
-                    {
-                        float jitter = Mathf.Sin((Time.time * 50f) + (i * 4f) + (t * 2f)) * vibrationAmp;
-                        Vector3 tangent = (p2 - p1).normalized;
-                        Vector3 normal = Vector3.Cross(tangent, Vector3.forward).normalized;
-                        point += normal * jitter;
-                    }
-
                     smoothedPoints.Add(point);
                 }
             }

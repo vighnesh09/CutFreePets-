@@ -12,22 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8c3752ea8fcd4140ab2dc1b271f1bb3, type: 3}
   m_Name: DefaultRopeConfig
   m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.Rope.RopeConfig
-  segmentCount: 18
-  slackMultiplier: 1.05
-  constraintIterations: 16
-  damping: 0.975
+  segmentCount: 24
+  slackMultiplier: 1.06
+  physicsSubsteps: 3
+  constraintIterations: 18
+  damping: 0.986
+  bendingStiffness: 0.08
+  elasticity: 0.015
   gravity: {x: 0, y: -9.81, z: 0}
-  elasticity: 0.02
   enableCollision: 1
   collisionMask:
     serializedVersion: 2
     m_Bits: 4294967295
   particleRadius: 0.04
   skinWidth: 0.01
-  baseWidth: 0.08
-  minStretchWidthFactor: 0.6
+  baseWidth: 0.12
+  minStretchWidthFactor: 0.58
   maxTensionThreshold: 1.25
-  normalColor: {r: 0.9, g: 0.75, b: 0.55, a: 1}
-  highTensionColor: {r: 1, g: 0.35, b: 0.25, a: 1}
+  normalColor: {r: 0.96, g: 0.82, b: 0.62, a: 1}
+  highTensionColor: {r: 1, g: 0.38, b: 0.26, a: 1}
   tensionVibrationAmount: 0.015
-  splineSubdivisions: 4
+  splineSubdivisions: 6

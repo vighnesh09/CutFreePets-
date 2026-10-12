@@ -35,8 +35,8 @@ namespace CutFreePets.Rope
         [Header("Anchor Rigidbody Physics Coupling")]
         [Tooltip("Enable reactive spring tension force onto connected Rigidbodies (3D and 2D).")]
         [SerializeField] private bool applyTensionForces = true;
-        [SerializeField] private float springStiffness = 300f;
-        [SerializeField] private float springDamping = 15f;
+        [SerializeField] private float springStiffness = 160f;
+        [SerializeField] private float springDamping = 22f;
 
         [Header("State")]
         [SerializeField] private bool pinStart = true;
@@ -175,50 +175,58 @@ namespace CutFreePets.Rope
         {
             if (particles.Count < 2) return;
 
-            float dt = Time.fixedDeltaTime;
-
-            // 1. Anchor tracking
-            if (pinStart && startAnchor != null)
-            {
-                particles[0].Position = StartPosition;
-                particles[0].PreviousPosition = StartPosition;
-            }
-
-            if (pinEnd && endAnchor != null)
-            {
-                particles[particles.Count - 1].Position = EndPosition;
-                particles[particles.Count - 1].PreviousPosition = EndPosition;
-            }
-
-            // 2. Gravity & Verlet Step
+            int substeps = config != null ? Mathf.Max(1, config.physicsSubsteps) : 3;
+            float dt = Time.fixedDeltaTime / substeps;
             Vector3 gravity = config != null ? config.gravity : new Vector3(0f, -9.81f, 0f);
-            float damping = config != null ? config.damping : 0.98f;
-
-            for (int i = 0; i < particles.Count; i++)
-            {
-                RopeParticle p = particles[i];
-                if (!p.IsPinned)
-                {
-                    p.Acceleration += gravity;
-                    p.UpdateVerlet(dt, damping);
-                }
-            }
-
-            // 3. Distance constraint iterations & collision wrapping
-            int iterations = config != null ? config.constraintIterations : 16;
+            float damping = config != null ? config.damping : 0.986f;
+            int iterations = config != null ? config.constraintIterations : 18;
             bool enableCol = config == null || config.enableCollision;
+            float bendStiffness = config != null ? config.bendingStiffness : 0.08f;
 
-            for (int iter = 0; iter < iterations; iter++)
+            for (int s = 0; s < substeps; s++)
             {
-                SolveDistanceConstraints();
-
-                if (enableCol)
+                // 1. Anchor tracking
+                if (pinStart && startAnchor != null)
                 {
-                    SolveCollisions();
+                    particles[0].Position = StartPosition;
+                    particles[0].PreviousPosition = StartPosition;
+                }
+
+                if (pinEnd && endAnchor != null)
+                {
+                    particles[particles.Count - 1].Position = EndPosition;
+                    particles[particles.Count - 1].PreviousPosition = EndPosition;
+                }
+
+                // 2. Gravity & Verlet Step
+                for (int i = 0; i < particles.Count; i++)
+                {
+                    RopeParticle p = particles[i];
+                    if (!p.IsPinned)
+                    {
+                        p.Acceleration += gravity;
+                        p.UpdateVerlet(dt, damping);
+                    }
+                }
+
+                // 3. Distance & Bending constraints loop
+                for (int iter = 0; iter < iterations; iter++)
+                {
+                    SolveDistanceConstraints();
+
+                    if (bendStiffness > 0.001f)
+                    {
+                        SolveBendingConstraints(bendStiffness);
+                    }
+
+                    if (enableCol)
+                    {
+                        SolveCollisions();
+                    }
                 }
             }
 
-            // 4. Measure stretch tension and apply physical pull force
+            // 4. Measure stretch tension and apply physical pull force to connected object
             MeasureTension();
             if (applyTensionForces && !isCut)
             {
@@ -229,7 +237,7 @@ namespace CutFreePets.Rope
         private void SolveDistanceConstraints()
         {
             float targetRest = segmentRestLength;
-            float compliance = config != null ? (1f - config.elasticity) : 0.98f;
+            float compliance = config != null ? (1f - config.elasticity) : 0.985f;
 
             for (int i = 0; i < particles.Count - 1; i++)
             {
@@ -256,6 +264,34 @@ namespace CutFreePets.Rope
                 else if (p1.IsPinned && !p2.IsPinned)
                 {
                     p2.Position -= correction * 2f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Prevents unnatural sharp folding and adds organic rope springiness (Cut the Rope feel).
+        /// </summary>
+        private void SolveBendingConstraints(float bendStiffness)
+        {
+            float doubleRest = segmentRestLength * 2f;
+
+            for (int i = 0; i < particles.Count - 2; i++)
+            {
+                RopeParticle p1 = particles[i];
+                RopeParticle p3 = particles[i + 2];
+
+                Vector3 delta = p3.Position - p1.Position;
+                float dist = delta.magnitude;
+
+                if (dist <= 0.0001f || dist >= doubleRest) continue;
+
+                float diff = (dist - doubleRest) / dist;
+                Vector3 correction = delta * (0.5f * diff * bendStiffness);
+
+                if (!p1.IsPinned && !p3.IsPinned)
+                {
+                    p1.Position += correction * 0.5f;
+                    p3.Position -= correction * 0.5f;
                 }
             }
         }
@@ -341,16 +377,17 @@ namespace CutFreePets.Rope
         private void ApplyConnectedForces()
         {
             float stretch = currentTotalLength - initialTotalRestLength;
-            if (stretch <= 0f || particles.Count < 2) return;
+            if (stretch <= 0.001f || particles.Count < 2) return;
 
-            float forceMag = stretch * springStiffness;
+            // Soft progressive spring response clamped to prevent force spikes
+            float forceMag = Mathf.Clamp(stretch * springStiffness, 0f, 80f);
 
             // Apply to 3D End Rigidbody
             if (endRb3D != null && !endRb3D.isKinematic)
             {
                 Vector3 pullDir = (particles[particles.Count - 2].Position - particles[particles.Count - 1].Position).normalized;
                 Vector3 dampForce = -endRb3D.linearVelocity * springDamping;
-                endRb3D.AddForceAtPosition((pullDir * forceMag) + dampForce, EndPosition);
+                endRb3D.AddForceAtPosition((pullDir * forceMag) + dampForce, EndPosition, ForceMode.Force);
             }
 
             // Apply to 2D End Rigidbody
@@ -358,7 +395,7 @@ namespace CutFreePets.Rope
             {
                 Vector2 pullDir2D = (Vector2)(particles[particles.Count - 2].Position - particles[particles.Count - 1].Position).normalized;
                 Vector2 dampForce2D = -endRb2D.linearVelocity * springDamping;
-                endRb2D.AddForceAtPosition((pullDir2D * forceMag) + dampForce2D, EndPosition);
+                endRb2D.AddForceAtPosition((pullDir2D * forceMag) + dampForce2D, EndPosition, ForceMode2D.Force);
             }
         }
 

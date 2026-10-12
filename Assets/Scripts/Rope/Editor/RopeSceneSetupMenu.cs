@@ -79,7 +79,6 @@ namespace CutFreePets.Editor
             boxCol.size = new Vector2(0.85f, 0.85f);
 
             HangingBox hangingBox = boxObj.AddComponent<HangingBox>();
-            boxObj.AddComponent<DraggableTarget>(); // Allows dragging box around
 
             // 7. Ground Floor Platform below for landing
             GameObject floorObj = new GameObject("Ground_Platform");
@@ -150,19 +149,25 @@ namespace CutFreePets.Editor
             if (config == null)
             {
                 config = ScriptableObject.CreateInstance<RopeConfig>();
-                config.segmentCount = 20;
-                config.baseWidth = 0.12f;
-                config.elasticity = 0.015f;
-                config.enableCollision = true;
-                config.slackMultiplier = 1.05f;
-                config.normalColor = new Color(0.95f, 0.8f, 0.6f);
-                config.highTensionColor = new Color(1f, 0.38f, 0.28f);
-                config.minStretchWidthFactor = 0.55f;
-                config.splineSubdivisions = 5;
-
                 AssetDatabase.CreateAsset(config, assetPath);
-                AssetDatabase.SaveAssets();
             }
+
+            config.segmentCount = 24;
+            config.physicsSubsteps = 3;
+            config.constraintIterations = 18;
+            config.damping = 0.986f;
+            config.bendingStiffness = 0.08f;
+            config.elasticity = 0.015f;
+            config.slackMultiplier = 1.06f;
+            config.baseWidth = 0.12f;
+            config.minStretchWidthFactor = 0.58f;
+            config.normalColor = new Color(0.96f, 0.82f, 0.62f);
+            config.highTensionColor = new Color(1f, 0.38f, 0.26f);
+            config.splineSubdivisions = 6;
+            config.enableCollision = true;
+
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
 
             return config;
         }
