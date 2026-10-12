@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 5a85c6ac8f5a491497a8008560c82ead
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    enableMipMap: 0
+    sRGBTexture: 1
+  filterMode: 1
+  spriteMode: 1
+  spritePixelsToUnits: 256
+  alphaIsTransparency: 1
+  textureType: 8
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    textureCompression: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites: []
+    spriteID: 5a85c6ac8f5a491497a8008560c82ead

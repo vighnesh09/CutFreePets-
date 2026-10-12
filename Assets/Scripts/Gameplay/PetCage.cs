@@ -112,6 +112,15 @@ namespace CutFreePets.Gameplay
             }
         }
 
+        [Header("Back Wall Visual")]
+        [SerializeField] private SpriteRenderer backRenderer;
+        [SerializeField] private Sprite backSprite;
+
+        [Header("Cage Breaking Debris on Landing")]
+        [SerializeField] private bool enableBreakShatter = true;
+        [SerializeField] private Sprite[] debrisSprites;
+        [SerializeField] private float debrisExplodeForce = 3.8f;
+
         public void SetupVisuals()
         {
             if (cageRenderer == null) cageRenderer = GetComponent<SpriteRenderer>();
@@ -120,7 +129,25 @@ namespace CutFreePets.Gameplay
 #if UNITY_EDITOR
             if (cageSprite == null)
             {
-                cageSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Pet_Cage_Sprite.png");
+                cageSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Pet_Cage_Golden.png")
+                          ?? UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Pet_Cage_Front.png");
+            }
+            if (debrisSprites == null || debrisSprites.Length == 0)
+            {
+                string[] debrisPaths = new string[] {
+                    "Assets/Art/Environment/Debris/Debris_Top_Handle.png",
+                    "Assets/Art/Environment/Debris/Debris_Door_Bars.png",
+                    "Assets/Art/Environment/Debris/Debris_Left_Pillar.png",
+                    "Assets/Art/Environment/Debris/Debris_Right_Pillar.png",
+                    "Assets/Art/Environment/Debris/Debris_Base_Tray.png"
+                };
+                List<Sprite> list = new List<Sprite>();
+                foreach (var p in debrisPaths)
+                {
+                    Sprite s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(p);
+                    if (s != null) list.Add(s);
+                }
+                debrisSprites = list.ToArray();
             }
 #endif
             if (cageSprite != null)
@@ -128,8 +155,8 @@ namespace CutFreePets.Gameplay
                 cageRenderer.sprite = cageSprite;
                 cageRenderer.color = Color.white;
             }
+            cageRenderer.sortingOrder = 8; // Front bars and crate frame
 
-            cageRenderer.sortingOrder = 8; // Rendered in front of the pet background
             transform.localScale = Vector3.one;
         }
 
@@ -217,28 +244,94 @@ namespace CutFreePets.Gameplay
 
         /// <summary>
         /// Called when the cage touches the landing platform.
-        /// Unlocks/hides the cage so the pet is freed on the platform!
+        /// Shatters and breaks open the cage with physical scattering debris,
+        /// freeing the cat onto the platform!
         /// </summary>
-        public void OpenAndDisappear()
+        public void BreakAndFreePet(Collision2D collision = null)
         {
+            if (isLanded) return;
             isLanded = true;
-            if (cageRenderer != null)
-            {
-                // Disappear cage visuals
-                cageRenderer.enabled = false;
-            }
 
-            // Disable cage collider so it doesn't push the pet
+            // Hide intact cage visuals
+            if (cageRenderer != null) cageRenderer.enabled = false;
+            if (backRenderer != null) backRenderer.enabled = false;
             if (col2D != null) col2D.enabled = false;
             if (rb2D != null) rb2D.simulated = false;
 
-            // Detach pet slot so pet remains standing on the platform
+            // Spawn dynamic scattering debris pieces
+            if (enableBreakShatter && debrisSprites != null && debrisSprites.Length > 0)
+            {
+                Vector2[] scatterDirections = new Vector2[] {
+                    new Vector2(0f, 1.25f),      // Top handle (upwards)
+                    new Vector2(0.4f, 0.95f),    // Door bars (front/up)
+                    new Vector2(-1.25f, 0.85f),  // Left pillar (left/up)
+                    new Vector2(1.25f, 0.85f),   // Right pillar (right/up)
+                    new Vector2(0f, 0.35f)       // Base tray (gentle pop)
+                };
+
+                for (int i = 0; i < debrisSprites.Length; i++)
+                {
+                    Sprite deb = debrisSprites[i];
+                    if (deb == null) continue;
+
+                    GameObject debObj = new GameObject($"Debris_{deb.name}");
+                    debObj.transform.position = transform.position;
+                    debObj.transform.rotation = transform.rotation;
+                    debObj.transform.localScale = transform.localScale;
+
+                    SpriteRenderer sr = debObj.AddComponent<SpriteRenderer>();
+                    sr.sprite = deb;
+                    sr.sortingOrder = 8;
+
+                    Rigidbody2D debRb = debObj.AddComponent<Rigidbody2D>();
+                    debRb.gravityScale = 1.6f;
+                    Vector2 dir = (i < scatterDirections.Length) ? scatterDirections[i] : UnityEngine.Random.insideUnitCircle.normalized;
+                    debRb.linearVelocity = dir * debrisExplodeForce + new Vector2(UnityEngine.Random.Range(-0.4f, 0.4f), 0f);
+                    debRb.angularVelocity = UnityEngine.Random.Range(-180f, 180f);
+
+                    StartCoroutine(FadeAndDestroyDebris(debObj, sr, 0.8f));
+                }
+            }
+
+            // Free the cat on the platform and switch mood to Happy
             if (petSlot != null)
             {
                 petSlot.SetParent(null, true);
+                CatAnimationPlayer cat = petSlot.GetComponentInChildren<CatAnimationPlayer>();
+                if (cat != null)
+                {
+                    cat.SetMood(CatMood.Happy);
+                }
             }
 
-            Debug.Log("<color=green>[PetCage]</color> Safe landing! Cage unlocked and disappeared.");
+            if (collision != null)
+            {
+                OnLandedOnGoal?.Invoke(collision);
+            }
+
+            Debug.Log("<color=green>[PetCage]</color> CAGE BROKE OPEN! Debris scattered and pet is freed!");
+        }
+
+        private System.Collections.IEnumerator FadeAndDestroyDebris(GameObject debObj, SpriteRenderer sr, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            float duration = 0.6f;
+            float elapsed = 0f;
+            Color c = sr != null ? sr.color : Color.white;
+            while (elapsed < duration)
+            {
+                if (sr == null || debObj == null) yield break;
+                elapsed += Time.deltaTime;
+                float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+                sr.color = new Color(c.r, c.g, c.b, alpha);
+                yield return null;
+            }
+            if (debObj != null) Destroy(debObj);
+        }
+
+        public void OpenAndDisappear()
+        {
+            BreakAndFreePet();
         }
 
         /// <summary>
@@ -246,28 +339,19 @@ namespace CutFreePets.Gameplay
         /// </summary>
         public void BreakOnCrash()
         {
-            isLanded = true;
-            if (cageRenderer != null) cageRenderer.enabled = false;
-            if (col2D != null) col2D.enabled = false;
-            if (rb2D != null) rb2D.simulated = false;
-
-            if (petSlot != null)
-            {
-                petSlot.SetParent(null, true);
-            }
-
-            Debug.Log("<color=red>[PetCage]</color> Cage crashed/failed.");
+            BreakAndFreePet();
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            // Landing detection will connect to LandingPlatform
+            // Landing detection when hitting platform
             if (collision.gameObject.name.Contains("Platform") || collision.gameObject.CompareTag("Finish"))
             {
-                OnLandedOnGoal?.Invoke(collision);
+                BreakAndFreePet(collision);
             }
             else if (collision.gameObject.name.Contains("Ground") || collision.gameObject.name.Contains("Hazard"))
             {
+                BreakAndFreePet(collision);
                 OnLandedOnHazard?.Invoke(collision);
             }
         }

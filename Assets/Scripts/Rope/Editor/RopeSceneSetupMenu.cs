@@ -113,13 +113,22 @@ namespace CutFreePets.Editor
             cageObj.transform.position = new Vector3(0f, 0.8f, 0f);
 
             BoxCollider2D cageCol = cageObj.AddComponent<BoxCollider2D>();
-            // Full sprite extents (3.22m x 3.31m at 256 PPU): bottom edge is at Y = -1.655m
-            // When resting on the platform (platform top at Y = -2.3m), the cage rests flush at Y = -0.645m
-            cageCol.size = new Vector2(3.22f, 3.31f);
-            cageCol.offset = Vector2.zero;
+            cageCol.size = new Vector2(3.38f, 3.1f);
+            cageCol.offset = new Vector2(0f, -0.25f);
 
             PetCage petCage = cageObj.AddComponent<PetCage>();
             petCage.SetupVisuals();
+
+            // Mount the animated Cat inside the cage at the pet slot
+            GameObject catObj = new GameObject("Cat_Character");
+            catObj.transform.parent = petCage.PetSlot;
+            catObj.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+            catObj.transform.localRotation = Quaternion.identity;
+            catObj.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+
+            CatSpriteImporterHelper.ReimportCatSprites();
+            CatAnimationPlayer catPlayer = catObj.AddComponent<CatAnimationPlayer>();
+            catPlayer.LoadFramesFromProject();
 
             // Dedicated top ring hook point where rope binds
             GameObject ringHookObj = new GameObject("TopRing_Hook");
@@ -167,9 +176,12 @@ namespace CutFreePets.Editor
             Selection.activeGameObject = ropeObj;
 
             EditorUtility.SetDirty(root);
-            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
-                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene()
-            );
+            var activeScene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(activeScene);
+            if (!string.IsNullOrEmpty(activeScene.path))
+            {
+                UnityEditor.SceneManagement.EditorSceneManager.SaveScene(activeScene);
+            }
 
             EditorUtility.DisplayDialog(
                 "Mobile Vertical Setup Complete!",
