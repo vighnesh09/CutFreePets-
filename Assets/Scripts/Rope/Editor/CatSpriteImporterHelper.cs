@@ -32,7 +32,13 @@ namespace CutFreePets.Editor
         [MenuItem("Cut Free Pets/Reimport Cat Sprites", false, 10)]
         public static void ReimportCatSprites()
         {
-            string[] folders = new string[] { "Assets/Art/cat/Frames_Happy", "Assets/Art/cat/Frames_Sad" };
+            string[] folders = new string[] { 
+                "Assets/Art/cat/Frames_Happy", 
+                "Assets/Art/cat/Frames_Sad",
+                "Assets/Art/Environment/Debris",
+                "Assets/Resources/Debris",
+                "Assets/Art/Environment"
+            };
             int count = 0;
 
             AssetDatabase.StartAssetEditing();

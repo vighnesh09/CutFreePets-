@@ -116,8 +116,12 @@ namespace CutFreePets.Editor
             cageCol.size = new Vector2(3.38f, 3.1f);
             cageCol.offset = new Vector2(0f, -0.25f);
 
+            CatSpriteImporterHelper.ReimportCatSprites();
+
             PetCage petCage = cageObj.AddComponent<PetCage>();
             petCage.SetupVisuals();
+            petCage.EnsureDebrisSpritesLoaded();
+            EditorUtility.SetDirty(petCage);
 
             // Mount the animated Cat inside the cage at the pet slot
             GameObject catObj = new GameObject("Cat_Character");
@@ -126,7 +130,6 @@ namespace CutFreePets.Editor
             catObj.transform.localRotation = Quaternion.identity;
             catObj.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
-            CatSpriteImporterHelper.ReimportCatSprites();
             CatAnimationPlayer catPlayer = catObj.AddComponent<CatAnimationPlayer>();
             catPlayer.LoadFramesFromProject();
 
@@ -155,6 +158,16 @@ namespace CutFreePets.Editor
             floorTex.Apply();
             floorRend.sprite = Sprite.Create(floorTex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
             floorObj.transform.localScale = new Vector3(4.5f, 0.6f, 1f);
+
+            // Platform top highlight border so ground landing plane is clearly visible
+            GameObject floorRim = new GameObject("Platform_Highlight");
+            floorRim.transform.parent = floorObj.transform;
+            floorRim.transform.localPosition = new Vector3(0f, 0.48f, 0f);
+            floorRim.transform.localScale = new Vector3(1f, 0.05f, 1f);
+            SpriteRenderer rimRend = floorRim.AddComponent<SpriteRenderer>();
+            rimRend.color = new Color(0.48f, 0.58f, 0.72f, 0.8f);
+            rimRend.sortingOrder = 4;
+            rimRend.sprite = floorRend.sprite;
 
             // 9. ONE Braided Rope Connecting Top Hanger -> Cage Top Ring Hook
             GameObject ropeObj = new GameObject("Rope");
