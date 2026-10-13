@@ -20,7 +20,8 @@ namespace CutFreePets.Editor
             string[] oldNames = new string[] { 
                 "CutTheRope_Demo", "HangingBox_Level", "CutTheRope_Level", "RopeDemo_Setup", "RopeDemo",
                 "Peg_TopAnchor", "Obstacle_Peg", "Pet_Target", "Peg_Top", "Weight_Bottom",
-                "TopMiddle_Hanger", "Hanging_Box", "Pet_Cage", "Rope", "SwipeCutBlade", "Directional Light"
+                "TopMiddle_Hanger", "Hanging_Box", "Pet_Cage", "Rope", "SwipeCutBlade", "Directional Light",
+                "Star_Collectible_01", "Star_Collectible_02", "Star_Collectible_03", "Star_Collectible", "LevelScoreTracker"
             };
             foreach (string name in oldNames)
             {
@@ -99,18 +100,18 @@ namespace CutFreePets.Editor
             GameObject root = new GameObject("HangingBox_Level");
             Undo.RegisterCreatedObjectUndo(root, "Create Root");
 
-            // 6. ONE Top Middle Hanger Peg (Framed nicely below top mobile notch/status bar)
+            // 6. ONE Top Rope Anchor (Hanger peg outside/above visible screen at Y = 5.8)
+            // Creates the authentic "rope enters from ceiling" Cut the Rope aesthetic
             GameObject hangerObj = new GameObject("TopMiddle_Hanger");
             hangerObj.transform.parent = root.transform;
-            hangerObj.transform.position = new Vector3(0f, 4.2f, 0f);
+            hangerObj.transform.position = new Vector3(0f, 5.8f, 0f);
             RopeHanger hanger = hangerObj.AddComponent<RopeHanger>();
             hanger.SetupVisuals();
 
-            // 7. ONE Hanging Pet Cage (Clear thin-wire cage for animated pet inside)
-            // 7. ONE Hanging Pet Cage (Clear thin-wire cage for animated pet inside)
+            // 7. ONE Hanging Pet Cage (Lifted higher up at Y = 2.4 so rope hangs down naturally)
             GameObject cageObj = new GameObject("Pet_Cage");
             cageObj.transform.parent = root.transform;
-            cageObj.transform.position = new Vector3(0f, 0.8f, 0f);
+            cageObj.transform.position = new Vector3(0f, 2.4f, 0f);
 
             BoxCollider2D cageCol = cageObj.AddComponent<BoxCollider2D>();
             cageCol.size = new Vector2(3.38f, 3.1f);
@@ -139,37 +140,49 @@ namespace CutFreePets.Editor
             ringHookObj.transform.localPosition = new Vector3(0f, 1.65f, 0f);
             ringHookObj.transform.localRotation = Quaternion.identity;
 
-            // 8. Ground Floor Platform below for landing (Sized for portrait width)
+            // 8. Polished Golden-Wood Landing Platform at bottom of screen (Y = -3.85)
+            // Slim, sleek, and perfectly sized
             GameObject floorObj = new GameObject("Ground_Platform");
             floorObj.transform.parent = root.transform;
-            floorObj.transform.position = new Vector3(0f, -2.6f, 0f);
+            floorObj.transform.position = new Vector3(0f, -3.85f, 0f);
 
-            BoxCollider2D floorCol = floorObj.AddComponent<BoxCollider2D>();
-            floorCol.size = new Vector2(4.5f, 0.6f);
+            Sprite woodPlatformSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Platform_Wood_Golden.png");
 
             SpriteRenderer floorRend = floorObj.AddComponent<SpriteRenderer>();
-            floorRend.color = new Color(0.28f, 0.35f, 0.45f);
-            floorRend.sortingOrder = 3;
+            floorRend.sprite = woodPlatformSprite;
+            floorRend.color = Color.white;
+            floorRend.sortingOrder = 4;
+            floorObj.transform.localScale = new Vector3(1.15f, 1.15f, 1f);
 
-            Texture2D floorTex = new Texture2D(16, 16);
-            Color[] cols = new Color[256];
-            for (int i = 0; i < 256; i++) cols[i] = Color.white;
-            floorTex.SetPixels(cols);
-            floorTex.Apply();
-            floorRend.sprite = Sprite.Create(floorTex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
-            floorObj.transform.localScale = new Vector3(4.5f, 0.6f, 1f);
+            BoxCollider2D floorCol = floorObj.AddComponent<BoxCollider2D>();
+            // Collider sized to top surface of the wooden dock
+            floorCol.size = new Vector2(3.9f, 0.5f);
+            floorCol.offset = new Vector2(0f, -0.05f);
 
-            // Platform top highlight border so ground landing plane is clearly visible
-            GameObject floorRim = new GameObject("Platform_Highlight");
-            floorRim.transform.parent = floorObj.transform;
-            floorRim.transform.localPosition = new Vector3(0f, 0.48f, 0f);
-            floorRim.transform.localScale = new Vector3(1f, 0.05f, 1f);
-            SpriteRenderer rimRend = floorRim.AddComponent<SpriteRenderer>();
-            rimRend.color = new Color(0.48f, 0.58f, 0.72f, 0.8f);
-            rimRend.sortingOrder = 4;
-            rimRend.sprite = floorRend.sprite;
+            // 9. THREE COLLECTIBLE STARS aligned in a single vertical column (X = 0)
+            // Sized cleanly at scale 0.35, with generous 1.25m vertical spacing
+            // Star 1 (Y = 0.1f), Star 2 (Y = -1.15f), Star 3 (Y = -2.4f)
+            Vector3[] starPositions = new Vector3[] {
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(0f, -1.15f, 0f),
+                new Vector3(0f, -2.40f, 0f)
+            };
 
-            // 9. ONE Braided Rope Connecting Top Hanger -> Cage Top Ring Hook
+            for (int s = 0; s < 3; s++)
+            {
+                GameObject starObj = new GameObject($"Star_Collectible_0{s + 1}");
+                starObj.transform.parent = root.transform;
+                starObj.transform.position = starPositions[s];
+                starObj.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
+                starObj.AddComponent<StarCollectible>();
+            }
+
+            // 10. LevelScoreTracker to record stars and progress
+            GameObject trackerObj = new GameObject("LevelScoreTracker");
+            trackerObj.transform.parent = root.transform;
+            trackerObj.AddComponent<LevelScoreTracker>();
+
+            // 11. ONE Braided Rope Connecting Top Hanger -> Cage Top Ring Hook
             GameObject ropeObj = new GameObject("Rope");
             ropeObj.transform.parent = root.transform;
             ropeObj.transform.position = hangerObj.transform.position;
@@ -180,7 +193,7 @@ namespace CutFreePets.Editor
             // Link rope to PetCage so it drops when cut
             petCage.AttachRope(rope);
 
-            // 10. Swipe Cut Blade (Pure touch/mouse swipe, zero scissors)
+            // 12. Swipe Cut Blade (Pure touch/mouse swipe, zero scissors)
             GameObject bladeObj = new GameObject("SwipeCutBlade");
             bladeObj.transform.parent = root.transform;
             bladeObj.AddComponent<SwipeCutBlade>();
@@ -197,14 +210,13 @@ namespace CutFreePets.Editor
             }
 
             EditorUtility.DisplayDialog(
-                "Mobile Vertical Setup Complete!",
-                "Vertical mobile (Portrait 9:16) setup created!\n\n" +
-                "• Orientation: Portrait (9:16 mobile aspect)\n" +
-                "• Top Middle: 1 RopeHanger peg\n" +
-                "• Middle: 1 Braided Rope\n" +
-                "• Bottom: 1 HangingBox (square)\n" +
-                "• Floor Platform: Sized for portrait width\n" +
-                "• Direct touch swipe slicing active!",
+                "Cut The Rope Layout Complete!",
+                "Vertical mobile (Portrait 9:16) level setup created!\n\n" +
+                "• Top Peg Hanger: Positioned high at Y = 4.5\n" +
+                "• Hanging Pet Cage: Positioned at Y = 1.8\n" +
+                "• 3 Glossy Stars: Floating in fall path\n" +
+                "• Ground Platform: Bottom of screen at Y = -3.8\n" +
+                "• Star Score & Progress Tracking Active!",
                 "Great!"
             );
         }

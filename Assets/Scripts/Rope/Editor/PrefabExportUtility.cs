@@ -54,6 +54,15 @@ namespace CutFreePets.Editor
                 Debug.LogWarning("[PrefabExport] 'TopMiddle_Hanger' GameObject not found in current scene.");
             }
 
+            // 4. Export Star_Collectible Prefab
+            GameObject starObj = GameObject.Find("Star_Collectible_01") ?? GameObject.Find("Star_Collectible");
+            if (starObj != null)
+            {
+                string starPath = "Assets/Prefabs/Gameplay/Star_Collectible.prefab";
+                PrefabUtility.SaveAsPrefabAssetAndConnect(starObj, starPath, InteractionMode.AutomatedAction);
+                Debug.Log($"<color=green>[PrefabExport]</color> Saved Star_Collectible to {starPath}");
+            }
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
@@ -62,6 +71,7 @@ namespace CutFreePets.Editor
                 "Successfully converted existing scene objects into clean, reusable Prefabs in Assets/Prefabs/!\n\n" +
                 "• Assets/Prefabs/Gameplay/Pet_Cage.prefab\n" +
                 "• Assets/Prefabs/Gameplay/Ground_Platform.prefab\n" +
+                "• Assets/Prefabs/Gameplay/Star_Collectible.prefab\n" +
                 "• Assets/Prefabs/Rope/Rope_Hanger.prefab",
                 "Awesome"
             );
