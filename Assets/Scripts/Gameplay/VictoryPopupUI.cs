@@ -96,22 +96,20 @@ namespace CutFreePets.UI
 
         private void OnNextClicked()
         {
-            Debug.Log("<color=lime>[VictoryPopupUI]</color> 'Next Level' button clicked! (Action stubbed for now)");
-            // Stubbed as requested: on that button click for now not do anything for now
+            Debug.Log("<color=lime>[VictoryPopupUI]</color> 'Next Level' button clicked! Loading next level...");
+            CutFreePets.Core.GameManager.LoadNextLevel();
         }
 
         private void OnReplayClicked()
         {
             Debug.Log("<color=cyan>[VictoryPopupUI]</color> 'Replay' clicked! Reloading current level...");
-            // Restart the current active level cleanly
-            string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            UnityEngine.SceneManagement.SceneManager.LoadScene(currentSceneName);
+            CutFreePets.Core.GameManager.RestartCurrentLevel();
         }
 
         private void OnMenuClicked()
         {
-            Debug.Log("<color=orange>[VictoryPopupUI]</color> 'Level Select / Menu' button clicked! (Action stubbed for now)");
-            // Stubbed as requested: on that button click for now not do anything for now
+            Debug.Log("<color=orange>[VictoryPopupUI]</color> 'Level Select / Menu' button clicked! Returning to Home Screen...");
+            CutFreePets.Core.GameManager.LoadHomeScreen();
         }
 
         private void HandleLevelCompleted(int levelIndex, int starsEarned, int totalStars)
