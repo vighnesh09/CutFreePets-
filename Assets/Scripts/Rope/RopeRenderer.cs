@@ -16,14 +16,14 @@ namespace CutFreePets.Rope
 
         [Header("Braided Texture & Width")]
         [Tooltip("Base thickness of the rope when relaxed.")]
-        [SerializeField] private float baseThickness = 0.12f;
+        [SerializeField] private float baseThickness = 0.075f;
 
         [Tooltip("Thickness ratio when under maximum tension (gets thinner under tension).")]
         [Range(0.3f, 1f)]
-        [SerializeField] private float minStretchThicknessRatio = 0.55f;
+        [SerializeField] private float minStretchThicknessRatio = 0.65f;
 
         [Tooltip("Number of braided texture repetitions per world unit.")]
-        [SerializeField] private float textureRepeatPerUnit = 4.0f;
+        [SerializeField] private float textureRepeatPerUnit = 5.5f;
 
         [Header("End Knot Visuals")]
         [Tooltip("Show tied knot ring at the end anchor.")]
@@ -32,7 +32,7 @@ namespace CutFreePets.Rope
 
         [Header("Spline Smoothing")]
         [Range(2, 10)]
-        [SerializeField] private int splineSubdivisions = 5;
+        [SerializeField] private int splineSubdivisions = 6;
 
         private VerletRope rope;
         private readonly System.Collections.Generic.List<Vector3> smoothedPoints = new System.Collections.Generic.List<Vector3>();
@@ -42,6 +42,7 @@ namespace CutFreePets.Rope
 
         public bool ShowEndKnot { get => showEndKnot; set => showEndKnot = value; }
         public float FadeAlpha { get => fadeAlpha; set => fadeAlpha = Mathf.Clamp01(value); }
+        public float BaseThickness { get => baseThickness; set => baseThickness = value; }
 
         private void Awake()
         {
@@ -93,6 +94,11 @@ namespace CutFreePets.Rope
         public void Initialize(VerletRope targetRope)
         {
             rope = targetRope;
+            if (rope != null && rope.Config != null)
+            {
+                baseThickness = rope.Config.baseWidth;
+                minStretchThicknessRatio = rope.Config.minStretchWidthFactor;
+            }
             CreateEndAccessories();
         }
 

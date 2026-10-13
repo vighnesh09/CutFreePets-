@@ -1286,12 +1286,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.Rope.RopeRenderer
   lineRenderer: {fileID: 0}
   ropeMaterial: {fileID: 0}
-  baseThickness: 0.12
-  minStretchThicknessRatio: 0.55
-  textureRepeatPerUnit: 4
+  baseThickness: 0.075
+  minStretchThicknessRatio: 0.65
+  textureRepeatPerUnit: 5.5
   showEndKnot: 1
   knotSprite: {fileID: 0}
-  splineSubdivisions: 5
+  splineSubdivisions: 6
 --- !u!120 &1488439949
 LineRenderer:
   serializedVersion: 3

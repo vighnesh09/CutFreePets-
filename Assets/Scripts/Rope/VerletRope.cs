@@ -476,17 +476,32 @@ namespace CutFreePets.Rope
                 bottomHalf.Add(particles[i]);
             }
 
-            // Top half stays attached to peg, falls freely from cut
+            // Top half stays attached to peg, falls freely from cut with natural snap recoil
             int removeCount = particles.Count - (segmentIndex + 1);
             particles.RemoveRange(segmentIndex + 1, removeCount);
             particles.Add(cutA);
             pinEnd = false; // severed end of top half falls freely
             Destroy(gameObject, 2.5f); // Fade out top remnant after swinging
 
+            // Impart natural whip recoil impulse to severed ends
+            Vector3 cutDirection = (particles.Count > 1) 
+                ? (particles[particles.Count - 1].Position - particles[particles.Count - 2].Position).normalized 
+                : Vector3.down;
+            Vector3 recoilImpulse = -cutDirection * 0.08f + Vector3.right * UnityEngine.Random.Range(-0.04f, 0.04f);
+            cutA.PreviousPosition = cutA.Position - recoilImpulse;
+
             // Spawn bottom severed piece attached to the box!
             if (bottomHalf.Count > 0)
             {
+                cutB.PreviousPosition = cutB.Position + (cutDirection * 0.06f + Vector3.right * UnityEngine.Random.Range(-0.03f, 0.03f));
                 SpawnSeveredPiece(cutB, bottomHalf);
+            }
+
+            // Transfer release kinetic kick to connected 2D body (e.g. multi-rope swing)
+            if (endRb2D != null && endRb2D.bodyType == RigidbodyType2D.Dynamic)
+            {
+                Vector2 releaseImpulse = (Vector2)(-cutDirection * 0.85f);
+                endRb2D.AddForceAtPosition(releaseImpulse, cutPoint, ForceMode2D.Impulse);
             }
 
             initialTotalRestLength = segmentRestLength * Mathf.Max(1, particles.Count - 1);
