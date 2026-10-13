@@ -88,7 +88,7 @@ namespace CutFreePets.Editor
             dimImg.color = new Color(0f, 0f, 0f, 0f);
             dimImg.raycastTarget = false;
 
-            // 4. Wooden Victory Board
+            // 4. Wooden Victory Board (Symmetrically trimmed to exact 629x442, scaled nicely for 1080x1920)
             Sprite winBoardSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/UI_Win_Board.png");
             GameObject boardObj = new GameObject("Win_Board");
             boardObj.transform.SetParent(popupRoot.transform, false);
@@ -97,7 +97,7 @@ namespace CutFreePets.Editor
             boardRect.anchorMax = new Vector2(0.5f, 0.5f);
             boardRect.pivot = new Vector2(0.5f, 0.5f);
             boardRect.anchoredPosition = new Vector2(0f, 40f);
-            boardRect.sizeDelta = new Vector2(760f, 620f); // Clean proportions for 1080x1920
+            boardRect.sizeDelta = new Vector2(740f, 520f); // Exactly matches the 629:442 aspect ratio
 
             Image boardImg = boardObj.AddComponent<Image>();
             if (winBoardSprite != null)
@@ -107,19 +107,19 @@ namespace CutFreePets.Editor
                 boardImg.preserveAspect = true;
             }
 
-            // 5. Stars Container - Perfectly Centered in the inner parchment display of the board
-            // Left socket (-148, -12), Center socket (0, 10), Right socket (148, -12)
-            // Centered horizontally around X = 0 and vertically balanced inside the inner parchment window
+            // 5. Stars Container - Centered and evenly spaced across the plate
+            // Center star at X = 0, Left star at X = -160, Right star at X = 160
+            // Vertically placed at Y = 28 (upper inner area of the plate)
             Sprite emptyStarSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/UI_Star_Empty.png");
             Sprite goldStarSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Star_Collectible.png");
 
             Vector2[] starPos = new Vector2[] {
-                new Vector2(-148f, -12f),
-                new Vector2(0f, 10f),
-                new Vector2(148f, -12f)
+                new Vector2(-160f, 20f),
+                new Vector2(0f, 38f),
+                new Vector2(160f, 20f)
             };
-            float[] starRot = new float[] { 8f, 0f, -8f }; // Gentle natural arch tilt
-            float[] starSizes = new float[] { 135f, 155f, 135f }; // Center star slightly prominent and grand
+            float[] starRot = new float[] { 6f, 0f, -6f }; // Gentle natural arch tilt
+            float[] starSizes = new float[] { 130f, 150f, 130f }; // Center star prominent
 
             Image[] emptyStarSockets = new Image[3];
             Image[] goldenStars = new Image[3];
@@ -155,39 +155,39 @@ namespace CutFreePets.Editor
                 goldenStars[i] = gImg;
             }
 
-            // 6. Action Buttons Container (Bottom row of board)
+            // 6. Action Buttons Container - Centered and evenly spaced across the bottom area of the plate
             Sprite btnReplaySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/UI_Btn_Replay.png");
             Sprite btnNextSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/UI_Btn_Next.png");
             Sprite btnMenuSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/UI_Btn_Menu.png");
 
-            // Replay Button (Left)
+            // Replay Button (Left, balanced at X = -160, Y = -120)
             GameObject replayBtnObj = new GameObject("Btn_Replay");
             replayBtnObj.transform.SetParent(boardObj.transform, false);
             RectTransform repRect = replayBtnObj.AddComponent<RectTransform>();
-            repRect.anchoredPosition = new Vector2(-155f, -145f);
-            repRect.sizeDelta = new Vector2(110f, 110f);
+            repRect.anchoredPosition = new Vector2(-160f, -120f);
+            repRect.sizeDelta = new Vector2(105f, 105f);
             Image repImg = replayBtnObj.AddComponent<Image>();
             repImg.sprite = btnReplaySprite;
             repImg.preserveAspect = true;
             Button repBtn = replayBtnObj.AddComponent<Button>();
 
-            // Next Level Button (Center, prominent)
+            // Next Level Button (Center, prominent at X = 0, Y = -118)
             GameObject nextBtnObj = new GameObject("Btn_Next");
             nextBtnObj.transform.SetParent(boardObj.transform, false);
             RectTransform nextRect = nextBtnObj.AddComponent<RectTransform>();
-            nextRect.anchoredPosition = new Vector2(0f, -145f);
-            nextRect.sizeDelta = new Vector2(160f, 125f);
+            nextRect.anchoredPosition = new Vector2(0f, -118f);
+            nextRect.sizeDelta = new Vector2(150f, 118f);
             Image nextImg = nextBtnObj.AddComponent<Image>();
             nextImg.sprite = btnNextSprite;
             nextImg.preserveAspect = true;
             Button nextBtn = nextBtnObj.AddComponent<Button>();
 
-            // Menu Button (Right)
+            // Menu Button (Right, balanced at X = 160, Y = -120)
             GameObject menuBtnObj = new GameObject("Btn_Menu");
             menuBtnObj.transform.SetParent(boardObj.transform, false);
             RectTransform menuRect = menuBtnObj.AddComponent<RectTransform>();
-            menuRect.anchoredPosition = new Vector2(155f, -145f);
-            menuRect.sizeDelta = new Vector2(110f, 110f);
+            menuRect.anchoredPosition = new Vector2(160f, -120f);
+            menuRect.sizeDelta = new Vector2(105f, 105f);
             Image menuImg = menuBtnObj.AddComponent<Image>();
             menuImg.sprite = btnMenuSprite;
             menuImg.preserveAspect = true;
