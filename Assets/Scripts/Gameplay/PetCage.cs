@@ -215,15 +215,15 @@ namespace CutFreePets.Gameplay
                     petSlot = existing;
                     if (!isLanded)
                     {
-                        petSlot.localPosition = new Vector3(0f, 0.22f, 0f);
+                        petSlot.localPosition = new Vector3(0f, -0.28f, 0f);
                     }
                 }
                 else
                 {
                     GameObject slotObj = new GameObject("Pet_Slot");
                     slotObj.transform.parent = transform;
-                    // Position lifted inside cage window so cat face, chest, and paws are beautifully visible
-                    slotObj.transform.localPosition = new Vector3(0f, 0.22f, 0f);
+                    // Position seated squarely on cage base without floating
+                    slotObj.transform.localPosition = new Vector3(0f, -0.28f, 0f);
                     slotObj.transform.localRotation = Quaternion.identity;
                     slotObj.transform.localScale = Vector3.one;
                     petSlot = slotObj.transform;
@@ -231,7 +231,7 @@ namespace CutFreePets.Gameplay
             }
             else if (!isLanded)
             {
-                petSlot.localPosition = new Vector3(0f, 0.22f, 0f);
+                petSlot.localPosition = new Vector3(0f, -0.28f, 0f);
             }
         }
 
@@ -301,80 +301,43 @@ namespace CutFreePets.Gameplay
 
         private System.Collections.IEnumerator FadeAndRemoveSeveredRopes(VerletRope cutRope)
         {
-            // Brief 0.1s moment for the initial cut snip dynamic reaction
-            yield return new WaitForSeconds(0.1f);
+            // Give severed piece a frame to spawn
+            yield return null;
 
-            List<LineRenderer> lineRenderers = new List<LineRenderer>();
-            List<SpriteRenderer> knotRenderers = new List<SpriteRenderer>();
-            List<GameObject> toDestroy = new List<GameObject>();
-
+            // 1. TOP REMNANT (attached to ceiling hanger/peg):
+            // Fade its alpha to 0 over 0.8s so it gently disappears from the ceiling
             if (cutRope != null)
             {
-                toDestroy.Add(cutRope.gameObject);
-                var lr = cutRope.GetComponent<LineRenderer>();
-                if (lr != null) lineRenderers.Add(lr);
-                var sr = cutRope.GetComponentInChildren<SpriteRenderer>();
-                if (sr != null) knotRenderers.Add(sr);
+                var topRopeRenderer = cutRope.GetComponent<RopeRenderer>();
+                var topLr = cutRope.GetComponent<LineRenderer>();
+                var topKnots = cutRope.GetComponentsInChildren<SpriteRenderer>();
 
-                // Check for severed piece created by cut
-                string pieceName = $"{cutRope.gameObject.name}_SeveredPiece";
-                GameObject piece = GameObject.Find(pieceName);
-                if (piece != null)
+                float duration = 0.8f;
+                float elapsed = 0f;
+
+                while (elapsed < duration)
                 {
-                    toDestroy.Add(piece);
-                    var plr = piece.GetComponent<LineRenderer>();
-                    if (plr != null) lineRenderers.Add(plr);
-                    var psr = piece.GetComponentInChildren<SpriteRenderer>();
-                    if (psr != null) knotRenderers.Add(psr);
-                }
-            }
+                    elapsed += Time.deltaTime;
+                    float alpha = Mathf.Clamp01(1f - (elapsed / duration));
 
-            // Also check any other severed ropes or remnants
-            VerletRope[] allRopes = FindObjectsByType<VerletRope>(FindObjectsSortMode.None);
-            foreach (var r in allRopes)
-            {
-                if (r != null && r.IsCut && !toDestroy.Contains(r.gameObject))
-                {
-                    toDestroy.Add(r.gameObject);
-                    var lr = r.GetComponent<LineRenderer>();
-                    if (lr != null) lineRenderers.Add(lr);
-                }
-            }
+                    if (topRopeRenderer != null) topRopeRenderer.FadeAlpha = alpha;
+                    if (topLr != null)
+                    {
+                        Color sc = topLr.startColor; sc.a = alpha; topLr.startColor = sc;
+                        Color ec = topLr.endColor; ec.a = alpha; topLr.endColor = ec;
+                    }
+                    foreach (var sr in topKnots)
+                    {
+                        if (sr != null) { Color c = sr.color; c.a = alpha; sr.color = c; }
+                    }
 
-            float duration = 1.0f;
-            float elapsed = 0f;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-                float alpha = Mathf.Lerp(1f, 0f, t);
-
-                foreach (var lr in lineRenderers)
-                {
-                    if (lr == null) continue;
-                    Color sc = lr.startColor;
-                    sc.a = alpha;
-                    lr.startColor = sc;
-                    Color ec = lr.endColor;
-                    ec.a = alpha;
-                    lr.endColor = ec;
+                    yield return null;
                 }
 
-                foreach (var sr in knotRenderers)
+                if (cutRope != null && cutRope.gameObject != null)
                 {
-                    if (sr == null) continue;
-                    Color c = sr.color;
-                    c.a = alpha;
-                    sr.color = c;
+                    Destroy(cutRope.gameObject);
                 }
-
-                yield return null;
-            }
-
-            foreach (var go in toDestroy)
-            {
-                if (go != null) Destroy(go);
             }
         }
 
@@ -396,6 +359,16 @@ namespace CutFreePets.Gameplay
             if (backRenderer != null) backRenderer.enabled = false;
             if (col2D != null) col2D.enabled = false;
             if (rb2D != null) rb2D.simulated = false;
+
+            // Instantly disappear any remaining severed rope pieces when cage breaks
+            VerletRope[] remainingRopes = FindObjectsByType<VerletRope>(FindObjectsSortMode.None);
+            foreach (var r in remainingRopes)
+            {
+                if (r != null && (r.name.Contains("SeveredPiece") || r.IsCut))
+                {
+                    Destroy(r.gameObject);
+                }
+            }
 
             // Determine accurate platform surface height
             float platformTopY = -2.30f;

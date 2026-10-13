@@ -38,8 +38,10 @@ namespace CutFreePets.Rope
         private readonly System.Collections.Generic.List<Vector3> smoothedPoints = new System.Collections.Generic.List<Vector3>();
         private GameObject endKnotInstance;
         private SpriteRenderer endKnotRenderer;
+        private float fadeAlpha = 1.0f;
 
         public bool ShowEndKnot { get => showEndKnot; set => showEndKnot = value; }
+        public float FadeAlpha { get => fadeAlpha; set => fadeAlpha = Mathf.Clamp01(value); }
 
         private void Awake()
         {
@@ -179,6 +181,7 @@ namespace CutFreePets.Rope
             Color normalColor = rope.Config != null ? rope.Config.normalColor : new Color(0.92f, 0.78f, 0.58f);
             Color strainColor = rope.Config != null ? rope.Config.highTensionColor : new Color(1f, 0.45f, 0.35f);
             Color blendedColor = Color.Lerp(normalColor, strainColor, tensionNormalized);
+            blendedColor.a *= fadeAlpha;
 
             lineRenderer.startColor = blendedColor;
             lineRenderer.endColor = blendedColor;
@@ -194,6 +197,13 @@ namespace CutFreePets.Rope
         private void UpdateKnotPosition()
         {
             if (!showEndKnot || endKnotInstance == null || rope.Particles == null || rope.Particles.Count < 2) return;
+
+            if (endKnotRenderer != null)
+            {
+                Color kc = endKnotRenderer.color;
+                kc.a = fadeAlpha;
+                endKnotRenderer.color = kc;
+            }
 
             Vector3 endPos = rope.Particles[rope.Particles.Count - 1].Position;
             Vector3 prevPos = rope.Particles[rope.Particles.Count - 2].Position;

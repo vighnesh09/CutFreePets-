@@ -34,7 +34,7 @@ namespace CutFreePets.Gameplay
 
         [Header("Visual Sizing")]
         [SerializeField] private Vector2 spriteDisplaySize = new Vector2(0.9f, 0.9f);
-        [SerializeField] private Vector3 slotLocalOffset = new Vector3(0f, -0.05f, 0f);
+        [SerializeField] private Vector3 slotLocalOffset = Vector3.zero;
 
         private SpriteRenderer spriteRenderer;
         private PetCage parentCage;
