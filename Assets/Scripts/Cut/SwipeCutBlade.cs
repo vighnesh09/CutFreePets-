@@ -1,18 +1,15 @@
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
-
 using CutFreePets.Rope;
 
 namespace CutFreePets.Cut
 {
     /// <summary>
-    /// Pure touch and mouse swipe cut controller supporting both Unity's New Input System and legacy Input.
+    /// Pure touch and mouse swipe cut controller using Unity's Input System.
     /// Features:
     /// - Direct swipe cutting (no scissor icons, pure instant blade slicing)
     /// - Continuous line-segment collision detection (never misses fast swipes)
-    /// - Supports both mobile touch (multi-touch supported) and mouse input
+    /// - Supports both mobile touch (multi-touch supported) and mouse/pointer input
     /// - Juicy glowing slash blade trail effect
     /// </summary>
     [RequireComponent(typeof(TrailRenderer))]
@@ -77,7 +74,6 @@ namespace CutFreePets.Cut
             bool wasReleasedThisFrame = false;
             Vector2 screenPosition = Vector2.zero;
 
-#if ENABLE_INPUT_SYSTEM
             // Check Touchscreen first
             if (Touchscreen.current != null && Touchscreen.current.touches.Count > 0)
             {
@@ -102,28 +98,17 @@ namespace CutFreePets.Cut
                 wasPressedThisFrame = Pointer.current.press.wasPressedThisFrame;
                 wasReleasedThisFrame = Pointer.current.press.wasReleasedThisFrame;
             }
-#else
-            if (Input.touchCount > 0)
-            {
-                Touch t = Input.GetTouch(0);
-                screenPosition = t.position;
-                isPressed = (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary);
-                wasPressedThisFrame = (t.phase == TouchPhase.Began);
-                wasReleasedThisFrame = (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled);
-            }
-            else
-            {
-                screenPosition = Input.mousePosition;
-                isPressed = Input.GetMouseButton(0);
-                wasPressedThisFrame = Input.GetMouseButtonDown(0);
-                wasReleasedThisFrame = Input.GetMouseButtonUp(0);
-            }
-#endif
 
             Vector3 worldPos = GetWorldPosition(screenPosition);
 
+            // Do not start cut swipe if touching UI buttons or modal
             if (wasPressedThisFrame)
             {
+                if (UnityEngine.EventSystems.EventSystem.current != null && 
+                    UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                {
+                    return;
+                }
                 StartSwipe(worldPos);
             }
             else if (isPressed && isSwiping)

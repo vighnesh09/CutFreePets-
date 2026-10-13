@@ -21,7 +21,8 @@ namespace CutFreePets.Editor
                 "CutTheRope_Demo", "HangingBox_Level", "CutTheRope_Level", "RopeDemo_Setup", "RopeDemo",
                 "Peg_TopAnchor", "Obstacle_Peg", "Pet_Target", "Peg_Top", "Weight_Bottom",
                 "TopMiddle_Hanger", "Hanging_Box", "Pet_Cage", "Rope", "SwipeCutBlade", "Directional Light",
-                "Star_Collectible_01", "Star_Collectible_02", "Star_Collectible_03", "Star_Collectible", "LevelScoreTracker"
+                "Star_Collectible_01", "Star_Collectible_02", "Star_Collectible_03", "Star_Collectible", "LevelScoreTracker",
+                "VictoryCanvas", "EventSystem"
             };
             foreach (string name in oldNames)
             {
@@ -197,6 +198,9 @@ namespace CutFreePets.Editor
             GameObject bladeObj = new GameObject("SwipeCutBlade");
             bladeObj.transform.parent = root.transform;
             bladeObj.AddComponent<SwipeCutBlade>();
+
+            // 13. Level Clear Victory Popup UI Canvas (Cut the Rope style: wooden board, 3 star sockets, Next/Replay/Menu buttons)
+            VictoryPopupBuilder.CreateOrUpdateVictoryPopup(root.transform);
 
             Undo.CollapseUndoOperations(group);
             Selection.activeGameObject = ropeObj;
