@@ -41,12 +41,30 @@ namespace CutFreePets.Editor
 
             canvasObj.AddComponent<GraphicRaycaster>();
 
-            // Ensure EventSystem exists in scene
-            if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            // Ensure EventSystem exists in scene with the correct input module
+            var existingEventSystem = Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
+            if (existingEventSystem == null)
             {
                 GameObject eventSystemObj = new GameObject("EventSystem");
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+                
+                // Use InputSystemUIInputModule for New Input System compatibility
+                var inputModule = eventSystemObj.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                if (inputModule != null)
+                {
+                    inputModule.AssignDefaultActions();
+                }
+            }
+            else
+            {
+                // Ensure existing EventSystem has the New Input System module
+                var legacyModule = existingEventSystem.GetComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+                if (legacyModule != null)
+                {
+                    Object.DestroyImmediate(legacyModule);
+                    var newModule = existingEventSystem.gameObject.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                    if (newModule != null) newModule.AssignDefaultActions();
+                }
             }
 
             // 2. Victory Popup Root Panel
