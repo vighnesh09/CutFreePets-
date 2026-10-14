@@ -38,13 +38,14 @@ namespace CutFreePets.Editor
                 "All scenes and systems have been built and linked:\n\n" +
                 "1. Home Screen (HomeScreen.unity):\n" +
                 "   • Animated Cat sitting on Braided Pastel Mat\n" +
-                "   • Big Play button ➔ opens Level Select Screen\n" +
+                "   • Big Play button ➔ opens Adventure Map Screen\n" +
                 "   • Settings & Quit popups\n\n" +
-                "2. Level Select (LevelSelect.unity):\n" +
-                "   • 20 Cozy Wooden Level Cards with star sockets\n" +
-                "   • Realtime highest stars achieved per level\n" +
-                "   • Golden Padlock icons for locked levels\n" +
-                "   • Back button to Home Screen\n\n" +
+                "2. Adventure Map (LevelSelect.unity):\n" +
+                "   • Candy Crush-style winding forest trail (30 Levels)\n" +
+                "   • Tactile wooden medallions with 3-star sockets\n" +
+                "   • Pulsating golden aura on current playable level\n" +
+                "   • Illuminated stepping stones along the trail\n" +
+                "   • Floating focus button + smooth vertical scrolling\n\n" +
                 "3. Level 1 (SampleScene.unity):\n" +
                 "   • Rope, Hanging Cage & Rescued Cat\n" +
                 "   • 3 Collectible Stars with physics detection\n" +
