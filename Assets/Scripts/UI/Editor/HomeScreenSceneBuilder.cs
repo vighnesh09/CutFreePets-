@@ -12,7 +12,7 @@ namespace CutFreePets.Editor
 {
     public static class HomeScreenSceneBuilder
     {
-        [MenuItem("Cut Free Pets/Build Complete Game (Home & Level 1)", false, 0)]
+        [MenuItem("Cut Free Pets/Build Complete Game (Home, Level Select & Level 1)", false, 0)]
         public static void BuildCompleteGame()
         {
             // 1. Open SampleScene and build Level 1 with Rope, Cage, Cat, Stars, and Victory Popup UI
@@ -23,25 +23,33 @@ namespace CutFreePets.Editor
             }
             RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
 
-            // 2. Open / Build HomeScreen scene
+            // 2. Open / Build LevelSelect scene
+            LevelSelectSceneBuilder.BuildLevelSelectSceneInternal(false);
+
+            // 3. Open / Build HomeScreen scene
             string homeScenePath = "Assets/Scenes/HomeScreen.unity";
             BuildHomeScreenSceneInternal(false);
 
-            // 3. Make sure HomeScreen is active in Editor
+            // 4. Ensure HomeScreen is the open active scene ready to play
             EditorSceneManager.OpenScene(homeScenePath, OpenSceneMode.Single);
 
             EditorUtility.DisplayDialog(
                 "Cut Free Pets - Complete Game Built!",
                 "All scenes and systems have been built and linked:\n\n" +
-                "1. Level 1 (SampleScene.unity):\n" +
+                "1. Home Screen (HomeScreen.unity):\n" +
+                "   • Animated Cat sitting on Braided Pastel Mat\n" +
+                "   • Big Play button ➔ opens Level Select Screen\n" +
+                "   • Settings & Quit popups\n\n" +
+                "2. Level Select (LevelSelect.unity):\n" +
+                "   • 20 Cozy Wooden Level Cards with star sockets\n" +
+                "   • Realtime highest stars achieved per level\n" +
+                "   • Golden Padlock icons for locked levels\n" +
+                "   • Back button to Home Screen\n\n" +
+                "3. Level 1 (SampleScene.unity):\n" +
                 "   • Rope, Hanging Cage & Rescued Cat\n" +
                 "   • 3 Collectible Stars with physics detection\n" +
-                "   • Shattering cage on platform landing\n" +
+                "   • Shattering cage on landing\n" +
                 "   • Level Complete Victory Popup (Stars, Next, Replay, Menu)\n\n" +
-                "2. Home Screen (HomeScreen.unity):\n" +
-                "   • Animated Cat sitting on Braided Pastel Mat\n" +
-                "   • Play button loads Level 1 directly\n" +
-                "   • Settings & Quit popups\n\n" +
                 "Press the PLAY button at the top of Unity to play now!",
                 "Let's Play!"
             );
@@ -492,16 +500,22 @@ namespace CutFreePets.Editor
         public static void UpdateBuildSettings(string homeScenePath)
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>();
-            scenes.Add(new EditorBuildSettingsScene(homeScenePath, true));
+            scenes.Add(new EditorBuildSettingsScene(homeScenePath, true)); // Index 0: HomeScreen
+
+            string levelSelectPath = "Assets/Scenes/LevelSelect.unity";
+            if (File.Exists(levelSelectPath))
+            {
+                scenes.Add(new EditorBuildSettingsScene(levelSelectPath, true)); // Index 1: LevelSelect
+            }
 
             string sampleScenePath = "Assets/Scenes/SampleScene.unity";
             if (File.Exists(sampleScenePath))
             {
-                scenes.Add(new EditorBuildSettingsScene(sampleScenePath, true));
+                scenes.Add(new EditorBuildSettingsScene(sampleScenePath, true)); // Index 2: SampleScene (Level 1)
             }
 
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log("<color=cyan>[HomeScreenSceneBuilder]</color> Build Settings updated with HomeScreen (0) and SampleScene (1).");
+            Debug.Log("<color=cyan>[HomeScreenSceneBuilder]</color> Build Settings updated with HomeScreen (0), LevelSelect (1), and SampleScene (2).");
         }
     }
 }

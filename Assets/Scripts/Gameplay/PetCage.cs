@@ -368,7 +368,7 @@ namespace CutFreePets.Gameplay
             if (rb2D != null) rb2D.simulated = false;
 
             // Instantly disappear any remaining severed rope pieces when cage breaks
-            VerletRope[] remainingRopes = FindObjectsByType<VerletRope>(FindObjectsSortMode.None);
+            VerletRope[] remainingRopes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             foreach (var r in remainingRopes)
             {
                 if (r != null && (r.name.Contains("SeveredPiece") || r.IsCut))
@@ -397,9 +397,11 @@ namespace CutFreePets.Gameplay
             // 1. SPAWN ANATOMICAL DEBRIS PIECES BURSTING OPEN
             if (enableBreakShatter)
             {
+                float explodeScale = debrisExplodeForce / 4.2f;
+
                 // Top Handle: pops straight up and tumbles
                 SpawnDebrisPiece(topHandleSprite, cagePos + new Vector3(0f, 1.45f, 0f), 0.70f,
-                    new Vector2(UnityEngine.Random.Range(-0.4f, 0.4f), 4.2f), UnityEngine.Random.Range(180f, 260f));
+                    new Vector2(UnityEngine.Random.Range(-0.4f, 0.4f), debrisExplodeForce), UnityEngine.Random.Range(180f, 260f));
 
                 // Left Pillar: bursts outward left and up with CCW rotation
                 SpawnDebrisPiece(leftPillarSprite, cagePos + new Vector3(-0.95f, 0.10f, 0f), 0.60f,

@@ -119,10 +119,8 @@ namespace CutFreePets.UI
 
         private void OnPlayClicked()
         {
-            Debug.Log("<color=lime>[HomeScreen]</color> Play button pressed! Launching Level 1...");
-            // Play latest unlocked level
-            int levelToPlay = Mathf.Max(1, SaveManager.Progress.highestUnlockedLevel);
-            GameManager.LoadLevel(levelToPlay);
+            Debug.Log("<color=lime>[HomeScreen]</color> Play button pressed! Opening Level Select screen...");
+            GameManager.LoadLevelSelect();
         }
 
         private void OnSettingsClicked()

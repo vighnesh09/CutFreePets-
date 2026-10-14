@@ -12,6 +12,7 @@ namespace CutFreePets.Core
     public static class GameManager
     {
         public const string HOME_SCENE_NAME = "HomeScreen";
+        public const string LEVEL_SELECT_SCENE_NAME = "LevelSelect";
         public const string LEVEL_SCENE_PREFIX = "Level_";
 
         public static int CurrentLevelIndex { get; private set; } = 1;
@@ -41,6 +42,21 @@ namespace CutFreePets.Core
                 {
                     SceneManager.LoadScene(1);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Loads the Level Select / Grid screen.
+        /// </summary>
+        public static void LoadLevelSelect()
+        {
+            if (Application.CanStreamedLevelBeLoaded(LEVEL_SELECT_SCENE_NAME))
+            {
+                SceneManager.LoadScene(LEVEL_SELECT_SCENE_NAME);
+            }
+            else
+            {
+                LoadHomeScreen();
             }
         }
 

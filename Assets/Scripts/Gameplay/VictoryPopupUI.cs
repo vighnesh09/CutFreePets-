@@ -134,8 +134,8 @@ namespace CutFreePets.UI
 
         private void OnMenuClicked()
         {
-            Debug.Log("<color=orange>[VictoryPopupUI]</color> 'Level Select / Menu' button clicked! Returning to Home Screen...");
-            CutFreePets.Core.GameManager.LoadHomeScreen();
+            Debug.Log("<color=orange>[VictoryPopupUI]</color> 'Level Select / Menu' button clicked! Returning to Level Select...");
+            CutFreePets.Core.GameManager.LoadLevelSelect();
         }
 
         private void HandleLevelCompleted(int levelIndex, int starsEarned, int totalStars)
