@@ -256,8 +256,9 @@ namespace CutFreePets.Gameplay
                 transform.rotation = Quaternion.Euler(0f, 0f, currentSwayZ);
 
                 // Failsafe proximity check for platform landing:
-                // If cage bottom drops to or below the platform surface level, break and celebrate
-                if (transform.position.y <= -2.15f)
+                // Platform surface is at -3.60f (platform pos -3.85f + 0.25f top half).
+                // Cage center reaches -2.15f when bottom touches -3.60f.
+                if (transform.position.y <= -2.10f)
                 {
                     BreakAndFreePet();
                 }
@@ -377,15 +378,15 @@ namespace CutFreePets.Gameplay
                 }
             }
 
-            // Determine accurate platform surface height
-            float platformTopY = -2.30f;
+            // Determine accurate platform surface height (Ground_Platform top is ~ -3.60f)
+            float platformTopY = -3.60f;
             if (collision != null && collision.collider != null)
             {
                 platformTopY = collision.collider.bounds.max.y;
             }
             else
             {
-                RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 6f);
+                RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 8f);
                 if (hit.collider != null)
                 {
                     platformTopY = hit.collider.bounds.max.y;

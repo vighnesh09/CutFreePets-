@@ -45,7 +45,7 @@ namespace CutFreePets.Gameplay
             StarCollectible.OnStarCollected += HandleStarCollected;
             
             // Listen to PetCage landing
-            PetCage cage = FindFirstObjectByType<PetCage>();
+            PetCage cage = FindAnyObjectByType<PetCage>();
             if (cage != null)
             {
                 cage.OnLandedOnGoal += HandleCageLanded;
@@ -55,7 +55,7 @@ namespace CutFreePets.Gameplay
         private void Start()
         {
             // Safety hook in case PetCage was instantiated after OnEnable
-            PetCage cage = FindFirstObjectByType<PetCage>();
+            PetCage cage = FindAnyObjectByType<PetCage>();
             if (cage != null)
             {
                 cage.OnLandedOnGoal -= HandleCageLanded;
@@ -67,7 +67,7 @@ namespace CutFreePets.Gameplay
         {
             StarCollectible.OnStarCollected -= HandleStarCollected;
 
-            PetCage cage = FindFirstObjectByType<PetCage>();
+            PetCage cage = FindAnyObjectByType<PetCage>();
             if (cage != null)
             {
                 cage.OnLandedOnGoal -= HandleCageLanded;

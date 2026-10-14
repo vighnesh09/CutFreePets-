@@ -59,7 +59,7 @@ namespace CutFreePets.UI
                 LevelScoreTracker.Instance.OnLevelCompleted += HandleLevelCompleted;
             }
 
-            PetCage cage = FindFirstObjectByType<PetCage>();
+            PetCage cage = FindAnyObjectByType<PetCage>();
             if (cage != null)
             {
                 cage.OnLandedOnGoal += HandleDirectCageLanded;
@@ -73,7 +73,7 @@ namespace CutFreePets.UI
                 LevelScoreTracker.Instance.OnLevelCompleted -= HandleLevelCompleted;
             }
 
-            PetCage cage = FindFirstObjectByType<PetCage>();
+            PetCage cage = FindAnyObjectByType<PetCage>();
             if (cage != null)
             {
                 cage.OnLandedOnGoal -= HandleDirectCageLanded;
@@ -89,7 +89,7 @@ namespace CutFreePets.UI
                 LevelScoreTracker.Instance.OnLevelCompleted += HandleLevelCompleted;
             }
 
-            PetCage cage = FindFirstObjectByType<PetCage>();
+            PetCage cage = FindAnyObjectByType<PetCage>();
             if (cage != null)
             {
                 cage.OnLandedOnGoal -= HandleDirectCageLanded;

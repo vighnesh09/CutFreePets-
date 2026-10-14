@@ -42,7 +42,7 @@ namespace CutFreePets.Editor
             canvasObj.AddComponent<GraphicRaycaster>();
 
             // Ensure EventSystem exists in scene with the correct input module
-            var existingEventSystem = Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
+            var existingEventSystem = Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
             if (existingEventSystem == null)
             {
                 GameObject eventSystemObj = new GameObject("EventSystem");

@@ -161,6 +161,11 @@ namespace CutFreePets.UI
                     bgRt.anchorMin = Vector2.zero;
                     bgRt.anchorMax = Vector2.one;
                 }
+                Image bgImage = bgChild.GetComponent<Image>();
+                if (bgImage != null)
+                {
+                    bgImage.raycastTarget = false;
+                }
             }
 
             // Ensure containers align with mapContent bottom-up coordinate space

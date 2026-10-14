@@ -1,30 +1,32 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#endif
 using CutFreePets.Rope;
 
 namespace CutFreePets.Cut
 {
     /// <summary>
-    /// Pure touch and mouse swipe cut controller using Unity's Input System.
+    /// Touch and mouse swipe cut controller.
+    /// Dual input system support: works seamlessly with both New Input System and Legacy Input Manager.
     /// Features:
-    /// - Direct swipe cutting (no scissor icons, pure instant blade slicing)
-    /// - Continuous line-segment collision detection (never misses fast swipes)
-    /// - Supports both mobile touch (multi-touch supported) and mouse/pointer input
-    /// - Juicy glowing slash blade trail effect
+    /// - Direct swipe cutting with interpolated multi-sample line collision
+    /// - High visual priority glowing blade trail (always visible on top)
+    /// - Immediate and path-based slice triggers
     /// </summary>
     [RequireComponent(typeof(TrailRenderer))]
     public class SwipeCutBlade : MonoBehaviour
     {
         [Header("Blade Slash Trail")]
         [SerializeField] private TrailRenderer trailRenderer;
-        [SerializeField] private float trailTime = 0.16f;
-        [SerializeField] private float startWidth = 0.18f;
-        [SerializeField] private float endWidth = 0.01f;
-        [SerializeField] private float minSwipeDistance = 0.03f;
+        [SerializeField] private float trailTime = 0.2f;
+        [SerializeField] private float startWidth = 0.22f;
+        [SerializeField] private float endWidth = 0.02f;
+        [SerializeField] private float minSwipeDistance = 0.015f;
 
         [Header("Colors & Glow")]
         [SerializeField] private Color bladeCoreColor = new Color(1f, 1f, 0.85f, 1f); // Bright white-gold core
-        [SerializeField] private Color bladeGlowColor = new Color(1f, 0.55f, 0.1f, 0.8f); // Warm orange glow
+        [SerializeField] private Color bladeGlowColor = new Color(1f, 0.55f, 0.1f, 0.85f); // Warm orange glow
 
         private Camera mainCamera;
         private Vector3 lastInputPos;
@@ -39,6 +41,8 @@ namespace CutFreePets.Cut
 
         private void ConfigureBladeTrail()
         {
+            if (trailRenderer == null) return;
+
             trailRenderer.time = trailTime;
             trailRenderer.startWidth = startWidth;
             trailRenderer.endWidth = endWidth;
@@ -46,18 +50,31 @@ namespace CutFreePets.Cut
             trailRenderer.alignment = LineAlignment.View;
             trailRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             trailRenderer.receiveShadows = false;
+            trailRenderer.sortingOrder = 50; // Ensure trail renders above backgrounds, ropes, and UI
+
+            // Assign default particle/trail material if none assigned
+            if (trailRenderer.material == null || trailRenderer.sharedMaterial == null)
+            {
+                Shader shader = Shader.Find("Sprites/Default");
+                if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
+                if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+                if (shader != null)
+                {
+                    trailRenderer.material = new Material(shader);
+                }
+            }
 
             // Cut the Rope luminous glowing swipe gradient
             Gradient gradient = new Gradient();
             gradient.SetKeys(
                 new GradientColorKey[] {
                     new GradientColorKey(bladeCoreColor, 0.0f),
-                    new GradientColorKey(bladeGlowColor, 0.6f),
-                    new GradientColorKey(new Color(0.9f, 0.2f, 0.05f), 1.0f)
+                    new GradientColorKey(bladeGlowColor, 0.5f),
+                    new GradientColorKey(new Color(1.0f, 0.25f, 0.05f), 1.0f)
                 },
                 new GradientAlphaKey[] {
                     new GradientAlphaKey(1.0f, 0.0f),
-                    new GradientAlphaKey(0.85f, 0.5f),
+                    new GradientAlphaKey(0.9f, 0.5f),
                     new GradientAlphaKey(0.0f, 1.0f)
                 }
             );
@@ -74,7 +91,8 @@ namespace CutFreePets.Cut
             bool wasReleasedThisFrame = false;
             Vector2 screenPosition = Vector2.zero;
 
-            // Check Touchscreen first
+            // 1. Try New Input System
+#if ENABLE_INPUT_SYSTEM
             if (Touchscreen.current != null && Touchscreen.current.touches.Count > 0)
             {
                 var touch = Touchscreen.current.touches[0];
@@ -83,7 +101,6 @@ namespace CutFreePets.Cut
                 wasPressedThisFrame = touch.press.wasPressedThisFrame;
                 wasReleasedThisFrame = touch.press.wasReleasedThisFrame;
             }
-            // Otherwise use Mouse / Pointer
             else if (Mouse.current != null)
             {
                 screenPosition = Mouse.current.position.ReadValue();
@@ -98,24 +115,47 @@ namespace CutFreePets.Cut
                 wasPressedThisFrame = Pointer.current.press.wasPressedThisFrame;
                 wasReleasedThisFrame = Pointer.current.press.wasReleasedThisFrame;
             }
+#endif
+
+            // 2. Hybrid Fallback: If New Input didn't register or is disabled, check Legacy Input Manager (when enabled)
+#if ENABLE_LEGACY_INPUT_MANAGER
+            if (!isPressed && !wasPressedThisFrame && !wasReleasedThisFrame)
+            {
+                if (Input.touchCount > 0)
+                {
+                    Touch t = Input.GetTouch(0);
+                    screenPosition = t.position;
+                    isPressed = (t.phase == UnityEngine.TouchPhase.Began || t.phase == UnityEngine.TouchPhase.Moved || t.phase == UnityEngine.TouchPhase.Stationary);
+                    wasPressedThisFrame = (t.phase == UnityEngine.TouchPhase.Began);
+                    wasReleasedThisFrame = (t.phase == UnityEngine.TouchPhase.Ended || t.phase == UnityEngine.TouchPhase.Canceled);
+                }
+                else if (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0))
+                {
+                    screenPosition = Input.mousePosition;
+                    isPressed = Input.GetMouseButton(0);
+                    wasPressedThisFrame = Input.GetMouseButtonDown(0);
+                    wasReleasedThisFrame = Input.GetMouseButtonUp(0);
+                }
+            }
+#endif
 
             Vector3 worldPos = GetWorldPosition(screenPosition);
 
-            // Do not start cut swipe if touching UI buttons or modal
             if (wasPressedThisFrame)
             {
-                if (UnityEngine.EventSystems.EventSystem.current != null && 
-                    UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-                {
-                    return;
-                }
                 StartSwipe(worldPos);
+                // Immediately check direct touch point slicing
+                SliceRopesAtPoint(worldPos);
             }
-            else if (isPressed && isSwiping)
+            else if (isPressed)
             {
+                if (!isSwiping)
+                {
+                    StartSwipe(worldPos);
+                }
                 ContinueSwipe(worldPos);
             }
-            else if (wasReleasedThisFrame && isSwiping)
+            else if (wasReleasedThisFrame || (!isPressed && isSwiping))
             {
                 EndSwipe();
             }
@@ -126,8 +166,11 @@ namespace CutFreePets.Cut
             isSwiping = true;
             lastInputPos = worldPos;
             transform.position = worldPos;
-            trailRenderer.Clear();
-            trailRenderer.emitting = true;
+            if (trailRenderer != null)
+            {
+                trailRenderer.Clear();
+                trailRenderer.emitting = true;
+            }
         }
 
         private void ContinueSwipe(Vector3 worldPos)
@@ -140,32 +183,58 @@ namespace CutFreePets.Cut
                 SliceRopesInPath(lastInputPos, worldPos);
                 lastInputPos = worldPos;
             }
+            else
+            {
+                SliceRopesAtPoint(worldPos);
+            }
         }
 
         private void EndSwipe()
         {
             isSwiping = false;
-            trailRenderer.emitting = false;
+            if (trailRenderer != null)
+            {
+                trailRenderer.emitting = false;
+            }
         }
 
         private void SliceRopesInPath(Vector3 pStart, Vector3 pEnd)
         {
-            var ropes = FindObjectsByType<VerletRope>();
+            var ropes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude);
             for (int i = 0; i < ropes.Length; i++)
             {
                 VerletRope rope = ropes[i];
                 if (rope == null || rope.IsCut) continue;
 
-                if (rope.CutBetweenPoints(pStart, pEnd))
+                // Try segment intersection first, then high-tolerance point slice along the swipe vector
+                if (rope.CutBetweenPoints(pStart, pEnd) ||
+                    rope.CutAtPoint(pEnd, 0.65f) ||
+                    rope.CutAtPoint(Vector3.Lerp(pStart, pEnd, 0.5f), 0.65f))
                 {
-                    Debug.Log("<color=yellow>[CutTheRope]</color> Rope sliced by touch swipe!");
+                    Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced by touch swipe!");
+                }
+            }
+        }
+
+        private void SliceRopesAtPoint(Vector3 point)
+        {
+            var ropes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < ropes.Length; i++)
+            {
+                VerletRope rope = ropes[i];
+                if (rope == null || rope.IsCut) continue;
+
+                if (rope.CutAtPoint(point, 0.65f))
+                {
+                    Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced at touch point!");
                 }
             }
         }
 
         private Vector3 GetWorldPosition(Vector2 screenPos)
         {
-            Vector3 sp = new Vector3(screenPos.x, screenPos.y, Mathf.Abs(mainCamera.transform.position.z));
+            float distToCamera = mainCamera.orthographic ? 10f : Mathf.Abs(mainCamera.transform.position.z);
+            Vector3 sp = new Vector3(screenPos.x, screenPos.y, distToCamera);
             Vector3 world = mainCamera.ScreenToWorldPoint(sp);
             world.z = 0f;
             return world;

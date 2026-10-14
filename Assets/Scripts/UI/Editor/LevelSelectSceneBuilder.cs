@@ -63,7 +63,7 @@ namespace CutFreePets.Editor
             canvasObj.AddComponent<GraphicRaycaster>();
 
             // 3. EventSystem with New Input System module
-            var existingEventSystem = Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
+            var existingEventSystem = Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
             if (existingEventSystem == null)
             {
                 GameObject eventSystemObj = new GameObject("EventSystem");
@@ -120,6 +120,7 @@ namespace CutFreePets.Editor
             bgImg.sprite = bgSprite;
             bgImg.type = Image.Type.Simple;
             bgImg.preserveAspect = false;
+            bgImg.raycastTarget = false; // Don't block scroll view dragging or node touches
 
             // Path Stepping Stones Container
             GameObject pathContainerObj = new GameObject("Path_SteppingStones");

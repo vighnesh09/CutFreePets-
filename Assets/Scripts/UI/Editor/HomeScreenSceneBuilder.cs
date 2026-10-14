@@ -19,9 +19,14 @@ namespace CutFreePets.Editor
             string sampleScenePath = "Assets/Scenes/SampleScene.unity";
             if (File.Exists(sampleScenePath))
             {
-                EditorSceneManager.OpenScene(sampleScenePath, OpenSceneMode.Single);
+                var sampleScene = EditorSceneManager.OpenScene(sampleScenePath, OpenSceneMode.Single);
+                RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
+                EditorSceneManager.SaveScene(sampleScene);
             }
-            RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
+            else
+            {
+                RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
+            }
 
             // 2. Open / Build LevelSelect scene
             LevelSelectSceneBuilder.BuildLevelSelectSceneInternal(false);
@@ -127,6 +132,7 @@ namespace CutFreePets.Editor
             Image bgImg = bgObj.AddComponent<Image>();
             bgImg.sprite = bgSprite;
             bgImg.preserveAspect = false;
+            bgImg.raycastTarget = false;
 
             // 6. Header: Game Title Logo ("CUT FREE PETS")
             Sprite titleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Home/UI_Game_Title_Logo.png");
@@ -141,6 +147,7 @@ namespace CutFreePets.Editor
             Image titleImg = titleObj.AddComponent<Image>();
             titleImg.sprite = titleSprite;
             titleImg.preserveAspect = true;
+            titleImg.raycastTarget = false;
 
             // 7. Total Stars Header Pill (Top Right)
             GameObject starsPillObj = new GameObject("Stars_Pill");
@@ -199,6 +206,7 @@ namespace CutFreePets.Editor
             Image pedImg = pedestalObj.AddComponent<Image>();
             pedImg.sprite = pedestalSprite;
             pedImg.preserveAspect = true;
+            pedImg.raycastTarget = false;
 
             // 8b. Animated In-Game Cat Mascot (Standing firmly seated on the braided floor mat)
             GameObject catObj = new GameObject("Animated_Cat");
@@ -211,6 +219,7 @@ namespace CutFreePets.Editor
             catRect.sizeDelta = new Vector2(540f, 540f);
             Image catImg = catObj.AddComponent<Image>();
             catImg.preserveAspect = true;
+            catImg.raycastTarget = false;
 
             // Load all 60 frames matching the in-game rescued cat
             List<Sprite> happyFramesList = new List<Sprite>();
