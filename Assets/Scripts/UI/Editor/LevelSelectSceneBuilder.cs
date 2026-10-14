@@ -44,7 +44,7 @@ namespace CutFreePets.Editor
             cam.orthographic = true;
             cam.orthographicSize = 5f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.24f, 0.44f, 0.22f); // Deep forest green backdrop
+            cam.backgroundColor = new Color(0.12f, 0.16f, 0.20f); // Soft dark slate matching mountain peaks and winter
             cam.transform.position = new Vector3(0f, 0f, -10f);
             camObj.AddComponent<AudioListener>();
 
@@ -83,8 +83,7 @@ namespace CutFreePets.Editor
             ScrollRect scroll = scrollObj.AddComponent<ScrollRect>();
             scroll.horizontal = false;
             scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Elastic;
-            scroll.elasticity = 0.08f;
+            scroll.movementType = ScrollRect.MovementType.Clamped; // Clamped ensures no overscroll gap or green background
             scroll.scrollSensitivity = 35f;
 
             // Viewport

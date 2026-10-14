@@ -53,6 +53,7 @@ namespace CutFreePets.UI
         [SerializeField] private Sprite currentGlowSprite;
 
         private List<AdventureLevelNodeUI> createdNodes = new List<AdventureLevelNodeUI>();
+        private List<Vector2> levelPositions = new List<Vector2>();
         private Coroutine toastCoroutine;
         private int currentPlayableLevel = 1;
 
@@ -74,10 +75,33 @@ namespace CutFreePets.UI
             {
                 toastPanel.SetActive(false);
             }
+
+            EnsureSpritesLoaded();
+        }
+
+        private void EnsureSpritesLoaded()
+        {
+#if UNITY_EDITOR
+            if (nodeUnlockedSprite == null)
+                nodeUnlockedSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Node_Wood_Unlocked.png");
+            if (nodeLockedSprite == null)
+                nodeLockedSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Node_Wood_Locked.png");
+            if (starFilledSprite == null)
+                starFilledSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Star_Collectible.png");
+            if (starEmptySprite == null)
+                starEmptySprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/UI_Star_Empty.png");
+            if (lockIconSprite == null)
+                lockIconSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Level_Lock_Icon.png");
+            if (steppingStoneSprite == null)
+                steppingStoneSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Path_SteppingStone.png");
+            if (currentGlowSprite == null)
+                currentGlowSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Node_Current_Glow.png");
+#endif
         }
 
         private void Start()
         {
+            EnsureSpritesLoaded();
             BuildAdventureMap();
             UpdateTotalStarsDisplay();
 
@@ -87,12 +111,15 @@ namespace CutFreePets.UI
 
         private IEnumerator DelayedInitialFocus()
         {
+            yield return null;
+            Canvas.ForceUpdateCanvases();
             yield return new WaitForEndOfFrame();
             FocusOnLevel(currentPlayableLevel, false);
         }
 
         public void BuildAdventureMap()
         {
+            EnsureSpritesLoaded();
             if (nodesContainer == null || pathContainer == null || mapContent == null) return;
 
             // Clear old children safely in both Edit mode and Play mode
@@ -113,11 +140,28 @@ namespace CutFreePets.UI
             var progress = SaveManager.Progress;
             currentPlayableLevel = Mathf.Clamp(progress.highestUnlockedLevel, 1, totalLevels);
 
-            // Total height needed for map content
-            float bottomPadding = 260f;
-            float topPadding = 380f;
-            float totalHeight = bottomPadding + (totalLevels - 1) * verticalSpacing + topPadding;
-            mapContent.sizeDelta = new Vector2(mapContent.sizeDelta.x, totalHeight);
+            // Total height matching clean 1080x6800 map texture
+            float totalHeight = 6800f;
+            mapContent.sizeDelta = new Vector2(1080f, totalHeight);
+
+            // Clamp scroll bounds so no empty background or camera backdrop ever appears
+            if (scrollRect != null)
+            {
+                scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            }
+
+            // Sync background image size if present
+            Transform bgChild = mapContent.Find("Adventure_Background");
+            if (bgChild != null)
+            {
+                RectTransform bgRt = bgChild.GetComponent<RectTransform>();
+                if (bgRt != null)
+                {
+                    bgRt.sizeDelta = Vector2.zero;
+                    bgRt.anchorMin = Vector2.zero;
+                    bgRt.anchorMax = Vector2.one;
+                }
+            }
 
             // Ensure containers align with mapContent bottom-up coordinate space
             RectTransform nrt = nodesContainer.GetComponent<RectTransform>();
@@ -140,35 +184,84 @@ namespace CutFreePets.UI
                 prt.sizeDelta = mapContent.sizeDelta;
             }
 
-            // 1. Calculate positions for each level node
-            List<Vector2> levelPositions = new List<Vector2>();
+            // 1. Precise road-calibrated positions for each of the 30 levels (matching the clean background road)
+            Vector2[] calibratedPositions = new Vector2[]
+            {
+                new Vector2(  135.0f,   260.0f), // Level 01
+                new Vector2(   39.5f,   460.0f), // Level 02
+                new Vector2(  -43.0f,   660.0f), // Level 03
+                new Vector2(   50.9f,   860.0f), // Level 04
+                new Vector2(    6.5f,  1060.0f), // Level 05
+                new Vector2(   80.0f,  1260.0f), // Level 06
+                new Vector2( -123.0f,  1460.0f), // Level 07
+                new Vector2( -122.5f,  1660.0f), // Level 08
+                new Vector2(  -14.0f,  1860.0f), // Level 09
+                new Vector2(  -37.0f,  2060.0f), // Level 10
+                new Vector2(  -66.0f,  2260.0f), // Level 11
+                new Vector2(   16.0f,  2460.0f), // Level 12
+                new Vector2(  -98.5f,  2660.0f), // Level 13
+                new Vector2(  160.5f,  2860.0f), // Level 14
+                new Vector2(   94.0f,  3060.0f), // Level 15
+                new Vector2(   36.0f,  3260.0f), // Level 16
+                new Vector2(   16.5f,  3460.0f), // Level 17
+                new Vector2(  -71.3f,  3660.0f), // Level 18
+                new Vector2(  104.8f,  3860.0f), // Level 19
+                new Vector2(   73.0f,  4060.0f), // Level 20
+                new Vector2(   45.0f,  4260.0f), // Level 21
+                new Vector2(  128.5f,  4460.0f), // Level 22
+                new Vector2(   47.0f,  4660.0f), // Level 23
+                new Vector2( -169.5f,  4860.0f), // Level 24
+                new Vector2(  112.5f,  5060.0f), // Level 25
+                new Vector2(  106.0f,  5260.0f), // Level 26
+                new Vector2(  -87.5f,  5460.0f), // Level 27
+                new Vector2(   51.5f,  5660.0f), // Level 28
+                new Vector2(  -93.0f,  5860.0f), // Level 29
+                new Vector2(   39.0f,  6060.0f)  // Level 30
+            };
+
+            levelPositions.Clear();
             for (int i = 0; i < totalLevels; i++)
             {
-                int lvlNum = i + 1;
-                // Organic winding wave pattern (Candy Crush style sine wave with organic phase)
-                float angle = i * 0.95f;
-                float x = Mathf.Sin(angle) * horizontalAmplitude;
-                float y = bottomPadding + (i * verticalSpacing);
-                levelPositions.Add(new Vector2(x, y));
+                if (i < calibratedPositions.Length)
+                {
+                    levelPositions.Add(calibratedPositions[i]);
+                }
+                else
+                {
+                    float angle = i * 0.95f;
+                    float x = Mathf.Sin(angle) * horizontalAmplitude;
+                    float y = 260.0f + (i * verticalSpacing);
+                    levelPositions.Add(new Vector2(x, y));
+                }
             }
 
-            // 2. Spawn Stepping Stones connecting consecutive levels
-            int stonesPerSegment = 5;
+            // 2. Spawn Stepping Stones connecting consecutive levels along smooth road tangents
+            int stonesPerSegment = 4;
             for (int i = 0; i < totalLevels - 1; i++)
             {
                 Vector2 p0 = levelPositions[i];
                 Vector2 p1 = levelPositions[i + 1];
 
+                // Compute tangents for natural organic road curve
+                Vector2 prevP = (i > 0) ? levelPositions[i - 1] : p0 - (p1 - p0);
+                Vector2 nextP = (i < totalLevels - 2) ? levelPositions[i + 2] : p1 + (p1 - p0);
+                Vector2 m0 = (p1 - prevP) * 0.5f;
+                Vector2 m1 = (nextP - p0) * 0.5f;
+
                 for (int s = 1; s <= stonesPerSegment; s++)
                 {
-                    float t = s / (float)(stonesPerSegment + 1);
-                    float cx = Mathf.Lerp(p0.x, p1.x, t);
-                    float cy = Mathf.Lerp(p0.y, p1.y, t);
+                    // Distribute stones evenly along trail between node boundaries
+                    float t = Mathf.Lerp(0.24f, 0.76f, (float)(s - 1) / (stonesPerSegment - 1));
+                    float t2 = t * t;
+                    float t3 = t2 * t;
 
-                    // Add slight natural curve offset
-                    float curveOffset = Mathf.Sin(t * Mathf.PI) * 20f;
-                    Vector2 stonePos = new Vector2(cx + curveOffset, cy);
+                    // Cubic Hermite Spline calculation
+                    float h00 = 2 * t3 - 3 * t2 + 1;
+                    float h10 = t3 - 2 * t2 + t;
+                    float h01 = -2 * t3 + 3 * t2;
+                    float h11 = t3 - t2;
 
+                    Vector2 stonePos = h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1;
                     SpawnSteppingStone(stonePos, (i + 1) < currentPlayableLevel);
                 }
             }
@@ -195,14 +288,16 @@ namespace CutFreePets.UI
             rt.anchorMax = new Vector2(0.5f, 0f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos;
-            rt.sizeDelta = new Vector2(48f, 48f);
+            rt.sizeDelta = new Vector2(52f, 52f);
 
             Image img = stone.AddComponent<Image>();
             img.sprite = steppingStoneSprite;
             img.preserveAspect = true;
             img.raycastTarget = false;
-            // Completed trail is illuminated warm cream; upcoming trail is soft stone
-            img.color = isCompletedPath ? new Color(1f, 0.96f, 0.82f, 0.95f) : new Color(0.82f, 0.78f, 0.72f, 0.80f);
+            // Completed trail is illuminated warm glowing cream; upcoming trail is subtle cobblestone
+            img.color = isCompletedPath 
+                ? new Color(1f, 0.98f, 0.88f, 0.95f) 
+                : new Color(1f, 1f, 1f, 0.70f);
         }
 
         private GameObject CreateLevelNode(int levelNum, Vector2 pos, bool unlocked, bool isCurrent, int stars)
@@ -215,7 +310,7 @@ namespace CutFreePets.UI
             nRect.anchorMax = new Vector2(0.5f, 0f);
             nRect.pivot = new Vector2(0.5f, 0.5f);
             nRect.anchoredPosition = pos;
-            nRect.sizeDelta = new Vector2(170f, 170f);
+            nRect.sizeDelta = new Vector2(150f, 150f);
 
             // Pulsating Aura Glow behind current level
             GameObject glowObj = new GameObject("Current_Glow");
@@ -225,7 +320,7 @@ namespace CutFreePets.UI
             gRect.anchorMax = new Vector2(0.5f, 0.5f);
             gRect.pivot = new Vector2(0.5f, 0.5f);
             gRect.anchoredPosition = Vector2.zero;
-            gRect.sizeDelta = new Vector2(260f, 260f);
+            gRect.sizeDelta = new Vector2(230f, 230f);
             Image glowImg = glowObj.AddComponent<Image>();
             glowImg.sprite = currentGlowSprite;
             glowImg.preserveAspect = true;
@@ -250,24 +345,29 @@ namespace CutFreePets.UI
             GameObject numObj = new GameObject("Text_Number");
             numObj.transform.SetParent(nodeObj.transform, false);
             RectTransform numRect = numObj.AddComponent<RectTransform>();
-            numRect.anchoredPosition = new Vector2(0f, 4f);
-            numRect.sizeDelta = new Vector2(120f, 80f);
+            numRect.anchoredPosition = new Vector2(0f, 2f);
+            numRect.sizeDelta = new Vector2(110f, 70f);
 
             Text nTxt = numObj.AddComponent<Text>();
             nTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            nTxt.fontSize = 58;
+            nTxt.fontSize = 52;
             nTxt.fontStyle = FontStyle.Bold;
-            nTxt.color = new Color(0.32f, 0.18f, 0.05f); // Rich dark chocolate oak
+            nTxt.color = Color.white;
             nTxt.alignment = TextAnchor.MiddleCenter;
             nTxt.raycastTarget = false;
             nTxt.text = levelNum.ToString();
 
-            // Stars Container (above the medallion node)
+            // Outline for crisp 3D embossed look
+            Outline outline = numObj.AddComponent<Outline>();
+            outline.effectColor = new Color(0.24f, 0.12f, 0.02f, 0.95f);
+            outline.effectDistance = new Vector2(2f, -2.5f);
+
+            // Stars Container (neatly underneath the medallion node)
             GameObject starsObj = new GameObject("Stars_Container");
             starsObj.transform.SetParent(nodeObj.transform, false);
             RectTransform sRect = starsObj.AddComponent<RectTransform>();
-            sRect.anchoredPosition = new Vector2(0f, 92f);
-            sRect.sizeDelta = new Vector2(140f, 44f);
+            sRect.anchoredPosition = new Vector2(0f, -60f);
+            sRect.sizeDelta = new Vector2(120f, 36f);
 
             HorizontalLayoutGroup hlg = starsObj.AddComponent<HorizontalLayoutGroup>();
             hlg.childAlignment = TextAnchor.MiddleCenter;
@@ -284,7 +384,7 @@ namespace CutFreePets.UI
                 sIcon.transform.SetParent(starsObj.transform, false);
                 RectTransform siRect = sIcon.AddComponent<RectTransform>();
                 // Arch arrangement: middle star slightly larger
-                float starSize = (s == 1) ? 36f : 30f;
+                float starSize = (s == 1) ? 34f : 28f;
                 siRect.sizeDelta = new Vector2(starSize, starSize);
 
                 Image simg = sIcon.AddComponent<Image>();
@@ -293,12 +393,15 @@ namespace CutFreePets.UI
                 starImgs[s] = simg;
             }
 
-            // Lock Overlay (shown when locked)
+            // Lock Overlay (shown when locked - compact badge at top-right corner)
             GameObject lockObj = new GameObject("Lock_Overlay");
             lockObj.transform.SetParent(nodeObj.transform, false);
             RectTransform lRect = lockObj.AddComponent<RectTransform>();
-            lRect.anchoredPosition = Vector2.zero;
-            lRect.sizeDelta = new Vector2(85f, 85f);
+            lRect.anchorMin = new Vector2(0.5f, 0.5f);
+            lRect.anchorMax = new Vector2(0.5f, 0.5f);
+            lRect.pivot = new Vector2(0.5f, 0.5f);
+            lRect.anchoredPosition = new Vector2(40f, 40f);
+            lRect.sizeDelta = new Vector2(48f, 48f);
 
             Image lockImg = lockObj.AddComponent<Image>();
             lockImg.sprite = lockIconSprite;
@@ -365,8 +468,10 @@ namespace CutFreePets.UI
             float totalScrollable = mapContent.rect.height - scrollRect.viewport.rect.height;
             if (totalScrollable <= 0) return;
 
-            float bottomPadding = 260f;
-            float targetY = bottomPadding + (targetIndex * verticalSpacing);
+            float targetY = (levelPositions != null && targetIndex < levelPositions.Count) 
+                ? levelPositions[targetIndex].y 
+                : (260.0f + targetIndex * verticalSpacing);
+
             // Center the target in the viewport
             float viewportHalf = scrollRect.viewport.rect.height * 0.5f;
             float desiredScrollY = Mathf.Clamp(targetY - viewportHalf, 0f, totalScrollable);

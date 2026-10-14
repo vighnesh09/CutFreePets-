@@ -82,7 +82,31 @@ namespace CutFreePets.UI
             if (txtLevelNumber != null)
             {
                 txtLevelNumber.text = levelIndex.ToString();
-                txtLevelNumber.gameObject.SetActive(isUnlocked);
+                txtLevelNumber.gameObject.SetActive(true);
+                
+                // Crisp cartoon 3D typography:
+                // Unlocked: Pure bright white (#FFFFFF) with dark warm chocolate drop shadow outline (#3D1E04)
+                // Locked: Polished silvery cream (#F0F4F8) with deep charcoal-slate outline (#1B2228)
+                txtLevelNumber.color = isUnlocked 
+                    ? Color.white 
+                    : new Color(0.94f, 0.96f, 0.98f);
+
+                Outline ol = txtLevelNumber.GetComponent<Outline>();
+                if (ol != null)
+                {
+                    ol.effectColor = isUnlocked 
+                        ? new Color(0.24f, 0.12f, 0.02f, 0.95f) 
+                        : new Color(0.11f, 0.13f, 0.16f, 0.95f);
+                    ol.effectDistance = new Vector2(2f, -2.5f);
+                }
+
+                // Centered level number
+                RectTransform numRect = txtLevelNumber.rectTransform;
+                if (numRect != null)
+                {
+                    numRect.anchoredPosition = new Vector2(0f, 2f);
+                    numRect.sizeDelta = new Vector2(130f, 80f);
+                }
             }
 
             if (lockOverlay != null)
