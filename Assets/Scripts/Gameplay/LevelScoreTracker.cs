@@ -52,6 +52,17 @@ namespace CutFreePets.Gameplay
             }
         }
 
+        private void Start()
+        {
+            // Safety hook in case PetCage was instantiated after OnEnable
+            PetCage cage = FindFirstObjectByType<PetCage>();
+            if (cage != null)
+            {
+                cage.OnLandedOnGoal -= HandleCageLanded;
+                cage.OnLandedOnGoal += HandleCageLanded;
+            }
+        }
+
         private void OnDisable()
         {
             StarCollectible.OnStarCollected -= HandleStarCollected;

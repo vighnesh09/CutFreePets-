@@ -9,7 +9,7 @@ namespace CutFreePets.Editor
 {
     public static class VictoryPopupBuilder
     {
-        [MenuItem("Cut Free Pets/Build Victory Popup UI", false, 10)]
+        [MenuItem("Cut Free Pets/Build Victory Popup UI", false, 22)]
         public static void MenuBuildVictoryPopup()
         {
             CreateOrUpdateVictoryPopup(null);

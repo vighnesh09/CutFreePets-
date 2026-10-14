@@ -254,6 +254,13 @@ namespace CutFreePets.Gameplay
                 float targetFallTilt = Mathf.Clamp(-rb2D.linearVelocity.x * inAirTiltFactor, -10f, 10f);
                 currentSwayZ = Mathf.Lerp(currentSwayZ, targetFallTilt, Time.deltaTime * 4.5f);
                 transform.rotation = Quaternion.Euler(0f, 0f, currentSwayZ);
+
+                // Failsafe proximity check for platform landing:
+                // If cage bottom drops to or below the platform surface level, break and celebrate
+                if (transform.position.y <= -2.15f)
+                {
+                    BreakAndFreePet();
+                }
             }
         }
 
@@ -457,10 +464,7 @@ namespace CutFreePets.Gameplay
             // 5. CAMERA IMPACT MICRO-SHAKE
             StartCoroutine(CameraImpactShake(0.06f, 0.16f));
 
-            if (collision != null)
-            {
-                OnLandedOnGoal?.Invoke(collision);
-            }
+            OnLandedOnGoal?.Invoke(collision);
 
             Debug.Log("<color=green>[PetCage]</color> CAGE SHATTERED OPEN! Cat solidly grounded on platform with contact shadow.");
         }

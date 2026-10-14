@@ -9,8 +9,13 @@ namespace CutFreePets.Editor
 {
     public static class RopeSceneSetupMenu
     {
-        [MenuItem("Cut Free Pets/Setup 1-Rope Cage Level", false, 1)]
+        [MenuItem("Cut Free Pets/Setup 1-Rope Cage Level", false, 20)]
         public static void SetupHangingBoxDemo()
+        {
+            SetupHangingBoxDemoInternal(true);
+        }
+
+        public static void SetupHangingBoxDemoInternal(bool showDialog)
         {
             Undo.IncrementCurrentGroup();
             Undo.SetCurrentGroupName("Setup Clean 1-Rope 1-Box Demo");
@@ -213,16 +218,19 @@ namespace CutFreePets.Editor
                 UnityEditor.SceneManagement.EditorSceneManager.SaveScene(activeScene);
             }
 
-            EditorUtility.DisplayDialog(
-                "Cut The Rope Layout Complete!",
-                "Vertical mobile (Portrait 9:16) level setup created!\n\n" +
-                "• Top Peg Hanger: Positioned high at Y = 4.5\n" +
-                "• Hanging Pet Cage: Positioned at Y = 1.8\n" +
-                "• 3 Glossy Stars: Floating in fall path\n" +
-                "• Ground Platform: Bottom of screen at Y = -3.8\n" +
-                "• Star Score & Progress Tracking Active!",
-                "Great!"
-            );
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog(
+                    "Cut The Rope Layout Complete!",
+                    "Vertical mobile (Portrait 9:16) level setup created!\n\n" +
+                    "• Top Peg Hanger: Positioned high at Y = 4.5\n" +
+                    "• Hanging Pet Cage: Positioned at Y = 1.8\n" +
+                    "• 3 Glossy Stars: Floating in fall path\n" +
+                    "• Ground Platform: Bottom of screen at Y = -3.8\n" +
+                    "• Star Score & Progress Tracking Active!",
+                    "Great!"
+                );
+            }
         }
 
         private static RopeConfig GetOrCreateRopeConfig()

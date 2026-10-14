@@ -12,8 +12,48 @@ namespace CutFreePets.Editor
 {
     public static class HomeScreenSceneBuilder
     {
-        [MenuItem("Cut Free Pets/Build Home Screen Scene", false, 2)]
+        [MenuItem("Cut Free Pets/Build Complete Game (Home & Level 1)", false, 0)]
+        public static void BuildCompleteGame()
+        {
+            // 1. Open SampleScene and build Level 1 with Rope, Cage, Cat, Stars, and Victory Popup UI
+            string sampleScenePath = "Assets/Scenes/SampleScene.unity";
+            if (File.Exists(sampleScenePath))
+            {
+                EditorSceneManager.OpenScene(sampleScenePath, OpenSceneMode.Single);
+            }
+            RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
+
+            // 2. Open / Build HomeScreen scene
+            string homeScenePath = "Assets/Scenes/HomeScreen.unity";
+            BuildHomeScreenSceneInternal(false);
+
+            // 3. Make sure HomeScreen is active in Editor
+            EditorSceneManager.OpenScene(homeScenePath, OpenSceneMode.Single);
+
+            EditorUtility.DisplayDialog(
+                "Cut Free Pets - Complete Game Built!",
+                "All scenes and systems have been built and linked:\n\n" +
+                "1. Level 1 (SampleScene.unity):\n" +
+                "   • Rope, Hanging Cage & Rescued Cat\n" +
+                "   • 3 Collectible Stars with physics detection\n" +
+                "   • Shattering cage on platform landing\n" +
+                "   • Level Complete Victory Popup (Stars, Next, Replay, Menu)\n\n" +
+                "2. Home Screen (HomeScreen.unity):\n" +
+                "   • Animated Cat sitting on Braided Pastel Mat\n" +
+                "   • Play button loads Level 1 directly\n" +
+                "   • Settings & Quit popups\n\n" +
+                "Press the PLAY button at the top of Unity to play now!",
+                "Let's Play!"
+            );
+        }
+
+        [MenuItem("Cut Free Pets/Build Home Screen Scene", false, 21)]
         public static void BuildHomeScreenScene()
+        {
+            BuildHomeScreenSceneInternal(true);
+        }
+
+        public static void BuildHomeScreenSceneInternal(bool showDialog)
         {
             // 1. Create or open HomeScreen.unity in Assets/Scenes
             string scenePath = "Assets/Scenes/HomeScreen.unity";
@@ -270,14 +310,17 @@ namespace CutFreePets.Editor
             // Update Build Settings so HomeScreen is scene 0 and SampleScene is scene 1
             UpdateBuildSettings(scenePath);
 
-            EditorUtility.DisplayDialog(
-                "Home Screen Created!",
-                "HomeScreen scene built successfully!\n\n" +
-                "• Index 0: Assets/Scenes/HomeScreen.unity (First to load)\n" +
-                "• Index 1: Assets/Scenes/SampleScene.unity (Level 1)\n" +
-                "• Play, Settings, Quit, and Animated Cat active!",
-                "Great!"
-            );
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog(
+                    "Home Screen Created!",
+                    "HomeScreen scene built successfully!\n\n" +
+                    "• Index 0: Assets/Scenes/HomeScreen.unity (First to load)\n" +
+                    "• Index 1: Assets/Scenes/SampleScene.unity (Level 1)\n" +
+                    "• Play, Settings, Quit, and Animated Cat active!",
+                    "Great!"
+                );
+            }
         }
 
         private static GameObject CreateSettingsModal(Transform parent)

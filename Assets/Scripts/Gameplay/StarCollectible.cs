@@ -59,7 +59,7 @@ namespace CutFreePets.Gameplay
             // Gentle Cut the Rope bobbing & subtle shimmer
             float offset = Mathf.Sin((Time.time * bobSpeed) + seed) * bobAmplitude;
             transform.position = startPos + new Vector3(0f, offset, 0f);
-            transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin((Time.time * 1.5f) + seed) * 8f);
+            transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin((Time.time * 1.5f) + seed) * (rotateSpeed * 0.5f));
         }
 
         private void OnTriggerEnter2D(Collider2D collision)

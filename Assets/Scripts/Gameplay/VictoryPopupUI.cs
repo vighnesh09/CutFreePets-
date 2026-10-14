@@ -58,6 +58,12 @@ namespace CutFreePets.UI
             {
                 LevelScoreTracker.Instance.OnLevelCompleted += HandleLevelCompleted;
             }
+
+            PetCage cage = FindFirstObjectByType<PetCage>();
+            if (cage != null)
+            {
+                cage.OnLandedOnGoal += HandleDirectCageLanded;
+            }
         }
 
         private void OnDisable()
@@ -65,6 +71,12 @@ namespace CutFreePets.UI
             if (LevelScoreTracker.Instance != null)
             {
                 LevelScoreTracker.Instance.OnLevelCompleted -= HandleLevelCompleted;
+            }
+
+            PetCage cage = FindFirstObjectByType<PetCage>();
+            if (cage != null)
+            {
+                cage.OnLandedOnGoal -= HandleDirectCageLanded;
             }
         }
 
@@ -76,6 +88,20 @@ namespace CutFreePets.UI
                 LevelScoreTracker.Instance.OnLevelCompleted -= HandleLevelCompleted;
                 LevelScoreTracker.Instance.OnLevelCompleted += HandleLevelCompleted;
             }
+
+            PetCage cage = FindFirstObjectByType<PetCage>();
+            if (cage != null)
+            {
+                cage.OnLandedOnGoal -= HandleDirectCageLanded;
+                cage.OnLandedOnGoal += HandleDirectCageLanded;
+            }
+        }
+
+        private void HandleDirectCageLanded(Collision2D collision)
+        {
+            if (isShowing) return;
+            int stars = LevelScoreTracker.Instance != null ? LevelScoreTracker.Instance.StarsCollectedThisRun : 3;
+            StartCoroutine(ShowVictoryFlow(stars));
         }
 
         private void SetupButtons()
