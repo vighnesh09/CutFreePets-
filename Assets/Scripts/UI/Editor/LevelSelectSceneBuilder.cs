@@ -90,25 +90,25 @@ namespace CutFreePets.Editor
             bgImg.type = Image.Type.Simple;
             bgImg.preserveAspect = false;
 
-            // 5. Header Bar (Top)
+            // 5. Header Bar (Top) - Hanging Wooden Plaque area
             GameObject headerObj = new GameObject("Header_Bar");
             headerObj.transform.SetParent(canvasObj.transform, false);
             RectTransform headerRect = headerObj.AddComponent<RectTransform>();
             headerRect.anchorMin = new Vector2(0f, 1f);
             headerRect.anchorMax = new Vector2(1f, 1f);
             headerRect.pivot = new Vector2(0.5f, 1f);
-            headerRect.anchoredPosition = new Vector2(0f, -40f);
-            headerRect.sizeDelta = new Vector2(0f, 160f);
+            headerRect.anchoredPosition = new Vector2(0f, 0f);
+            headerRect.sizeDelta = new Vector2(0f, 420f);
 
-            // Back Button (Top Left)
+            // Back Button (Top Left) - Smooth carved circular button
             Sprite backSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Btn_Back.png");
             GameObject backBtnObj = new GameObject("Btn_Back");
             backBtnObj.transform.SetParent(headerObj.transform, false);
             RectTransform backRect = backBtnObj.AddComponent<RectTransform>();
-            backRect.anchorMin = new Vector2(0f, 0.5f);
-            backRect.anchorMax = new Vector2(0f, 0.5f);
-            backRect.pivot = new Vector2(0f, 0.5f);
-            backRect.anchoredPosition = new Vector2(50f, 0f);
+            backRect.anchorMin = new Vector2(0f, 1f);
+            backRect.anchorMax = new Vector2(0f, 1f);
+            backRect.pivot = new Vector2(0f, 1f);
+            backRect.anchoredPosition = new Vector2(40f, -40f);
             backRect.sizeDelta = new Vector2(130f, 130f);
 
             Image backImg = backBtnObj.AddComponent<Image>();
@@ -116,21 +116,21 @@ namespace CutFreePets.Editor
             backImg.preserveAspect = true;
             Button backBtn = backBtnObj.AddComponent<Button>();
 
-            // Title Text ("SELECT LEVEL")
+            // Title Text ("SELECT LEVEL") - Centered right on the hanging wooden plank
             GameObject titleObj = new GameObject("Text_Title");
             titleObj.transform.SetParent(headerObj.transform, false);
             RectTransform titleRect = titleObj.AddComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.5f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+            titleRect.anchorMin = new Vector2(0.5f, 1f);
+            titleRect.anchorMax = new Vector2(0.5f, 1f);
             titleRect.pivot = new Vector2(0.5f, 0.5f);
-            titleRect.anchoredPosition = new Vector2(0f, 0f);
-            titleRect.sizeDelta = new Vector2(500f, 90f);
+            titleRect.anchoredPosition = new Vector2(0f, -270f);
+            titleRect.sizeDelta = new Vector2(580f, 100f);
 
             Text titleTxt = titleObj.AddComponent<Text>();
             titleTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            titleTxt.fontSize = 52;
+            titleTxt.fontSize = 58;
             titleTxt.fontStyle = FontStyle.Bold;
-            titleTxt.color = new Color(0.35f, 0.18f, 0.05f); // Rich warm brown
+            titleTxt.color = new Color(0.36f, 0.19f, 0.06f); // Warm carved dark oak
             titleTxt.alignment = TextAnchor.MiddleCenter;
             titleTxt.text = "SELECT LEVEL";
 
@@ -138,14 +138,14 @@ namespace CutFreePets.Editor
             GameObject starBadgeObj = new GameObject("Badge_TotalStars");
             starBadgeObj.transform.SetParent(headerObj.transform, false);
             RectTransform sbRect = starBadgeObj.AddComponent<RectTransform>();
-            sbRect.anchorMin = new Vector2(1f, 0.5f);
-            sbRect.anchorMax = new Vector2(1f, 0.5f);
-            sbRect.pivot = new Vector2(1f, 0.5f);
-            sbRect.anchoredPosition = new Vector2(-50f, 0f);
-            sbRect.sizeDelta = new Vector2(230f, 85f);
+            sbRect.anchorMin = new Vector2(1f, 1f);
+            sbRect.anchorMax = new Vector2(1f, 1f);
+            sbRect.pivot = new Vector2(1f, 1f);
+            sbRect.anchoredPosition = new Vector2(-40f, -50f);
+            sbRect.sizeDelta = new Vector2(250f, 85f);
 
             Image sbBg = starBadgeObj.AddComponent<Image>();
-            sbBg.color = new Color(0.2f, 0.12f, 0.05f, 0.55f); // Dark translucent pill
+            sbBg.color = new Color(0.22f, 0.13f, 0.06f, 0.65f); // Rich warm dark chocolate pill
 
             // Star icon in badge
             Sprite starFilledSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Star_Collectible.png");
@@ -155,8 +155,8 @@ namespace CutFreePets.Editor
             siRect.anchorMin = new Vector2(0f, 0.5f);
             siRect.anchorMax = new Vector2(0f, 0.5f);
             siRect.pivot = new Vector2(0f, 0.5f);
-            siRect.anchoredPosition = new Vector2(16f, 0f);
-            siRect.sizeDelta = new Vector2(56f, 56f);
+            siRect.anchoredPosition = new Vector2(18f, 0f);
+            siRect.sizeDelta = new Vector2(62f, 62f);
             Image siImg = sIconObj.AddComponent<Image>();
             siImg.sprite = starFilledSprite;
             siImg.preserveAspect = true;
@@ -167,33 +167,33 @@ namespace CutFreePets.Editor
             RectTransform stRect = starTxtObj.AddComponent<RectTransform>();
             stRect.anchorMin = new Vector2(0f, 0f);
             stRect.anchorMax = new Vector2(1f, 1f);
-            stRect.offsetMin = new Vector2(75f, 0f);
+            stRect.offsetMin = new Vector2(85f, 0f);
             stRect.offsetMax = new Vector2(-15f, 0f);
 
             Text stTxt = starTxtObj.AddComponent<Text>();
             stTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            stTxt.fontSize = 32;
+            stTxt.fontSize = 34;
             stTxt.fontStyle = FontStyle.Bold;
-            stTxt.color = new Color(1f, 0.92f, 0.45f); // Warm gold
+            stTxt.color = new Color(1f, 0.94f, 0.48f); // Bright warm honey gold
             stTxt.alignment = TextAnchor.MiddleCenter;
             stTxt.text = "0 / 60";
 
-            // 6. Scrollable Level Cards Grid Area
+            // 6. Scrollable Level Cards Grid Area (Perfect fit inside the central cardboard box)
             GameObject scrollObj = new GameObject("Scroll_View");
             scrollObj.transform.SetParent(canvasObj.transform, false);
             RectTransform scRect = scrollObj.AddComponent<RectTransform>();
             scRect.anchorMin = new Vector2(0.5f, 0.5f);
             scRect.anchorMax = new Vector2(0.5f, 0.5f);
             scRect.pivot = new Vector2(0.5f, 0.5f);
-            scRect.anchoredPosition = new Vector2(0f, -40f);
-            scRect.sizeDelta = new Vector2(960f, 1420f);
+            scRect.anchoredPosition = new Vector2(0f, -220f);
+            scRect.sizeDelta = new Vector2(740f, 1160f);
 
             ScrollRect scroll = scrollObj.AddComponent<ScrollRect>();
             scroll.horizontal = false;
             scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.elasticity = 0.1f;
-            scroll.scrollSensitivity = 25f;
+            scroll.scrollSensitivity = 30f;
 
             // Viewport
             GameObject viewObj = new GameObject("Viewport");
@@ -215,16 +215,17 @@ namespace CutFreePets.Editor
             cRect.anchorMin = new Vector2(0f, 1f);
             cRect.anchorMax = new Vector2(1f, 1f);
             cRect.pivot = new Vector2(0.5f, 1f);
-            cRect.sizeDelta = new Vector2(0f, 1500f);
+            cRect.sizeDelta = new Vector2(0f, 1600f);
 
             GridLayoutGroup grid = contentObj.AddComponent<GridLayoutGroup>();
             grid.cellSize = new Vector2(210f, 210f);
-            grid.spacing = new Vector2(36f, 40f);
+            grid.spacing = new Vector2(25f, 32f);
+            grid.padding = new RectOffset(15, 15, 20, 30);
             grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
             grid.startAxis = GridLayoutGroup.Axis.Horizontal;
             grid.childAlignment = TextAnchor.UpperCenter;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 4; // 4 columns x 5 rows = 20 levels
+            grid.constraintCount = 3; // 3 columns cleanly centered inside the cardboard box
 
             ContentSizeFitter fitter = contentObj.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;

@@ -78,35 +78,36 @@ namespace CutFreePets.UI
         {
             GameObject cardObj = new GameObject($"Card_Level_{levelIndex:D2}");
             RectTransform cardRect = cardObj.AddComponent<RectTransform>();
-            cardRect.sizeDelta = new Vector2(180f, 180f);
+            cardRect.sizeDelta = new Vector2(205f, 205f);
 
             Image cardImg = cardObj.AddComponent<Image>();
             cardImg.sprite = cardWoodSprite;
             cardImg.type = Image.Type.Simple;
             cardImg.preserveAspect = true;
-            cardImg.color = unlocked ? Color.white : new Color(0.65f, 0.65f, 0.65f, 0.95f);
+            // Unlocked cards are clean honey wood, locked cards are muted stone-wood
+            cardImg.color = unlocked ? Color.white : new Color(0.70f, 0.68f, 0.65f, 0.95f);
 
             Button cardBtn = cardObj.AddComponent<Button>();
             ColorBlock cb = cardBtn.colors;
-            cb.highlightedColor = new Color(1f, 0.95f, 0.85f);
-            cb.pressedColor = new Color(0.85f, 0.85f, 0.85f);
+            cb.highlightedColor = new Color(1f, 0.96f, 0.88f);
+            cb.pressedColor = new Color(0.88f, 0.88f, 0.88f);
             cardBtn.colors = cb;
 
-            // Level Number Text
+            // Level Number Text (for unlocked levels)
             GameObject numObj = new GameObject("Text_LevelNum");
             numObj.transform.SetParent(cardObj.transform, false);
             RectTransform nRect = numObj.AddComponent<RectTransform>();
             nRect.anchorMin = new Vector2(0.5f, 0.5f);
             nRect.anchorMax = new Vector2(0.5f, 0.5f);
             nRect.pivot = new Vector2(0.5f, 0.5f);
-            nRect.anchoredPosition = new Vector2(0f, 12f);
-            nRect.sizeDelta = new Vector2(140f, 70f);
+            nRect.anchoredPosition = new Vector2(0f, 16f);
+            nRect.sizeDelta = new Vector2(140f, 75f);
 
             Text nTxt = numObj.AddComponent<Text>();
             nTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            nTxt.fontSize = 54;
+            nTxt.fontSize = 58;
             nTxt.fontStyle = FontStyle.Bold;
-            nTxt.color = new Color(0.38f, 0.20f, 0.08f); // rich warm chocolate brown
+            nTxt.color = new Color(0.32f, 0.18f, 0.06f); // Warm chocolate brown
             nTxt.alignment = TextAnchor.MiddleCenter;
             nTxt.text = levelIndex.ToString();
 
@@ -117,8 +118,8 @@ namespace CutFreePets.UI
             sRect.anchorMin = new Vector2(0.5f, 0.5f);
             sRect.anchorMax = new Vector2(0.5f, 0.5f);
             sRect.pivot = new Vector2(0.5f, 0.5f);
-            sRect.anchoredPosition = new Vector2(0f, -44f);
-            sRect.sizeDelta = new Vector2(140f, 36f);
+            sRect.anchoredPosition = new Vector2(0f, -42f);
+            sRect.sizeDelta = new Vector2(150f, 38f);
 
             HorizontalLayoutGroup hlg = starsObj.AddComponent<HorizontalLayoutGroup>();
             hlg.childAlignment = TextAnchor.MiddleCenter;
@@ -134,7 +135,7 @@ namespace CutFreePets.UI
                 GameObject sIcon = new GameObject($"Star_{s + 1}");
                 sIcon.transform.SetParent(starsObj.transform, false);
                 RectTransform siRect = sIcon.AddComponent<RectTransform>();
-                siRect.sizeDelta = new Vector2(30f, 30f);
+                siRect.sizeDelta = new Vector2(32f, 32f);
 
                 Image simg = sIcon.AddComponent<Image>();
                 simg.preserveAspect = true;
@@ -148,8 +149,8 @@ namespace CutFreePets.UI
             lRect.anchorMin = new Vector2(0.5f, 0.5f);
             lRect.anchorMax = new Vector2(0.5f, 0.5f);
             lRect.pivot = new Vector2(0.5f, 0.5f);
-            lRect.anchoredPosition = Vector2.zero;
-            lRect.sizeDelta = new Vector2(85f, 85f);
+            lRect.anchoredPosition = new Vector2(0f, 0f);
+            lRect.sizeDelta = new Vector2(90f, 90f);
 
             Image lockImg = lockObj.AddComponent<Image>();
             lockImg.sprite = lockIconSprite;
