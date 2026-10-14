@@ -100,12 +100,12 @@ namespace CutFreePets.UI
                     ol.effectDistance = new Vector2(2f, -2.5f);
                 }
 
-                // Centered level number
+                // Centered level number on the top face of the 3D button
                 RectTransform numRect = txtLevelNumber.rectTransform;
                 if (numRect != null)
                 {
-                    numRect.anchoredPosition = new Vector2(0f, 2f);
-                    numRect.sizeDelta = new Vector2(130f, 80f);
+                    numRect.anchoredPosition = new Vector2(0f, -8f);
+                    numRect.sizeDelta = new Vector2(120f, 70f);
                 }
             }
 
@@ -116,18 +116,19 @@ namespace CutFreePets.UI
 
             if (starsContainer != null)
             {
-                starsContainer.SetActive(isUnlocked);
+                // Only show stars crown when player has completed the level and earned stars (just like reference!)
+                starsContainer.SetActive(isUnlocked && starsEarned > 0);
             }
 
             // Fill Star badges
-            if (isUnlocked && starImages != null)
+            if (isUnlocked && starsEarned > 0 && starImages != null)
             {
                 for (int i = 0; i < starImages.Length; i++)
                 {
                     if (starImages[i] != null)
                     {
                         starImages[i].sprite = (i < starsEarned) ? starFilled : starEmpty;
-                        starImages[i].color = (i < starsEarned) ? Color.white : new Color(1f, 1f, 1f, 0.40f);
+                        starImages[i].color = (i < starsEarned) ? Color.white : new Color(1f, 1f, 1f, 0.90f);
                     }
                 }
             }

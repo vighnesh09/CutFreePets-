@@ -187,36 +187,36 @@ namespace CutFreePets.UI
             // 1. Precise road-calibrated positions for each of the 30 levels (matching the clean background road)
             Vector2[] calibratedPositions = new Vector2[]
             {
-                new Vector2(  135.0f,   260.0f), // Level 01
-                new Vector2(   39.5f,   460.0f), // Level 02
-                new Vector2(  -43.0f,   660.0f), // Level 03
-                new Vector2(   50.9f,   860.0f), // Level 04
-                new Vector2(    6.5f,  1060.0f), // Level 05
-                new Vector2(   80.0f,  1260.0f), // Level 06
-                new Vector2( -123.0f,  1460.0f), // Level 07
-                new Vector2( -122.5f,  1660.0f), // Level 08
-                new Vector2(  -14.0f,  1860.0f), // Level 09
-                new Vector2(  -37.0f,  2060.0f), // Level 10
-                new Vector2(  -66.0f,  2260.0f), // Level 11
-                new Vector2(   16.0f,  2460.0f), // Level 12
-                new Vector2(  -98.5f,  2660.0f), // Level 13
-                new Vector2(  160.5f,  2860.0f), // Level 14
-                new Vector2(   94.0f,  3060.0f), // Level 15
-                new Vector2(   36.0f,  3260.0f), // Level 16
-                new Vector2(   16.5f,  3460.0f), // Level 17
-                new Vector2(  -71.3f,  3660.0f), // Level 18
-                new Vector2(  104.8f,  3860.0f), // Level 19
-                new Vector2(   73.0f,  4060.0f), // Level 20
-                new Vector2(   45.0f,  4260.0f), // Level 21
-                new Vector2(  128.5f,  4460.0f), // Level 22
-                new Vector2(   47.0f,  4660.0f), // Level 23
-                new Vector2( -169.5f,  4860.0f), // Level 24
-                new Vector2(  112.5f,  5060.0f), // Level 25
-                new Vector2(  106.0f,  5260.0f), // Level 26
-                new Vector2(  -87.5f,  5460.0f), // Level 27
-                new Vector2(   51.5f,  5660.0f), // Level 28
-                new Vector2(  -93.0f,  5860.0f), // Level 29
-                new Vector2(   39.0f,  6060.0f)  // Level 30
+                new Vector2(   68.0f,   260.0f), // Level 01 (road entrance center)
+                new Vector2(  -35.0f,   460.0f), // Level 02 (curves towards left-center)
+                new Vector2( -165.0f,   660.0f), // Level 03 (deep left bend near snowshoes/sign)
+                new Vector2(  -45.0f,   860.0f), // Level 04 (winding back to center)
+                new Vector2( -120.0f,  1060.0f), // Level 05 (left turn between pines)
+                new Vector2(    0.0f,  1260.0f), // Level 06 (center path near ice pond)
+                new Vector2( -185.0f,  1460.0f), // Level 07 (left path around ice lake)
+                new Vector2( -175.0f,  1660.0f), // Level 08 (lake embankment)
+                new Vector2(  -14.0f,  1860.0f), // Level 09 (transition out of winter)
+                new Vector2(  -37.0f,  2060.0f), // Level 10 (summer gateway)
+                new Vector2(  -66.0f,  2260.0f), // Level 11 (entering flower meadow)
+                new Vector2(   16.0f,  2460.0f), // Level 12 (path center)
+                new Vector2(  -20.0f,  2660.0f), // Level 13 (natural trail leading to bridge)
+                new Vector2(  115.0f,  2860.0f), // Level 14 (turn towards wooden bridge)
+                new Vector2(   30.0f,  3060.0f), // Level 15 (riverbank bridge entrance)
+                new Vector2(    0.0f,  3260.0f), // Level 16 (on the wooden bridge)
+                new Vector2(   10.0f,  3460.0f), // Level 17 (bridge exit onto trail)
+                new Vector2( -105.0f,  3660.0f), // Level 18 (campsite bend)
+                new Vector2(   95.0f,  3860.0f), // Level 19 (waterfall curve)
+                new Vector2(   65.0f,  4060.0f), // Level 20 (river trail)
+                new Vector2(   45.0f,  4260.0f), // Level 21 (foot of the mountain)
+                new Vector2(  128.5f,  4460.0f), // Level 22 (mountain pass right)
+                new Vector2(   47.0f,  4660.0f), // Level 23 (mountain pass center)
+                new Vector2( -169.5f,  4860.0f), // Level 24 (cliff dodge left)
+                new Vector2(  112.5f,  5060.0f), // Level 25 (switchback right)
+                new Vector2(  106.0f,  5260.0f), // Level 26 (alpine ascent)
+                new Vector2(  -87.5f,  5460.0f), // Level 27 (crystal crag)
+                new Vector2(   51.5f,  5660.0f), // Level 28 (summit stairs approach)
+                new Vector2(  -93.0f,  5860.0f), // Level 29 (final staircase)
+                new Vector2(   39.0f,  6060.0f)  // Level 30 (star altar summit)
             };
 
             levelPositions.Clear();
@@ -310,7 +310,7 @@ namespace CutFreePets.UI
             nRect.anchorMax = new Vector2(0.5f, 0f);
             nRect.pivot = new Vector2(0.5f, 0.5f);
             nRect.anchoredPosition = pos;
-            nRect.sizeDelta = new Vector2(150f, 150f);
+            nRect.sizeDelta = new Vector2(160f, 150f);
 
             // Pulsating Aura Glow behind current level
             GameObject glowObj = new GameObject("Current_Glow");
@@ -320,7 +320,7 @@ namespace CutFreePets.UI
             gRect.anchorMax = new Vector2(0.5f, 0.5f);
             gRect.pivot = new Vector2(0.5f, 0.5f);
             gRect.anchoredPosition = Vector2.zero;
-            gRect.sizeDelta = new Vector2(230f, 230f);
+            gRect.sizeDelta = new Vector2(240f, 230f);
             Image glowImg = glowObj.AddComponent<Image>();
             glowImg.sprite = currentGlowSprite;
             glowImg.preserveAspect = true;
@@ -328,7 +328,7 @@ namespace CutFreePets.UI
             glowImg.color = new Color(1f, 0.88f, 0.25f, 0.85f);
             glowObj.SetActive(isCurrent);
 
-            // Medallion Image
+            // Medallion / 3D Pedestal Button Image
             Image medallionImg = nodeObj.AddComponent<Image>();
             medallionImg.sprite = unlocked ? nodeUnlockedSprite : nodeLockedSprite;
             medallionImg.preserveAspect = true;
@@ -341,16 +341,16 @@ namespace CutFreePets.UI
             cb.pressedColor = new Color(0.85f, 0.85f, 0.85f);
             btn.colors = cb;
 
-            // Level Number Text
+            // Level Number Text (Centered on the top face of the 3D button)
             GameObject numObj = new GameObject("Text_Number");
             numObj.transform.SetParent(nodeObj.transform, false);
             RectTransform numRect = numObj.AddComponent<RectTransform>();
-            numRect.anchoredPosition = new Vector2(0f, 2f);
+            numRect.anchoredPosition = new Vector2(0f, -8f);
             numRect.sizeDelta = new Vector2(110f, 70f);
 
             Text nTxt = numObj.AddComponent<Text>();
             nTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            nTxt.fontSize = 52;
+            nTxt.fontSize = 54;
             nTxt.fontStyle = FontStyle.Bold;
             nTxt.color = Color.white;
             nTxt.alignment = TextAnchor.MiddleCenter;
@@ -362,30 +362,31 @@ namespace CutFreePets.UI
             outline.effectColor = new Color(0.24f, 0.12f, 0.02f, 0.95f);
             outline.effectDistance = new Vector2(2f, -2.5f);
 
-            // Stars Container (neatly underneath the medallion node)
+            // 3-Star Crown (Arching proudly over top of the pedestal button, exactly like the reference!)
             GameObject starsObj = new GameObject("Stars_Container");
             starsObj.transform.SetParent(nodeObj.transform, false);
             RectTransform sRect = starsObj.AddComponent<RectTransform>();
-            sRect.anchoredPosition = new Vector2(0f, -60f);
-            sRect.sizeDelta = new Vector2(120f, 36f);
+            sRect.anchoredPosition = new Vector2(0f, 48f);
+            sRect.sizeDelta = new Vector2(140f, 52f);
 
-            HorizontalLayoutGroup hlg = starsObj.AddComponent<HorizontalLayoutGroup>();
-            hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.spacing = 4f;
-            hlg.childControlWidth = false;
-            hlg.childControlHeight = false;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = false;
-
+            // Individual Star Placement in an arch:
+            // Star 1 (Left): x = -36, y = -6, size = 38x38
+            // Star 2 (Middle): x = 0, y = 6, size = 46x46 (highest & biggest)
+            // Star 3 (Right): x = 36, y = -6, size = 38x38
             Image[] starImgs = new Image[3];
+            Vector2[] starOffsets = new Vector2[] { new Vector2(-36f, -6f), new Vector2(0f, 6f), new Vector2(36f, -6f) };
+            float[] starSizes = new float[] { 38f, 46f, 38f };
+
             for (int s = 0; s < 3; s++)
             {
                 GameObject sIcon = new GameObject($"Star_{s + 1}");
                 sIcon.transform.SetParent(starsObj.transform, false);
                 RectTransform siRect = sIcon.AddComponent<RectTransform>();
-                // Arch arrangement: middle star slightly larger
-                float starSize = (s == 1) ? 34f : 28f;
-                siRect.sizeDelta = new Vector2(starSize, starSize);
+                siRect.anchorMin = new Vector2(0.5f, 0.5f);
+                siRect.anchorMax = new Vector2(0.5f, 0.5f);
+                siRect.pivot = new Vector2(0.5f, 0.5f);
+                siRect.anchoredPosition = starOffsets[s];
+                siRect.sizeDelta = new Vector2(starSizes[s], starSizes[s]);
 
                 Image simg = sIcon.AddComponent<Image>();
                 simg.preserveAspect = true;
@@ -393,15 +394,15 @@ namespace CutFreePets.UI
                 starImgs[s] = simg;
             }
 
-            // Lock Overlay (shown when locked - compact badge at top-right corner)
+            // Lock Overlay (shown when locked - badge at upper right of button)
             GameObject lockObj = new GameObject("Lock_Overlay");
             lockObj.transform.SetParent(nodeObj.transform, false);
             RectTransform lRect = lockObj.AddComponent<RectTransform>();
             lRect.anchorMin = new Vector2(0.5f, 0.5f);
             lRect.anchorMax = new Vector2(0.5f, 0.5f);
             lRect.pivot = new Vector2(0.5f, 0.5f);
-            lRect.anchoredPosition = new Vector2(40f, 40f);
-            lRect.sizeDelta = new Vector2(48f, 48f);
+            lRect.anchoredPosition = new Vector2(38f, 28f);
+            lRect.sizeDelta = new Vector2(46f, 46f);
 
             Image lockImg = lockObj.AddComponent<Image>();
             lockImg.sprite = lockIconSprite;
