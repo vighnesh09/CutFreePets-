@@ -202,7 +202,7 @@ namespace CutFreePets.Gameplay
 
         private IEnumerator GroundedLandingBounce(Transform catTransform, Vector3 groundPos)
         {
-            Vector3 baseScale = new Vector3(0.9f, 0.9f, 1f);
+            Vector3 baseScale = catTransform != null ? catTransform.localScale : new Vector3(1.22f, 1.22f, 1f);
             float duration = 0.42f;
             float elapsed = 0f;
 

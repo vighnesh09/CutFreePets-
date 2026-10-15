@@ -481,6 +481,7 @@ namespace CutFreePets.Rope
             particles.RemoveRange(segmentIndex + 1, removeCount);
             particles.Add(cutA);
             pinEnd = false; // severed end of top half falls freely
+            isCut = true;   // mark original rope as cut to preserve knots without duplication
             Destroy(gameObject, 2.5f); // Fade out top remnant after swinging
 
             // Impart natural whip recoil impulse to severed ends
@@ -534,8 +535,9 @@ namespace CutFreePets.Rope
             RopeRenderer newRenderer = severed.GetComponent<RopeRenderer>();
             if (originalRenderer != null && newRenderer != null)
             {
-                newRenderer.CopySettingsFrom(originalRenderer, preserveEndKnot: true);
+                newRenderer.CopySettingsFrom(originalRenderer, preserveEndKnot: false);
                 newRenderer.Initialize(severedRope);
+                originalRenderer.TransferKnotsToSevered(newRenderer, remainingNodes);
             }
 
             // Auto cleanup severed piece after falling with the box

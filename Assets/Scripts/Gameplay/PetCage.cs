@@ -124,7 +124,6 @@ namespace CutFreePets.Gameplay
                 cageRenderer.color = Color.white;
             }
             cageRenderer.sortingOrder = 8;
-            transform.localScale = Vector3.one;
         }
 
         public void EnsureDebrisSpritesLoaded()
@@ -141,13 +140,13 @@ namespace CutFreePets.Gameplay
                 if (existing != null)
                 {
                     petSlot = existing;
-                    if (!isLanded) petSlot.localPosition = new Vector3(0f, -0.28f, 0f);
+                    if (!isLanded) petSlot.localPosition = new Vector3(0f, -0.05f, 0f);
                 }
                 else
                 {
                     GameObject slotObj = new GameObject("Pet_Slot");
                     slotObj.transform.parent = transform;
-                    slotObj.transform.localPosition = new Vector3(0f, -0.28f, 0f);
+                    slotObj.transform.localPosition = new Vector3(0f, -0.05f, 0f);
                     slotObj.transform.localRotation = Quaternion.identity;
                     slotObj.transform.localScale = Vector3.one;
                     petSlot = slotObj.transform;
@@ -155,7 +154,7 @@ namespace CutFreePets.Gameplay
             }
             else if (!isLanded)
             {
-                petSlot.localPosition = new Vector3(0f, -0.28f, 0f);
+                petSlot.localPosition = new Vector3(0f, -0.05f, 0f);
             }
         }
 

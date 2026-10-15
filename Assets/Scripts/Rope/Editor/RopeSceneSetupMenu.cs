@@ -114,10 +114,20 @@ namespace CutFreePets.Editor
             RopeHanger hanger = hangerObj.AddComponent<RopeHanger>();
             hanger.SetupVisuals();
 
-            // 7. ONE Hanging Pet Cage (Lifted higher up at Y = 2.4 so rope hangs down naturally)
+            // 6.5 Cozy Forest Background (Fills 9:16 vertical screen)
+            GameObject bgObj = new GameObject("Level_Background");
+            bgObj.transform.parent = root.transform;
+            bgObj.transform.position = new Vector3(0f, 0.6f, 0f);
+            SpriteRenderer bgRend = bgObj.AddComponent<SpriteRenderer>();
+            bgRend.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Level_BG_CozyForest.jpg");
+            bgRend.sortingOrder = -50;
+            bgObj.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            // 7. ONE Hanging Pet Cage (Compact, refined scale 0.70 leaving screen space)
             GameObject cageObj = new GameObject("Pet_Cage");
             cageObj.transform.parent = root.transform;
-            cageObj.transform.position = new Vector3(0f, 2.4f, 0f);
+            cageObj.transform.position = new Vector3(0f, 2.35f, 0f);
+            cageObj.transform.localScale = new Vector3(0.70f, 0.70f, 1f); // Refined, compact cage
 
             BoxCollider2D cageCol = cageObj.AddComponent<BoxCollider2D>();
             cageCol.size = new Vector2(3.38f, 3.1f);
@@ -135,7 +145,7 @@ namespace CutFreePets.Editor
             catObj.transform.parent = petCage.PetSlot;
             catObj.transform.localPosition = Vector3.zero;
             catObj.transform.localRotation = Quaternion.identity;
-            catObj.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            catObj.transform.localScale = new Vector3(1.22f, 1.22f, 1f); // Enlarged, prominent cat inside cage
 
             CatAnimationPlayer catPlayer = catObj.AddComponent<CatAnimationPlayer>();
             catPlayer.LoadFramesFromProject();
@@ -143,11 +153,11 @@ namespace CutFreePets.Editor
             // Dedicated top ring hook point where rope binds
             GameObject ringHookObj = new GameObject("TopRing_Hook");
             ringHookObj.transform.parent = cageObj.transform;
-            ringHookObj.transform.localPosition = new Vector3(0f, 1.65f, 0f);
+            ringHookObj.transform.localPosition = new Vector3(0f, 1.68f, 0f);
             ringHookObj.transform.localRotation = Quaternion.identity;
 
             // 8. Polished Golden-Wood Landing Platform at bottom of screen (Y = -3.85)
-            // Slim, sleek, and perfectly sized
+            // Slim, sleek, and compact to leave ample space for future puzzle elements
             GameObject floorObj = new GameObject("Ground_Platform");
             floorObj.transform.parent = root.transform;
             floorObj.transform.position = new Vector3(0f, -3.85f, 0f);
@@ -158,10 +168,9 @@ namespace CutFreePets.Editor
             floorRend.sprite = woodPlatformSprite;
             floorRend.color = Color.white;
             floorRend.sortingOrder = 4;
-            floorObj.transform.localScale = new Vector3(1.15f, 1.15f, 1f);
+            floorObj.transform.localScale = new Vector3(0.60f, 0.68f, 1f); // Compact platform
 
             BoxCollider2D floorCol = floorObj.AddComponent<BoxCollider2D>();
-            // Collider sized to top surface of the wooden dock
             floorCol.size = new Vector2(3.9f, 0.5f);
             floorCol.offset = new Vector2(0f, -0.05f);
 

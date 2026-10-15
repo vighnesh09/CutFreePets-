@@ -1,15 +1,30 @@
+using System.Collections.Generic;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace CutFreePets.Rope
 {
     /// <summary>
-    /// Professional Cut the Rope visual renderer with braided texture tiling,
-    /// dynamic Catmull-Rom spline curves, stretch strain thinning & trembling,
-    /// and end knot ring attached to the suspended object.
+    /// Component: RopeRenderer
+    /// Renders a vibrant, realistic cartoon braided hemp rope using a smooth Catmull-Rom spline
+    /// and maintains physical tied rope knots along the rope length that divide naturally upon cutting.
+    /// Fully compliant with URP 2D and Cut the Rope aesthetics.
     /// </summary>
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(LineRenderer))]
     public class RopeRenderer : MonoBehaviour
     {
+        [System.Serializable]
+        public class BodyKnot
+        {
+            public RopeParticle boundParticle;
+            public GameObject instance;
+            public SpriteRenderer renderer;
+        }
+
         [Header("Components")]
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private Material ropeMaterial;
@@ -22,53 +37,68 @@ namespace CutFreePets.Rope
         [Range(0.3f, 1f)]
         [SerializeField] private float minStretchThicknessRatio = 0.72f;
 
-        [Tooltip("Number of braided texture repetitions per world unit.")]
-        [SerializeField] private float textureRepeatPerUnit = 2.4f;
+        [Header("Knots Along Rope")]
+        [Tooltip("Number of tied knots spaced along the length of the rope.")]
+        [Range(0, 5)]
+        [SerializeField] private int knotCount = 2;
 
-        [Header("End Knot Visuals")]
-        [Tooltip("Show tied knot ring at the end anchor.")]
-        [SerializeField] private bool showEndKnot = true;
-        [SerializeField] private Sprite knotSprite;
+        [Tooltip("Sprite for tied knots placed along the rope.")]
+        [SerializeField] private Sprite bodyKnotSprite;
+
+        [Tooltip("Scale multiplier for the tied knots.")]
+        [SerializeField] private float knotScale = 0.36f;
 
         [Header("Spline Smoothing")]
         [Range(2, 10)]
         [SerializeField] private int splineSubdivisions = 6;
 
+        // Internal State
         private VerletRope rope;
-        private readonly System.Collections.Generic.List<Vector3> smoothedPoints = new System.Collections.Generic.List<Vector3>();
-        private GameObject endKnotInstance;
-        private SpriteRenderer endKnotRenderer;
+        private readonly List<Vector3> smoothedPoints = new List<Vector3>();
+        private readonly List<BodyKnot> bodyKnots = new List<BodyKnot>();
         private float fadeAlpha = 1.0f;
 
-        public bool ShowEndKnot { get => showEndKnot; set => showEndKnot = value; }
         public float FadeAlpha { get => fadeAlpha; set => fadeAlpha = Mathf.Clamp01(value); }
         public float BaseThickness { get => baseThickness; set => baseThickness = value; }
+        public int KnotCount { get => knotCount; set { knotCount = value; RebuildBodyKnots(); } }
 
         private void Awake()
         {
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
             ConfigureLineRenderer();
             LoadDefaultAssetsIfMissing();
+            CleanupLegacyEndKnots();
+        }
+
+        private void Start()
+        {
+            if (bodyKnots.Count == 0 && (rope == null || !rope.IsCut))
+            {
+                RebuildBodyKnots();
+            }
+        }
+
+        private void CleanupLegacyEndKnots()
+        {
+            // Remove legacy Knot_Ring_Albedo end accessories if any exist
+            Transform legacyKnot = transform.Find($"{gameObject.name}_EndKnot");
+            if (legacyKnot != null) Destroy(legacyKnot.gameObject);
         }
 
         private void LoadDefaultAssetsIfMissing()
         {
-            if (knotSprite == null)
-            {
-                knotSprite = Resources.Load<Sprite>("Knot_Ring_Albedo");
-            }
-
 #if UNITY_EDITOR
-            if (ropeMaterial == null)
+            if (bodyKnotSprite == null)
             {
-                ropeMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Settings/Rope_Material.mat");
-            }
-            if (knotSprite == null)
-            {
-                knotSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Knot_Ring_Albedo.png");
+                bodyKnotSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Rope_Body_Knot.png");
             }
 #endif
-            // Create a reliable, dedicated runtime rope material that never turns pink
+            if (bodyKnotSprite == null)
+            {
+                bodyKnotSprite = Resources.Load<Sprite>("Rope_Body_Knot");
+            }
+
+            // Create dedicated 2D unlit rope material that renders transparent and vibrant
             if (lineRenderer != null)
             {
                 Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
@@ -79,19 +109,17 @@ namespace CutFreePets.Rope
                 if (shader != null)
                 {
                     mat = new Material(shader);
-                    Texture2D ropeTex = Resources.Load<Texture2D>("Rope_Braided_Albedo");
+                    Texture2D ropeTex = null;
 #if UNITY_EDITOR
-                    if (ropeTex == null)
-                    {
-                        ropeTex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Rope/Rope_Braided_Albedo.png");
-                    }
+                    ropeTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Rope/Rope_Braided_Albedo.png");
 #endif
+                    if (ropeTex == null) ropeTex = Resources.Load<Texture2D>("Rope_Braided_Albedo");
+
                     if (ropeTex != null)
                     {
                         ropeTex.wrapMode = TextureWrapMode.Repeat;
                         mat.mainTexture = ropeTex;
                     }
-                    // Natural warm twisted hemp rope color
                     mat.color = Color.white;
                 }
                 else if (ropeMaterial != null)
@@ -115,12 +143,11 @@ namespace CutFreePets.Rope
             lineRenderer.numCapVertices = 6;
             lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             lineRenderer.receiveShadows = false;
-            lineRenderer.sortingOrder = 6; // Behind cage front, in front of background
+            lineRenderer.sortingOrder = 8;
             lineRenderer.startWidth = baseThickness;
             lineRenderer.endWidth = baseThickness;
-            // Authentic Cut the Rope golden-brown twisted fiber tone
-            lineRenderer.startColor = new Color(0.92f, 0.76f, 0.52f, 1f);
-            lineRenderer.endColor = new Color(0.88f, 0.70f, 0.46f, 1f);
+            lineRenderer.startColor = Color.white;
+            lineRenderer.endColor = Color.white;
         }
 
         public void Initialize(VerletRope targetRope)
@@ -128,22 +155,78 @@ namespace CutFreePets.Rope
             rope = targetRope;
             if (rope != null && rope.Config != null)
             {
-                baseThickness = Mathf.Max(0.16f, rope.Config.baseWidth);
+                baseThickness = Mathf.Max(0.14f, rope.Config.baseWidth);
                 minStretchThicknessRatio = rope.Config.minStretchWidthFactor;
             }
-            CreateEndAccessories();
+            LoadDefaultAssetsIfMissing();
+
+            // Crucial: Only build fresh knots if this is an uncut original rope!
+            // Severed pieces inherit their physical knots via TransferKnotsToSevered.
+            if (rope != null && !rope.IsCut && bodyKnots.Count == 0)
+            {
+                RebuildBodyKnots();
+            }
         }
 
-        private void CreateEndAccessories()
+        public void RebuildBodyKnots()
         {
-            if (showEndKnot && knotSprite != null && endKnotInstance == null)
+            // Clean up existing knot instances
+            for (int i = 0; i < bodyKnots.Count; i++)
             {
-                endKnotInstance = new GameObject($"{gameObject.name}_EndKnot");
-                endKnotInstance.transform.parent = transform;
-                endKnotRenderer = endKnotInstance.AddComponent<SpriteRenderer>();
-                endKnotRenderer.sprite = knotSprite;
-                endKnotRenderer.sortingOrder = 7;
-                endKnotInstance.transform.localScale = Vector3.one * 0.38f;
+                if (bodyKnots[i].instance != null) Destroy(bodyKnots[i].instance);
+            }
+            bodyKnots.Clear();
+
+            if (knotCount <= 0 || bodyKnotSprite == null || rope == null || rope.Particles == null || rope.Particles.Count < 3) return;
+
+            var particles = rope.Particles;
+            for (int k = 0; k < knotCount; k++)
+            {
+                float fraction = (float)(k + 1) / (knotCount + 1);
+                int particleIndex = Mathf.Clamp(Mathf.RoundToInt(fraction * (particles.Count - 1)), 1, particles.Count - 2);
+                RopeParticle p = particles[particleIndex];
+
+                GameObject knotObj = new GameObject($"{gameObject.name}_Knot_{k + 1}");
+                knotObj.transform.parent = transform;
+                knotObj.transform.localScale = Vector3.one * knotScale;
+
+                SpriteRenderer sr = knotObj.AddComponent<SpriteRenderer>();
+                sr.sprite = bodyKnotSprite;
+                sr.sortingOrder = 9;
+                sr.color = Color.white;
+                if (lineRenderer != null && lineRenderer.sharedMaterial != null)
+                {
+                    sr.material = new Material(lineRenderer.sharedMaterial.shader);
+                }
+
+                bodyKnots.Add(new BodyKnot
+                {
+                    boundParticle = p,
+                    instance = knotObj,
+                    renderer = sr
+                });
+            }
+        }
+
+        /// <summary>
+        /// Transfers physical knots that belong to the severed lower piece, preventing duplication.
+        /// </summary>
+        public void TransferKnotsToSevered(RopeRenderer newRenderer, List<RopeParticle> bottomHalfNodes)
+        {
+            if (newRenderer == null || bottomHalfNodes == null) return;
+
+            for (int i = bodyKnots.Count - 1; i >= 0; i--)
+            {
+                var knot = bodyKnots[i];
+                if (knot == null || knot.instance == null || knot.boundParticle == null) continue;
+
+                if (bottomHalfNodes.Contains(knot.boundParticle))
+                {
+                    // Transfer ownership to severed piece
+                    knot.instance.transform.parent = newRenderer.transform;
+                    newRenderer.bodyKnots.Add(knot);
+                    bodyKnots.RemoveAt(i);
+                }
             }
         }
 
@@ -152,10 +235,10 @@ namespace CutFreePets.Rope
             if (source == null) return;
             baseThickness = source.baseThickness;
             minStretchThicknessRatio = source.minStretchThicknessRatio;
-            textureRepeatPerUnit = source.textureRepeatPerUnit;
             splineSubdivisions = source.splineSubdivisions;
-            showEndKnot = preserveEndKnot;
-            knotSprite = source.knotSprite;
+            knotCount = source.knotCount;
+            bodyKnotSprite = source.bodyKnotSprite;
+            knotScale = source.knotScale;
             ropeMaterial = source.ropeMaterial;
 
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
@@ -164,6 +247,7 @@ namespace CutFreePets.Rope
                 lineRenderer.sharedMaterial = source.lineRenderer.sharedMaterial;
                 lineRenderer.textureMode = LineTextureMode.Tile;
                 lineRenderer.alignment = LineAlignment.View;
+                lineRenderer.sortingOrder = 8;
             }
         }
 
@@ -173,7 +257,7 @@ namespace CutFreePets.Rope
 
             UpdateSplineMesh();
             UpdateTensionFeedback();
-            UpdateKnotPosition();
+            UpdateBodyKnots();
         }
 
         private void UpdateSplineMesh()
@@ -215,43 +299,56 @@ namespace CutFreePets.Rope
             lineRenderer.startWidth = currentThickness;
             lineRenderer.endWidth = currentThickness;
 
-            // Cut the Rope color tinting: Warm golden brown when normal, subtle reddish warning when strained
-            Color normalColor = rope.Config != null ? rope.Config.normalColor : new Color(0.92f, 0.78f, 0.58f);
-            Color strainColor = rope.Config != null ? rope.Config.highTensionColor : new Color(1f, 0.45f, 0.35f);
-            Color blendedColor = Color.Lerp(normalColor, strainColor, tensionNormalized);
-            blendedColor.a *= fadeAlpha;
+            // Pure white tint ensures 100% color consistency between rope and knot
+            Color ropeColor = Color.white;
+            ropeColor.a = fadeAlpha;
 
-            lineRenderer.startColor = blendedColor;
-            lineRenderer.endColor = blendedColor;
-
-            // Texture UV tiling along length
-            if (lineRenderer.material != null)
-            {
-                float totalLength = rope.CurrentTotalLength;
-                lineRenderer.material.mainTextureScale = new Vector2(totalLength * textureRepeatPerUnit, 1f);
-            }
+            lineRenderer.startColor = ropeColor;
+            lineRenderer.endColor = ropeColor;
         }
 
-        private void UpdateKnotPosition()
+        private void UpdateBodyKnots()
         {
-            if (!showEndKnot || endKnotInstance == null || rope.Particles == null || rope.Particles.Count < 2) return;
+            if (bodyKnots.Count == 0 || rope == null || rope.Particles == null || rope.Particles.Count < 2) return;
 
-            if (endKnotRenderer != null)
+            var particles = rope.Particles;
+            for (int k = 0; k < bodyKnots.Count; k++)
             {
-                Color kc = endKnotRenderer.color;
-                kc.a = fadeAlpha;
-                endKnotRenderer.color = kc;
-            }
+                var knot = bodyKnots[k];
+                if (knot == null || knot.instance == null || knot.boundParticle == null) continue;
 
-            Vector3 endPos = rope.Particles[rope.Particles.Count - 1].Position;
-            Vector3 prevPos = rope.Particles[rope.Particles.Count - 2].Position;
-            endKnotInstance.transform.position = new Vector3(endPos.x, endPos.y, endPos.z - 0.01f);
+                Vector3 pos = knot.boundParticle.Position;
+                knot.instance.transform.position = new Vector3(pos.x, pos.y, pos.z - 0.015f);
 
-            Vector3 dir = (endPos - prevPos).normalized;
-            if (dir.sqrMagnitude > 0.001f)
-            {
-                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                endKnotInstance.transform.rotation = Quaternion.Euler(0f, 0f, angle + 90f);
+                int idx = -1;
+                for (int pIdx = 0; pIdx < particles.Count; pIdx++)
+                {
+                    if (particles[pIdx] == knot.boundParticle)
+                    {
+                        idx = pIdx;
+                        break;
+                    }
+                }
+
+                Vector3 tangent = Vector3.down;
+                if (idx >= 0)
+                {
+                    Vector3 prev = idx > 0 ? particles[idx - 1].Position : knot.boundParticle.Position;
+                    Vector3 next = idx < particles.Count - 1 ? particles[idx + 1].Position : knot.boundParticle.Position;
+                    Vector3 diff = next - prev;
+                    if (diff.sqrMagnitude > 0.0001f) tangent = diff.normalized;
+                }
+
+                float angle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
+                knot.instance.transform.rotation = Quaternion.Euler(0f, 0f, angle + 90f);
+                knot.instance.transform.localScale = Vector3.one * knotScale;
+
+                if (knot.renderer != null)
+                {
+                    Color c = Color.white;
+                    c.a = fadeAlpha;
+                    knot.renderer.color = c;
+                }
             }
         }
 
@@ -270,7 +367,11 @@ namespace CutFreePets.Rope
 
         private void OnDestroy()
         {
-            if (endKnotInstance != null) Destroy(endKnotInstance);
+            for (int i = 0; i < bodyKnots.Count; i++)
+            {
+                if (bodyKnots[i].instance != null) Destroy(bodyKnots[i].instance);
+            }
+            bodyKnots.Clear();
         }
     }
 }

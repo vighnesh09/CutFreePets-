@@ -169,7 +169,17 @@ namespace CutFreePets.Editor
             // 3. Level 01 Elements Root
             GameObject levelRoot = new GameObject("Level_01_Root");
 
-            // 4. Ground Platform Prefab Instance
+            // 4. Cozy Forest Theme Background (Fills 9:16 vertical screen)
+            GameObject bgObj = new GameObject("Level_Background");
+            bgObj.transform.parent = levelRoot.transform;
+            bgObj.transform.position = new Vector3(0f, 0.6f, 0f);
+            SpriteRenderer bgRend = bgObj.AddComponent<SpriteRenderer>();
+            bgRend.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Level_BG_CozyForest.jpg");
+            bgRend.sortingOrder = -50;
+            // 9:16 Camera with size 5 has height 10 and width ~5.625
+            bgObj.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            // 5. Ground Platform (Sleek, slightly smaller width & height)
             GameObject platformPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Ground_Platform.prefab");
             GameObject platformObj = platformPrefab != null 
                 ? (GameObject)PrefabUtility.InstantiatePrefab(platformPrefab)
@@ -177,35 +187,37 @@ namespace CutFreePets.Editor
             platformObj.name = "Ground_Platform";
             platformObj.transform.parent = levelRoot.transform;
             platformObj.transform.position = new Vector3(0f, -3.85f, 0f);
+            platformObj.transform.localScale = new Vector3(0.92f, 0.92f, 1f); // Slightly smaller platform
 
-            // 5. Rope Hanger Peg Prefab Instance
+            // 6. Rope Hanger Peg Prefab Instance
             GameObject hangerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Rope/Rope_Hanger.prefab");
             GameObject hangerObj = hangerPrefab != null
                 ? (GameObject)PrefabUtility.InstantiatePrefab(hangerPrefab)
                 : CreateDefaultHanger();
             hangerObj.name = "TopMiddle_Hanger";
             hangerObj.transform.parent = levelRoot.transform;
-            hangerObj.transform.position = new Vector3(0f, 4.5f, 0f);
+            hangerObj.transform.position = new Vector3(0f, 4.3f, 0f);
             RopeHanger hangerComp = hangerObj.GetComponent<RopeHanger>() ?? hangerObj.AddComponent<RopeHanger>();
 
-            // 6. Pet Cage Prefab Instance
+            // 7. Pet Cage Prefab Instance (Slightly smaller, refined scale 0.85)
             GameObject cagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Pet_Cage.prefab");
             GameObject cageObj = cagePrefab != null
                 ? (GameObject)PrefabUtility.InstantiatePrefab(cagePrefab)
                 : CreateDefaultPetCage();
             cageObj.name = "Pet_Cage";
             cageObj.transform.parent = levelRoot.transform;
-            cageObj.transform.position = new Vector3(0f, 2.4f, 0f);
+            cageObj.transform.position = new Vector3(0f, 2.35f, 0f);
+            cageObj.transform.localScale = new Vector3(0.85f, 0.85f, 1f); // Refined, slightly smaller cage & cat
             PetCage petCageComp = cageObj.GetComponent<PetCage>() ?? cageObj.AddComponent<PetCage>();
 
-            // 7. Rope connection
+            // 8. Rope connection
             ConnectRope(hangerComp, petCageComp);
 
-            // 8. 3 Collectible Star Prefab Instances
+            // 9. 3 Collectible Star Prefab Instances
             Vector3[] starPositions = new Vector3[] {
-                new Vector3(0f, 0.10f, 0f),
-                new Vector3(0f, -1.15f, 0f),
-                new Vector3(0f, -2.40f, 0f)
+                new Vector3(0f, 0.15f, 0f),
+                new Vector3(0f, -1.05f, 0f),
+                new Vector3(0f, -2.25f, 0f)
             };
 
             for (int s = 0; s < 3; s++)
@@ -476,7 +488,7 @@ namespace CutFreePets.Editor
             floorRend.sprite = woodPlatformSprite;
             floorRend.color = Color.white;
             floorRend.sortingOrder = 4;
-            floorObj.transform.localScale = new Vector3(1.15f, 1.15f, 1f);
+            floorObj.transform.localScale = new Vector3(0.60f, 0.68f, 1f); // Compact platform leaving wide margins for level design
 
             BoxCollider2D floorCol = floorObj.AddComponent<BoxCollider2D>();
             floorCol.size = new Vector2(3.9f, 0.5f);
@@ -487,6 +499,7 @@ namespace CutFreePets.Editor
         private static GameObject CreateDefaultPetCage()
         {
             GameObject cageObj = new GameObject("Pet_Cage");
+            cageObj.transform.localScale = new Vector3(0.70f, 0.70f, 1f); // Compact cage leaving ample screen breathing room
             BoxCollider2D cageCol = cageObj.AddComponent<BoxCollider2D>();
             cageCol.size = new Vector2(3.38f, 3.1f);
             cageCol.offset = new Vector2(0f, -0.25f);
@@ -499,7 +512,7 @@ namespace CutFreePets.Editor
             catObj.transform.parent = petCage.PetSlot;
             catObj.transform.localPosition = Vector3.zero;
             catObj.transform.localRotation = Quaternion.identity;
-            catObj.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            catObj.transform.localScale = new Vector3(1.22f, 1.22f, 1f); // Prominent, clearly visible cat inside cage
 
             CatAnimationPlayer catPlayer = catObj.AddComponent<CatAnimationPlayer>();
             catPlayer.LoadFramesFromProject();
