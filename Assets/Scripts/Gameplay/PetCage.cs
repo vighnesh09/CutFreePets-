@@ -236,7 +236,7 @@ namespace CutFreePets.Gameplay
             if (rb2D != null) rb2D.simulated = false;
 
             // Clean up remaining rope pieces
-            VerletRope[] remainingRopes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            VerletRope[] remainingRopes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude);
             foreach (var r in remainingRopes)
             {
                 if (r != null && (r.name.Contains("SeveredPiece") || r.IsCut))

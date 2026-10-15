@@ -19,9 +19,6 @@ namespace CutFreePets.Cut
     {
         [Header("Blade Slash Trail")]
         [SerializeField] private TrailRenderer trailRenderer;
-        [SerializeField] private float trailTime = 0.2f;
-        [SerializeField] private float startWidth = 0.22f;
-        [SerializeField] private float endWidth = 0.02f;
         [SerializeField] private float minSwipeDistance = 0.015f;
 
         [Header("Colors & Glow")]
