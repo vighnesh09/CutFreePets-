@@ -44,6 +44,12 @@ namespace CutFreePets.Gameplay
             if (starSprite == null)
             {
                 starSprite = Resources.Load<Sprite>("Star_Collectible");
+                if (starSprite == null)
+                {
+                    Sprite[] allSprites = Resources.LoadAll<Sprite>("Star_Collectible");
+                    if (allSprites != null && allSprites.Length > 0)
+                        starSprite = allSprites[0];
+                }
             }
 
 #if UNITY_EDITOR

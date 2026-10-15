@@ -183,7 +183,7 @@ namespace CutFreePets.Editor
                 GameObject starObj = new GameObject($"Star_Collectible_0{s + 1}");
                 starObj.transform.parent = root.transform;
                 starObj.transform.position = starPositions[s];
-                starObj.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
+                starObj.transform.localScale = new Vector3(0.24f, 0.24f, 1f);
 
                 SpriteRenderer sr = starObj.AddComponent<SpriteRenderer>();
                 sr.sprite = starSpriteAsset;
