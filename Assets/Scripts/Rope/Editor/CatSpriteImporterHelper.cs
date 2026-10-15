@@ -29,7 +29,7 @@ namespace CutFreePets.Editor
             }
         }
 
-        [MenuItem("Cut Free Pets/Reimport Cat Sprites", false, 10)]
+        [MenuItem("Cut Free Pets/Legacy Builders/Reimport Cat Sprites", false, 102)]
         public static void ReimportCatSprites()
         {
             string[] folders = new string[] { 

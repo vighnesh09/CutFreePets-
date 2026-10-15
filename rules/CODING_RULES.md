@@ -34,3 +34,20 @@
   - Avoid LINQ extensions on raw arrays in non-LINQ scopes (`OfType` issues).
   - Use `Undo` operations and `EditorSceneManager.MarkSceneDirty` in Editor tools.
   - Safe fallback asset loading for multi-sprite textures (`AssetDatabase.LoadAllAssetsAtPath`).
+
+---
+
+## 5. File Size & Component Documentation Rules (CRITICAL)
+- **Strict File Size Limits**:
+  - NO code file (`.cs`) may exceed **1,000 lines** (absolute maximum limit: **1,200 lines**).
+  - Monolithic scripts are strictly forbidden. Any class doing multiple tasks must be decomposed into smaller, specialized components (Single Responsibility Principle).
+- **Mandatory Component Header Documentation**:
+  - Every class MUST begin with an informative `<summary>` header detailing:
+    1. Exact component name & responsibility
+    2. Which game object or feature it belongs to
+    3. What it does NOT handle (delegations)
+  - All public methods, events, and properties MUST be commented so any future developer or AI knows exactly what each piece does without guessing.
+- **Prefab-Driven Scene Architecture**:
+  - Scene files (`.unity`) MUST be lightweight composition stages consisting of reusable Prefabs (`.prefab`).
+  - Complex multi-element structures (like Victory Popups, Level Rigs, and UI sets) MUST live in `Assets/Prefabs/` as prefabs so editing a prefab updates every level simultaneously with zero risk of breaking scenes.
+

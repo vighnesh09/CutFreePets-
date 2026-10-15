@@ -37,6 +37,9 @@ namespace CutFreePets.Gameplay
             Instance = this;
 
             SaveManager.Load();
+            currentLevel = CutFreePets.Core.GameManager.CurrentLevelIndex > 0 
+                ? CutFreePets.Core.GameManager.CurrentLevelIndex 
+                : currentLevel;
             starsCollectedThisRun = 0;
         }
 

@@ -9,7 +9,7 @@ namespace CutFreePets.Editor
 {
     public static class VictoryPopupBuilder
     {
-        [MenuItem("Cut Free Pets/Build Victory Popup UI", false, 22)]
+        [MenuItem("Cut Free Pets/Legacy Builders/Build Victory Popup UI", false, 103)]
         public static void MenuBuildVictoryPopup()
         {
             CreateOrUpdateVictoryPopup(null);
@@ -23,6 +23,15 @@ namespace CutFreePets.Editor
             if (existingCanvas != null)
             {
                 Object.DestroyImmediate(existingCanvas);
+            }
+
+            string prefabPath = "Assets/Prefabs/UI/VictoryCanvas.prefab";
+            GameObject canvasPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (canvasPrefab != null)
+            {
+                GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(canvasPrefab, parent);
+                instance.name = "VictoryCanvas";
+                return instance;
             }
 
             // 1. Create Screen Space Overlay Canvas
@@ -223,6 +232,13 @@ namespace CutFreePets.Editor
 
             // Hide popup root initially so it only shows upon winning
             popupRoot.SetActive(false);
+
+            // Automatically save to Assets/Prefabs/UI/VictoryCanvas.prefab
+            if (!AssetDatabase.IsValidFolder("Assets/Prefabs/UI"))
+            {
+                AssetDatabase.CreateFolder("Assets/Prefabs", "UI");
+            }
+            PrefabUtility.SaveAsPrefabAssetAndConnect(canvasObj, prefabPath, InteractionMode.AutomatedAction);
 
             EditorUtility.SetDirty(canvasObj);
             return canvasObj;

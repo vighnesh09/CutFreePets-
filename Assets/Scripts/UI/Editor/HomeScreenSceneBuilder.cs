@@ -12,7 +12,7 @@ namespace CutFreePets.Editor
 {
     public static class HomeScreenSceneBuilder
     {
-        [MenuItem("Cut Free Pets/Build Complete Game (Home, Level Select & Level 1)", false, 0)]
+        [MenuItem("Cut Free Pets/Build & Setup/Rebuild All Scenes from Scratch", false, 50)]
         public static void BuildCompleteGame()
         {
             // 1. Open SampleScene and build Level 1 with Rope, Cage, Cat, Stars, and Victory Popup UI
@@ -61,7 +61,7 @@ namespace CutFreePets.Editor
             );
         }
 
-        [MenuItem("Cut Free Pets/Build Home Screen Scene", false, 21)]
+        [MenuItem("Cut Free Pets/Legacy Builders/Build Home Screen Scene", false, 105)]
         public static void BuildHomeScreenScene()
         {
             BuildHomeScreenSceneInternal(true);
@@ -518,14 +518,20 @@ namespace CutFreePets.Editor
                 scenes.Add(new EditorBuildSettingsScene(levelSelectPath, true)); // Index 1: LevelSelect
             }
 
+            string level1Path = "Assets/Scenes/Level_1.unity";
+            if (File.Exists(level1Path))
+            {
+                scenes.Add(new EditorBuildSettingsScene(level1Path, true)); // Index 2: Level_1
+            }
+
             string sampleScenePath = "Assets/Scenes/SampleScene.unity";
             if (File.Exists(sampleScenePath))
             {
-                scenes.Add(new EditorBuildSettingsScene(sampleScenePath, true)); // Index 2: SampleScene (Level 1)
+                scenes.Add(new EditorBuildSettingsScene(sampleScenePath, true));
             }
 
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log("<color=cyan>[HomeScreenSceneBuilder]</color> Build Settings updated with HomeScreen (0), LevelSelect (1), and SampleScene (2).");
+            Debug.Log("<color=cyan>[HomeScreenSceneBuilder]</color> Build Settings updated with HomeScreen (0), LevelSelect (1), Level_1 (2), and SampleScene.");
         }
     }
 }

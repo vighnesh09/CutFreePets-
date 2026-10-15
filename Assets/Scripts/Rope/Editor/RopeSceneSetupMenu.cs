@@ -9,7 +9,7 @@ namespace CutFreePets.Editor
 {
     public static class RopeSceneSetupMenu
     {
-        [MenuItem("Cut Free Pets/Setup 1-Rope Cage Level", false, 20)]
+        [MenuItem("Cut Free Pets/Legacy Builders/Setup 1-Rope Cage Level", false, 100)]
         public static void SetupHangingBoxDemo()
         {
             SetupHangingBoxDemoInternal(true);

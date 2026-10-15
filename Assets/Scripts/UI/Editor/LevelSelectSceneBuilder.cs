@@ -11,7 +11,7 @@ namespace CutFreePets.Editor
 {
     public static class LevelSelectSceneBuilder
     {
-        [MenuItem("Cut Free Pets/Build Level Select Scene", false, 23)]
+        [MenuItem("Cut Free Pets/Legacy Builders/Build Level Select Scene", false, 104)]
         public static void BuildLevelSelectScene()
         {
             BuildLevelSelectSceneInternal(true);

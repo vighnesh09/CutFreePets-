@@ -8,7 +8,7 @@ namespace CutFreePets.Editor
 {
     public static class PrefabExportUtility
     {
-        [MenuItem("Cut Free Pets/Export Core Prefabs from Scene", false, 10)]
+        [MenuItem("Cut Free Pets/Legacy Builders/Export Core Prefabs from Scene", false, 101)]
         public static void ExportCorePrefabs()
         {
             // Ensure directories exist
