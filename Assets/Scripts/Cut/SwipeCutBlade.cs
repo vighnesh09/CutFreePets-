@@ -19,7 +19,7 @@ namespace CutFreePets.Cut
     {
         [Header("Blade Slash Trail")]
         [SerializeField] private TrailRenderer trailRenderer;
-        [SerializeField] private float minSwipeDistance = 0.015f;
+        [SerializeField] private float minSwipeDistance = 0.04f;
 
         [Header("Colors & Glow")]
         [SerializeField] private Color bladeCoreColor = new Color(1f, 1f, 0.85f, 1f); // Bright white-gold core
@@ -159,8 +159,6 @@ namespace CutFreePets.Cut
             if (wasPressedThisFrame)
             {
                 StartSwipe(worldPos);
-                // Immediately check direct touch point slicing
-                SliceRopesAtPoint(worldPos);
             }
             else if (isPressed)
             {
@@ -193,14 +191,11 @@ namespace CutFreePets.Cut
             transform.position = worldPos;
             float distance = Vector3.Distance(worldPos, lastInputPos);
 
+            // Require an actual swipe movement across the screen
             if (distance >= minSwipeDistance)
             {
                 SliceRopesInPath(lastInputPos, worldPos);
                 lastInputPos = worldPos;
-            }
-            else
-            {
-                SliceRopesAtPoint(worldPos);
             }
         }
 
@@ -221,29 +216,11 @@ namespace CutFreePets.Cut
                 VerletRope rope = ropes[i];
                 if (rope == null || rope.IsCut) continue;
 
-                // Try segment intersection first, then high-tolerance point slice along the swipe vector
-                if (rope.CutBetweenPoints(pStart, pEnd) ||
-                    rope.CutAtPoint(pEnd, 0.65f) ||
-                    rope.CutAtPoint(Vector3.Lerp(pStart, pEnd, 0.5f), 0.65f))
+                // Authentic Cut the Rope slicing: Requires swipe line segment to geometrically cross the rope
+                if (rope.CutBetweenPoints(pStart, pEnd))
                 {
                     SpawnSnipSparks(pEnd);
-                    Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced by touch swipe!");
-                }
-            }
-        }
-
-        private void SliceRopesAtPoint(Vector3 point)
-        {
-            var ropes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < ropes.Length; i++)
-            {
-                VerletRope rope = ropes[i];
-                if (rope == null || rope.IsCut) continue;
-
-                if (rope.CutAtPoint(point, 0.65f))
-                {
-                    SpawnSnipSparks(point);
-                    Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced at touch point!");
+                    Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced cleanly by swipe!");
                 }
             }
         }
