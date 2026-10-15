@@ -75,3 +75,6 @@ crashlytics-build.properties
 # OS generated
 .DS_Store
 Thumbs.db
+
+# Temporary scratch and preview files
+scratch*

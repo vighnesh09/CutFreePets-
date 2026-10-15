@@ -33,7 +33,7 @@ namespace CutFreePets.Gameplay
         [SerializeField] private Sprite[] happyFrames;
 
         [Header("Visual Sizing")]
-        [SerializeField] private Vector2 spriteDisplaySize = new Vector2(1.22f, 1.22f);
+        [SerializeField] private Vector2 spriteDisplaySize = new Vector2(0.90f, 0.90f);
         [SerializeField] private Vector3 slotLocalOffset = Vector3.zero;
 
         private SpriteRenderer spriteRenderer;
@@ -77,8 +77,8 @@ namespace CutFreePets.Gameplay
             if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
             if (spriteRenderer == null) spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
 
-            // Layering: Behind cage front wire bars (sortingOrder 8), in front of background
-            spriteRenderer.sortingOrder = 7;
+            // Layering: When happy/rescued, render in front of all debris (14). When trapped, render inside cage (7).
+            spriteRenderer.sortingOrder = (currentMood == CatMood.Happy) ? 14 : 7;
             spriteRenderer.color = Color.white;
 
             transform.localScale = new Vector3(spriteDisplaySize.x, spriteDisplaySize.y, 1f);
@@ -112,15 +112,21 @@ namespace CutFreePets.Gameplay
 
         private void HandleCageLanded(Collision2D col)
         {
+            transform.localRotation = Quaternion.identity;
+            transform.rotation = Quaternion.identity;
             SetMood(CatMood.Happy);
         }
 
         public void SetMood(CatMood mood)
         {
-            if (currentMood == mood) return;
             currentMood = mood;
             currentFrameIndex = 0;
             frameTimer = 0f;
+            if (mood == CatMood.Happy)
+            {
+                transform.localRotation = Quaternion.identity;
+                transform.rotation = Quaternion.identity;
+            }
             UpdateSprite();
         }
 
@@ -143,6 +149,21 @@ namespace CutFreePets.Gameplay
             }
         }
 
+        private void LateUpdate()
+        {
+            if (currentMood == CatMood.Happy)
+            {
+                // Guarantee the rescued cat is always strictly upright and never tilted/crossed
+                transform.localRotation = Quaternion.identity;
+                transform.rotation = Quaternion.identity;
+                if (transform.parent != null)
+                {
+                    transform.parent.localRotation = Quaternion.identity;
+                    transform.parent.rotation = Quaternion.identity;
+                }
+            }
+        }
+
         private void UpdateSprite()
         {
             Sprite[] activeFrames = (currentMood == CatMood.Sad) ? sadFrames : happyFrames;
@@ -152,7 +173,7 @@ namespace CutFreePets.Gameplay
                 if (spriteRenderer != null)
                 {
                     spriteRenderer.sprite = activeFrames[currentFrameIndex];
-                    spriteRenderer.sortingOrder = 7;
+                    spriteRenderer.sortingOrder = (currentMood == CatMood.Happy) ? 14 : 7;
                 }
             }
         }

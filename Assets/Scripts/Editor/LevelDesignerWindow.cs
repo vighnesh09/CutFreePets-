@@ -117,6 +117,16 @@ namespace CutFreePets.Editor
                 AddPlatformToScene();
             }
 
+            if (GUILayout.Button("🛝 Add Sloped Slide Ramp to Scene", GUILayout.Height(28)))
+            {
+                AddSlopedSlideToScene();
+            }
+
+            if (GUILayout.Button("🪵 Add Horizontal Support Plank to Scene", GUILayout.Height(28)))
+            {
+                AddHorizontalSupportPlankToScene();
+            }
+
             EditorGUILayout.Space(15);
             GUILayout.Label("4. Clean & Optimize Level 1 Scene", EditorStyles.boldLabel);
             if (GUILayout.Button("✨ Rebuild Level 1 from Modular Prefabs", GUILayout.Height(30)))
@@ -512,7 +522,7 @@ namespace CutFreePets.Editor
             catObj.transform.parent = petCage.PetSlot;
             catObj.transform.localPosition = Vector3.zero;
             catObj.transform.localRotation = Quaternion.identity;
-            catObj.transform.localScale = new Vector3(1.22f, 1.22f, 1f); // Prominent, clearly visible cat inside cage
+            catObj.transform.localScale = new Vector3(0.90f, 0.90f, 1f); // Balanced, cute cat inside cage
 
             CatAnimationPlayer catPlayer = catObj.AddComponent<CatAnimationPlayer>();
             catPlayer.LoadFramesFromProject();
@@ -550,6 +560,50 @@ namespace CutFreePets.Editor
             Undo.RegisterCreatedObjectUndo(platform, "Add Ground Platform");
             platform.transform.position = new Vector3(0f, -3.85f, 0f);
             Selection.activeGameObject = platform;
+        }
+
+        public static void AddSlopedSlideToScene()
+        {
+            GameObject slidePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Obstacle_Sloped_Slide.prefab");
+            GameObject slide = slidePrefab != null 
+                ? (GameObject)PrefabUtility.InstantiatePrefab(slidePrefab)
+                : CreateDefaultSlopedSlide();
+            Undo.RegisterCreatedObjectUndo(slide, "Add Sloped Slide Ramp");
+            slide.transform.position = SceneView.lastActiveSceneView != null 
+                ? SceneView.lastActiveSceneView.camera.transform.position + new Vector3(0f, 0f, 10f)
+                : new Vector3(-0.95f, -2.75f, 0f);
+            Selection.activeGameObject = slide;
+        }
+
+        private static GameObject CreateDefaultSlopedSlide()
+        {
+            GameObject obj = new GameObject("Obstacle_Sloped_Slide");
+            obj.transform.localScale = new Vector3(0.68f, 0.68f, 1f);
+            ObstacleSlopedSlide comp = obj.AddComponent<ObstacleSlopedSlide>();
+            comp.Direction = SlopeDirection.LeftToRight;
+            comp.ApplyConfiguration();
+            return obj;
+        }
+
+        public static void AddHorizontalSupportPlankToScene()
+        {
+            GameObject plank = new GameObject("Obstacle_Horizontal_Plank");
+            plank.transform.localScale = new Vector3(0.65f, 0.65f, 1f);
+            SpriteRenderer sr = plank.AddComponent<SpriteRenderer>();
+            sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Obstacle_Slide_Ramp.png");
+            sr.sortingOrder = 5;
+
+            BoxCollider2D boxCol = plank.AddComponent<BoxCollider2D>();
+            boxCol.size = new Vector2(4.75f, 0.72f);
+            boxCol.offset = new Vector2(0f, -0.02f);
+            PhysicsMaterial2D slideMat = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>("Assets/Settings/Smooth_Slide_Material.physicsMaterial2D");
+            if (slideMat != null) boxCol.sharedMaterial = slideMat;
+
+            Undo.RegisterCreatedObjectUndo(plank, "Add Horizontal Support Plank");
+            plank.transform.position = SceneView.lastActiveSceneView != null 
+                ? SceneView.lastActiveSceneView.camera.transform.position + new Vector3(0f, 0f, 10f)
+                : new Vector3(0f, -2.0f, 0f);
+            Selection.activeGameObject = plank;
         }
 
         [MenuItem("Cut Free Pets/Sync All Level Scenes in Build Settings", false, 30)]

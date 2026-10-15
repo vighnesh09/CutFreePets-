@@ -61,10 +61,9 @@ namespace CutFreePets.Gameplay
             }
             else if (isFreeFalling)
             {
-                // Natural aerodynamic stabilization torque during free-fall
-                float targetFallTilt = Mathf.Clamp(-rb2D.linearVelocity.x * inAirTiltFactor, -18f, 18f);
-                float angleDelta = Mathf.DeltaAngle(rb2D.rotation, targetFallTilt);
-                rb2D.AddTorque(angleDelta * 0.25f, ForceMode2D.Force);
+                // Natural upright stabilization: gently rights the pet cage so it falls, slides, and lands gracefully upright
+                float angleDelta = Mathf.DeltaAngle(rb2D.rotation, 0f);
+                rb2D.AddTorque(angleDelta * 0.8f - rb2D.angularVelocity * 0.20f, ForceMode2D.Force);
             }
         }
     }

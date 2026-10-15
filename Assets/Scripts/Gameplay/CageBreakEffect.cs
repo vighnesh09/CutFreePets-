@@ -86,32 +86,37 @@ namespace CutFreePets.Gameplay
         /// <summary>
         /// Executes the full shattering & rescue sequence when cage lands.
         /// </summary>
-        public void PlayBreakSequence(Vector3 cagePos, Quaternion cageRot, float platformTopY, Transform petSlot)
+        /// <summary>
+        /// Executes the full shattering & rescue sequence when cage lands.
+        /// </summary>
+        public void PlayBreakSequence(Vector3 cagePos, Quaternion cageRot, float platformTopY, Transform petSlot, Collider2D platformCollider = null)
         {
             EnsureDebrisSpritesLoaded();
 
-            // 1. Spawning anatomical shattered debris pieces
+            // 1. Spawning anatomical shattered debris pieces (bursting OUTWARD away from the pet)
             if (enableBreakShatter)
             {
-                // Top Handle: pops up and tumbles
-                SpawnDebrisPiece(topHandleSprite, cagePos + new Vector3(0f, 1.45f, 0f), cageRot, 0.70f,
-                    new Vector2(UnityEngine.Random.Range(-0.4f, 0.4f), debrisExplodeForce), UnityEngine.Random.Range(180f, 260f));
+                // Top Handle: bursts strongly up and to the side AWAY from the cat so it never crosses the cat's body
+                float handleDirX = (UnityEngine.Random.value > 0.5f) ? UnityEngine.Random.Range(3.0f, 4.2f) : UnityEngine.Random.Range(-4.2f, -3.0f);
+                SpawnDebrisPiece(topHandleSprite, cagePos + new Vector3(0f, 1.35f, 0f), Quaternion.identity, 0.65f,
+                    new Vector2(handleDirX, debrisExplodeForce * 1.1f), handleDirX > 0 ? 300f : -300f);
 
                 // Left Pillar: bursts outward left and up
-                SpawnDebrisPiece(leftPillarSprite, cagePos + new Vector3(-0.95f, 0.10f, 0f), cageRot, 0.60f,
-                    new Vector2(-2.8f, 2.0f), -320f);
+                SpawnDebrisPiece(leftPillarSprite, cagePos + new Vector3(-0.95f, 0.10f, 0f), Quaternion.identity, 0.55f,
+                    new Vector2(-3.8f, 2.8f), -340f);
 
                 // Right Pillar: bursts outward right and up
-                SpawnDebrisPiece(rightPillarSprite, cagePos + new Vector3(0.95f, 0.10f, 0f), cageRot, 0.60f,
-                    new Vector2(2.8f, 2.0f), 320f);
+                SpawnDebrisPiece(rightPillarSprite, cagePos + new Vector3(0.95f, 0.10f, 0f), Quaternion.identity, 0.55f,
+                    new Vector2(3.8f, 2.8f), 340f);
 
-                // Door Bars: pops forward/down
-                SpawnDebrisPiece(doorBarsSprite, cagePos + new Vector3(0f, 0.05f, 0f), cageRot, 0.60f,
-                    new Vector2(UnityEngine.Random.Range(-0.6f, 0.6f), 1.8f), 180f);
+                // Door Bars: bursts outward opposite to handle
+                float doorDirX = (handleDirX > 0) ? UnityEngine.Random.Range(-3.6f, -2.4f) : UnityEngine.Random.Range(2.4f, 3.6f);
+                SpawnDebrisPiece(doorBarsSprite, cagePos + new Vector3(0f, 0.05f, 0f), Quaternion.identity, 0.55f,
+                    new Vector2(doorDirX, 2.6f), doorDirX > 0 ? 220f : -220f);
 
-                // Base Tray: drops to platform surface
-                SpawnDebrisPiece(baseTraySprite, cagePos + new Vector3(0f, -1.35f, 0f), cageRot, 0.65f,
-                    new Vector2(UnityEngine.Random.Range(-0.3f, 0.3f), 0.8f), 60f);
+                // Base Tray: drops down away to platform base
+                SpawnDebrisPiece(baseTraySprite, cagePos + new Vector3(0f, -1.25f, 0f), Quaternion.identity, 0.60f,
+                    new Vector2(UnityEngine.Random.Range(-1.6f, 1.6f), -1.2f), 80f);
 
                 // 2. 8 Golden Star Sparkles in a 360 degree radial burst
                 if (sparkSprite != null)
@@ -125,32 +130,50 @@ namespace CutFreePets.Gameplay
                 }
             }
 
+            // Determine safe horizontal landing spot on platform - ALWAYS center the rescued cat squarely on the platform!
+            float targetCatX = cagePos.x;
+            if (platformCollider != null)
+            {
+                targetCatX = platformCollider.bounds.center.x;
+            }
+
             // 3. Ground contact shadow on landing platform
             if (groundShadowSprite != null)
             {
                 GameObject shadowObj = new GameObject("Cat_Ground_Shadow");
-                shadowObj.transform.position = new Vector3(cagePos.x, platformTopY + 0.02f, 0f);
-                shadowObj.transform.localScale = new Vector3(1.7f, 0.42f, 1f);
+                shadowObj.transform.position = new Vector3(targetCatX, platformTopY + 0.02f, 0f);
+                shadowObj.transform.rotation = Quaternion.identity;
+                shadowObj.transform.localScale = new Vector3(1.25f, 0.32f, 1f);
 
                 SpriteRenderer srShadow = shadowObj.AddComponent<SpriteRenderer>();
                 srShadow.sprite = groundShadowSprite;
                 srShadow.color = new Color(0f, 0f, 0f, 0.45f);
-                srShadow.sortingOrder = 4;
+                srShadow.sortingOrder = 5;
             }
 
-            // 4. Firmly ground pet onto platform with no floating
+            // 4. Firmly ground pet onto platform upright (no tilt, no crossing, paws on wood)
             if (petSlot != null)
             {
+                // Preserve exact world scale from inside the cage so the cat never unexpectedly balloons or pops larger
+                Vector3 savedWorldScale = petSlot.lossyScale;
                 petSlot.SetParent(null, true);
-                float targetCatY = platformTopY + 0.86f;
-                Vector3 targetGroundedPos = new Vector3(cagePos.x, targetCatY, 0f);
+                petSlot.localScale = savedWorldScale;
+
+                float targetCatY = platformTopY + 0.60f;
+                Vector3 targetGroundedPos = new Vector3(targetCatX, targetCatY, 0f);
                 petSlot.position = targetGroundedPos;
+                petSlot.rotation = Quaternion.identity;
+                petSlot.localRotation = Quaternion.identity;
 
                 CatAnimationPlayer cat = petSlot.GetComponentInChildren<CatAnimationPlayer>();
                 if (cat != null)
                 {
+                    cat.transform.localPosition = Vector3.zero;
+                    cat.transform.localRotation = Quaternion.identity;
+                    cat.transform.rotation = Quaternion.identity;
+                    cat.transform.localScale = new Vector3(0.90f, 0.90f, 1f);
                     cat.SetMood(CatMood.Happy);
-                    StartCoroutine(GroundedLandingBounce(cat.transform, targetGroundedPos));
+                    StartCoroutine(GroundedLandingBounce(cat.transform, petSlot, targetGroundedPos));
                 }
             }
 
@@ -169,14 +192,15 @@ namespace CutFreePets.Gameplay
 
             SpriteRenderer sr = debObj.AddComponent<SpriteRenderer>();
             sr.sprite = spr;
-            sr.sortingOrder = 9;
+            // Sorting order 6: Always behind the cat (14), in front of background (0)
+            sr.sortingOrder = 6;
 
             Rigidbody2D debRb = debObj.AddComponent<Rigidbody2D>();
             debRb.gravityScale = 2.2f;
             debRb.linearVelocity = velocity;
             debRb.angularVelocity = angularVel;
 
-            StartCoroutine(FadeAndDestroyDebris(debObj, sr, 0.85f, 0.45f));
+            StartCoroutine(FadeAndDestroyDebris(debObj, sr, 0.45f, 0.35f));
         }
 
         private void SpawnSparkPiece(Sprite spr, Vector3 startPos, Vector2 velocity)
@@ -200,9 +224,9 @@ namespace CutFreePets.Gameplay
             StartCoroutine(FadeAndDestroyDebris(sparkObj, ssr, 0.45f, 0.35f));
         }
 
-        private IEnumerator GroundedLandingBounce(Transform catTransform, Vector3 groundPos)
+        private IEnumerator GroundedLandingBounce(Transform catTransform, Transform slotTransform, Vector3 groundPos)
         {
-            Vector3 baseScale = catTransform != null ? catTransform.localScale : new Vector3(1.22f, 1.22f, 1f);
+            Vector3 baseScale = catTransform != null ? catTransform.localScale : new Vector3(0.90f, 0.90f, 1f);
             float duration = 0.42f;
             float elapsed = 0f;
 
@@ -213,6 +237,13 @@ namespace CutFreePets.Gameplay
                 float t = Mathf.Clamp01(elapsed / duration);
 
                 catTransform.position = groundPos;
+                catTransform.rotation = Quaternion.identity;
+                catTransform.localRotation = Quaternion.identity;
+                if (slotTransform != null)
+                {
+                    slotTransform.position = groundPos;
+                    slotTransform.rotation = Quaternion.identity;
+                }
 
                 float squashWave = Mathf.Sin(t * Mathf.PI * 2f) * Mathf.Exp(-t * 3.5f);
                 float scaleX = baseScale.x * (1f + squashWave * 0.14f);
@@ -225,7 +256,14 @@ namespace CutFreePets.Gameplay
             if (catTransform != null)
             {
                 catTransform.position = groundPos;
+                catTransform.rotation = Quaternion.identity;
+                catTransform.localRotation = Quaternion.identity;
                 catTransform.localScale = baseScale;
+            }
+            if (slotTransform != null)
+            {
+                slotTransform.position = groundPos;
+                slotTransform.rotation = Quaternion.identity;
             }
         }
 

@@ -1504,7 +1504,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.22, y: 1.22, z: 1}
+  m_LocalScale: {x: 0.9, y: 0.9, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1610212762}
@@ -1646,7 +1646,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 4a7d6b561fe24dbc8b400ef17fc51209, type: 3}
   - {fileID: 21300000, guid: cdabb606aa5844cfa056d1d235541996, type: 3}
   - {fileID: 21300000, guid: aaa412c4d6714b81add0f70fba8202ac, type: 3}
-  spriteDisplaySize: {x: 1.22, y: 1.22}
+  spriteDisplaySize: {x: 0.9, y: 0.9}
   slotLocalOffset: {x: 0, y: 0, z: 0}
 --- !u!212 &669533783
 SpriteRenderer:
@@ -2667,7 +2667,7 @@ Transform:
   m_GameObject: {fileID: 1610212761}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.05, z: 0}
+  m_LocalPosition: {x: 0, y: -0.21, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

@@ -145,7 +145,7 @@ namespace CutFreePets.Editor
             catObj.transform.parent = petCage.PetSlot;
             catObj.transform.localPosition = Vector3.zero;
             catObj.transform.localRotation = Quaternion.identity;
-            catObj.transform.localScale = new Vector3(1.22f, 1.22f, 1f); // Enlarged, prominent cat inside cage
+            catObj.transform.localScale = new Vector3(0.90f, 0.90f, 1f); // Balanced, cute cat inside cage
 
             CatAnimationPlayer catPlayer = catObj.AddComponent<CatAnimationPlayer>();
             catPlayer.LoadFramesFromProject();

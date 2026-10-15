@@ -24,7 +24,7 @@ namespace CutFreePets.Gameplay
         [SerializeField] private float cageMass = 1.5f;
         [SerializeField] private float gravityScale = 1.35f;
         [SerializeField] private float linearDrag = 0.15f;
-        [SerializeField] private float angularDrag = 0.5f;
+        [SerializeField] private float angularDrag = 2.0f;
 
         [Header("Cage Dimensions")]
         [SerializeField] private Vector2 cageSize = new Vector2(3.22f, 3.31f);
@@ -101,6 +101,11 @@ namespace CutFreePets.Gameplay
             {
                 boxCol.size = cageSize;
                 boxCol.offset = new Vector2(0f, 0f);
+                boxCol.edgeRadius = 0.08f;
+                if (boxCol.sharedMaterial == null)
+                {
+                    boxCol.sharedMaterial = new PhysicsMaterial2D("CageSlideMat") { friction = 0.02f, bounciness = 0.05f };
+                }
             }
         }
 
@@ -140,13 +145,13 @@ namespace CutFreePets.Gameplay
                 if (existing != null)
                 {
                     petSlot = existing;
-                    if (!isLanded) petSlot.localPosition = new Vector3(0f, -0.05f, 0f);
+                    if (!isLanded) petSlot.localPosition = new Vector3(0f, -0.21f, 0f);
                 }
                 else
                 {
                     GameObject slotObj = new GameObject("Pet_Slot");
                     slotObj.transform.parent = transform;
-                    slotObj.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+                    slotObj.transform.localPosition = new Vector3(0f, -0.21f, 0f);
                     slotObj.transform.localRotation = Quaternion.identity;
                     slotObj.transform.localScale = Vector3.one;
                     petSlot = slotObj.transform;
@@ -154,7 +159,7 @@ namespace CutFreePets.Gameplay
             }
             else if (!isLanded)
             {
-                petSlot.localPosition = new Vector3(0f, -0.05f, 0f);
+                petSlot.localPosition = new Vector3(0f, -0.21f, 0f);
             }
         }
 
@@ -184,11 +189,19 @@ namespace CutFreePets.Gameplay
                 hangingPhysics.UpdateSway(isLanded, isFreeFalling, connectedRopes.Count);
             }
 
-            // Abyss safety failsafe only if cage misses all platforms and drops into the void below -5.50f
-            if (isFreeFalling && transform.position.y <= -5.50f)
+            // Abyss failsafe: if cage misses platforms and drops into the void below -5.50f, fail and restart
+            if (isFreeFalling && !isLanded && transform.position.y <= -5.50f)
             {
-                BreakAndFreePet();
+                isLanded = true;
+                Debug.Log("<color=orange>[PetCage]</color> Cage dropped into abyss! Level Failed. Restarting...");
+                StartCoroutine(RestartAfterDelay(0.65f));
             }
+        }
+
+        private IEnumerator RestartAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            CutFreePets.Core.GameManager.RestartCurrentLevel();
         }
 
         private void FixedUpdate()
@@ -225,14 +238,6 @@ namespace CutFreePets.Gameplay
             if (connectedRopes.Count == 0 && !isFreeFalling && !isLanded)
             {
                 isFreeFalling = true;
-
-                // Subtle natural angular impulse on cut so it drops with organic weight
-                if (rb2D != null && rb2D.bodyType == RigidbodyType2D.Dynamic)
-                {
-                    float cutTorque = UnityEngine.Random.Range(-1.2f, 1.2f);
-                    rb2D.AddTorque(cutTorque, ForceMode2D.Impulse);
-                }
-
                 OnAllRopesCut?.Invoke();
                 Debug.Log("<color=cyan>[PetCage]</color> ALL ROPES CUT! Cage dropped into free-fall.");
             }
@@ -270,21 +275,27 @@ namespace CutFreePets.Gameplay
                 }
             }
 
-            // Determine platform surface height
+            // Determine platform surface height and hit collider
             float platformTopY = -3.60f;
+            Collider2D hitCollider = null;
             if (collision != null && collision.collider != null)
             {
+                hitCollider = collision.collider;
                 platformTopY = collision.collider.bounds.max.y;
             }
             else
             {
                 RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 8f);
-                if (hit.collider != null) platformTopY = hit.collider.bounds.max.y;
+                if (hit.collider != null)
+                {
+                    hitCollider = hit.collider;
+                    platformTopY = hit.collider.bounds.max.y;
+                }
             }
 
             // Execute modular shatter and pet grounding effect
             if (breakEffect == null) breakEffect = GetComponent<CageBreakEffect>() ?? gameObject.AddComponent<CageBreakEffect>();
-            breakEffect.PlayBreakSequence(transform.position, transform.rotation, platformTopY, petSlot);
+            breakEffect.PlayBreakSequence(transform.position, transform.rotation, platformTopY, petSlot, hitCollider);
 
             OnLandedOnGoal?.Invoke(collision);
         }
@@ -301,6 +312,15 @@ namespace CutFreePets.Gameplay
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
+            // Do not break when sliding or colliding with non-hazard obstacles like ramps or slides
+            if (collision.gameObject.name.Contains("Ramp") || 
+                collision.gameObject.name.Contains("Slope") || 
+                collision.gameObject.name.Contains("Slide") ||
+                collision.gameObject.name.Contains("Obstacle"))
+            {
+                return;
+            }
+
             if (collision.gameObject.name.Contains("Platform") || collision.gameObject.CompareTag("Finish"))
             {
                 BreakAndFreePet(collision);
