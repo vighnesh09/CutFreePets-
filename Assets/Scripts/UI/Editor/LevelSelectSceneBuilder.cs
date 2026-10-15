@@ -32,7 +32,7 @@ namespace CutFreePets.Editor
             }
 
             // Clean existing scene
-            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include))
             {
                 Object.DestroyImmediate(go);
             }

@@ -16,14 +16,14 @@ namespace CutFreePets.Rope
 
         [Header("Braided Texture & Width")]
         [Tooltip("Base thickness of the rope when relaxed.")]
-        [SerializeField] private float baseThickness = 0.075f;
+        [SerializeField] private float baseThickness = 0.18f;
 
         [Tooltip("Thickness ratio when under maximum tension (gets thinner under tension).")]
         [Range(0.3f, 1f)]
-        [SerializeField] private float minStretchThicknessRatio = 0.65f;
+        [SerializeField] private float minStretchThicknessRatio = 0.72f;
 
         [Tooltip("Number of braided texture repetitions per world unit.")]
-        [SerializeField] private float textureRepeatPerUnit = 5.5f;
+        [SerializeField] private float textureRepeatPerUnit = 2.4f;
 
         [Header("End Knot Visuals")]
         [Tooltip("Show tied knot ring at the end anchor.")]
@@ -53,6 +53,11 @@ namespace CutFreePets.Rope
 
         private void LoadDefaultAssetsIfMissing()
         {
+            if (knotSprite == null)
+            {
+                knotSprite = Resources.Load<Sprite>("Knot_Ring_Albedo");
+            }
+
 #if UNITY_EDITOR
             if (ropeMaterial == null)
             {
@@ -61,22 +66,43 @@ namespace CutFreePets.Rope
             if (knotSprite == null)
             {
                 knotSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Knot_Ring_Albedo.png");
-                if (knotSprite == null)
-                {
-                    foreach (var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Art/Rope/Knot_Ring_Albedo.png"))
-                    {
-                        if (asset is Sprite s)
-                        {
-                            knotSprite = s;
-                            break;
-                        }
-                    }
-                }
             }
 #endif
-            if (ropeMaterial != null && lineRenderer != null)
+            // Create a reliable, dedicated runtime rope material that never turns pink
+            if (lineRenderer != null)
             {
-                lineRenderer.material = ropeMaterial;
+                Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                             ?? Shader.Find("Sprites/Default")
+                             ?? Shader.Find("Universal Render Pipeline/Unlit");
+
+                Material mat = null;
+                if (shader != null)
+                {
+                    mat = new Material(shader);
+                    Texture2D ropeTex = Resources.Load<Texture2D>("Rope_Braided_Albedo");
+#if UNITY_EDITOR
+                    if (ropeTex == null)
+                    {
+                        ropeTex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Rope/Rope_Braided_Albedo.png");
+                    }
+#endif
+                    if (ropeTex != null)
+                    {
+                        ropeTex.wrapMode = TextureWrapMode.Repeat;
+                        mat.mainTexture = ropeTex;
+                    }
+                    // Natural warm twisted hemp rope color
+                    mat.color = Color.white;
+                }
+                else if (ropeMaterial != null)
+                {
+                    mat = ropeMaterial;
+                }
+
+                if (mat != null)
+                {
+                    lineRenderer.material = mat;
+                }
             }
         }
 
@@ -89,6 +115,12 @@ namespace CutFreePets.Rope
             lineRenderer.numCapVertices = 6;
             lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             lineRenderer.receiveShadows = false;
+            lineRenderer.sortingOrder = 6; // Behind cage front, in front of background
+            lineRenderer.startWidth = baseThickness;
+            lineRenderer.endWidth = baseThickness;
+            // Authentic Cut the Rope golden-brown twisted fiber tone
+            lineRenderer.startColor = new Color(0.92f, 0.76f, 0.52f, 1f);
+            lineRenderer.endColor = new Color(0.88f, 0.70f, 0.46f, 1f);
         }
 
         public void Initialize(VerletRope targetRope)
@@ -96,7 +128,7 @@ namespace CutFreePets.Rope
             rope = targetRope;
             if (rope != null && rope.Config != null)
             {
-                baseThickness = rope.Config.baseWidth;
+                baseThickness = Mathf.Max(0.16f, rope.Config.baseWidth);
                 minStretchThicknessRatio = rope.Config.minStretchWidthFactor;
             }
             CreateEndAccessories();

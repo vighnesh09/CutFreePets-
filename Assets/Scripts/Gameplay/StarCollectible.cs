@@ -32,13 +32,19 @@ namespace CutFreePets.Gameplay
         private void Awake()
         {
             col2D = GetComponent<CircleCollider2D>();
+            if (col2D == null) col2D = gameObject.AddComponent<CircleCollider2D>();
             col2D.isTrigger = true;
             col2D.radius = 0.45f;
 
             if (starRenderer == null) starRenderer = GetComponent<SpriteRenderer>();
             if (starRenderer == null) starRenderer = gameObject.AddComponent<SpriteRenderer>();
 
-            starRenderer.sortingOrder = 8; // In front of background and cage back
+            starRenderer.sortingOrder = 15; // In front of background and cage
+
+            if (starSprite == null)
+            {
+                starSprite = Resources.Load<Sprite>("Star_Collectible");
+            }
 
 #if UNITY_EDITOR
             if (starSprite == null)
@@ -47,6 +53,16 @@ namespace CutFreePets.Gameplay
             }
 #endif
             if (starSprite != null) starRenderer.sprite = starSprite;
+
+            // Ensure proper unlit sprite shader under URP
+            if (starRenderer.sharedMaterial == null || starRenderer.sharedMaterial.shader.name.Contains("Error") || starRenderer.sharedMaterial.shader.name.Contains("Hidden"))
+            {
+                Shader unlit = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+                if (unlit != null)
+                {
+                    starRenderer.material = new Material(unlit);
+                }
+            }
 
             startPos = transform.position;
             seed = UnityEngine.Random.Range(0f, 10f);

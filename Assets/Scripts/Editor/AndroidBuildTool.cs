@@ -20,7 +20,7 @@ namespace CutFreePets.Editor
             }
 
             // 2. Set Bundle Identifier & App Name
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.cutfreegames.cutfreepets");
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.cutfreegames.cutfreepets");
             PlayerSettings.productName = "Cut Free Pets";
             PlayerSettings.companyName = "CutFreeGames";
 
@@ -35,6 +35,17 @@ namespace CutFreePets.Editor
             EditorUserBuildSettings.buildAppBundle = false;
 
             // 5. Gather Scenes in Build Settings
+            // Ensure SampleScene has freshly constructed stars, ropes, and materials
+            try
+            {
+                var curScene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+                if (curScene.path == "Assets/Scenes/SampleScene.unity")
+                {
+                    CutFreePets.Editor.RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
+                }
+            }
+            catch (System.Exception) {}
+
             string[] scenes = new string[]
             {
                 "Assets/Scenes/HomeScreen.unity",

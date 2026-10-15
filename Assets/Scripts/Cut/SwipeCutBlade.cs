@@ -39,42 +39,60 @@ namespace CutFreePets.Cut
             ConfigureBladeTrail();
         }
 
+        private void Start()
+        {
+            ConfigureBladeTrail();
+        }
+
         private void ConfigureBladeTrail()
         {
             if (trailRenderer == null) return;
 
-            trailRenderer.time = trailTime;
-            trailRenderer.startWidth = startWidth;
-            trailRenderer.endWidth = endWidth;
+            // Fruit Ninja style: very fast, sleek, clean katana slash
+            trailRenderer.time = 0.12f; // Snappy, clean cut lifetime
             trailRenderer.emitting = false;
             trailRenderer.alignment = LineAlignment.View;
             trailRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             trailRenderer.receiveShadows = false;
             trailRenderer.sortingOrder = 50; // Ensure trail renders above backgrounds, ropes, and UI
+            trailRenderer.numCornerVertices = 10;
+            trailRenderer.numCapVertices = 10;
 
-            // Assign default particle/trail material if none assigned
-            if (trailRenderer.material == null || trailRenderer.sharedMaterial == null)
+            // Fruit Ninja Katana Blade Width Profile:
+            // Razor leading tip (0.0), quick slender sharp blade body, fading to needle tip (1.0)
+            AnimationCurve curve = new AnimationCurve();
+            curve.AddKey(new Keyframe(0.00f, 0.40f, 0.0f, 0.0f));  // Crisp sharp cutting point
+            curve.AddKey(new Keyframe(0.15f, 0.70f, 0.0f, 0.0f));  // Slender blade edge
+            curve.AddKey(new Keyframe(0.50f, 0.40f, -0.6f, -0.6f));// Thinning taper
+            curve.AddKey(new Keyframe(1.00f, 0.00f, -0.4f, 0.0f)); // Vanishing needle point
+            trailRenderer.widthCurve = curve;
+            trailRenderer.widthMultiplier = 0.14f; // Sleek, thin professional blade (not chunky)
+
+            // Assign high quality 2D Unlit shader for URP to prevent any magenta/pink artifacts
+            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                         ?? Shader.Find("Sprites/Default")
+                         ?? Shader.Find("Universal Render Pipeline/Unlit");
+
+            if (shader != null)
             {
-                Shader shader = Shader.Find("Sprites/Default");
-                if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
-                if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-                if (shader != null)
-                {
-                    trailRenderer.material = new Material(shader);
-                }
+                Material bladeMat = new Material(shader);
+                bladeMat.color = Color.white;
+                trailRenderer.material = bladeMat;
             }
 
-            // Cut the Rope luminous glowing swipe gradient
+            // Fruit Ninja authentic gleaming katana steel / ice slash:
+            // Pure piercing white blade edge -> Crisp ice-silver glow -> Translucent cyan-silver fade (zero fire/orange)
             Gradient gradient = new Gradient();
             gradient.SetKeys(
                 new GradientColorKey[] {
-                    new GradientColorKey(bladeCoreColor, 0.0f),
-                    new GradientColorKey(bladeGlowColor, 0.5f),
-                    new GradientColorKey(new Color(1.0f, 0.25f, 0.05f), 1.0f)
+                    new GradientColorKey(new Color(1f, 1f, 1f), 0.0f),         // Pure bright white blade core
+                    new GradientColorKey(new Color(0.92f, 0.98f, 1f), 0.35f),  // Crisp polished silver-white
+                    new GradientColorKey(new Color(0.70f, 0.88f, 1f), 0.75f),  // Cool steel katana tint
+                    new GradientColorKey(new Color(0.50f, 0.75f, 0.98f), 1.0f) // Soft fading edge
                 },
                 new GradientAlphaKey[] {
                     new GradientAlphaKey(1.0f, 0.0f),
-                    new GradientAlphaKey(0.9f, 0.5f),
+                    new GradientAlphaKey(0.85f, 0.4f),
                     new GradientAlphaKey(0.0f, 1.0f)
                 }
             );
@@ -211,6 +229,7 @@ namespace CutFreePets.Cut
                     rope.CutAtPoint(pEnd, 0.65f) ||
                     rope.CutAtPoint(Vector3.Lerp(pStart, pEnd, 0.5f), 0.65f))
                 {
+                    SpawnSnipSparks(pEnd);
                     Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced by touch swipe!");
                 }
             }
@@ -226,8 +245,44 @@ namespace CutFreePets.Cut
 
                 if (rope.CutAtPoint(point, 0.65f))
                 {
+                    SpawnSnipSparks(point);
                     Debug.Log("<color=yellow>[CutFreePets]</color> Rope sliced at touch point!");
                 }
+            }
+        }
+
+        private void SpawnSnipSparks(Vector3 position)
+        {
+            // Cut the Rope iconic burst of golden scissor sparks at the severed point
+            Sprite sparkSprite = Resources.Load<Sprite>("Snip_Spark");
+#if UNITY_EDITOR
+            if (sparkSprite == null)
+            {
+                sparkSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Snip_Spark.png");
+            }
+#endif
+            Shader sparkShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            Material sparkMat = sparkShader != null ? new Material(sparkShader) : null;
+
+            for (int i = 0; i < 7; i++)
+            {
+                GameObject spark = new GameObject("SnipSpark");
+                spark.transform.position = position;
+                SpriteRenderer sr = spark.AddComponent<SpriteRenderer>();
+                if (sparkSprite != null) sr.sprite = sparkSprite;
+                if (sparkMat != null) sr.material = sparkMat;
+                sr.color = new Color(1f, 0.92f, 0.45f, 1f);
+                sr.sortingOrder = 60;
+                spark.transform.localScale = Vector3.one * UnityEngine.Random.Range(0.14f, 0.24f);
+
+                float angle = UnityEngine.Random.Range(0f, 360f);
+                Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+
+                Rigidbody2D rb = spark.AddComponent<Rigidbody2D>();
+                rb.gravityScale = 1.2f;
+                rb.linearVelocity = dir * UnityEngine.Random.Range(3.5f, 6.0f);
+
+                Destroy(spark, 0.35f);
             }
         }
 

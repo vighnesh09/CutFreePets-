@@ -174,12 +174,26 @@ namespace CutFreePets.Editor
                 new Vector3(0f, -2.40f, 0f)
             };
 
+            Sprite starSpriteAsset = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Star_Collectible.png");
+            Shader starShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            Material starSharedMat = starShader != null ? new Material(starShader) : null;
+
             for (int s = 0; s < 3; s++)
             {
                 GameObject starObj = new GameObject($"Star_Collectible_0{s + 1}");
                 starObj.transform.parent = root.transform;
                 starObj.transform.position = starPositions[s];
                 starObj.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
+
+                SpriteRenderer sr = starObj.AddComponent<SpriteRenderer>();
+                sr.sprite = starSpriteAsset;
+                if (starSharedMat != null) sr.material = starSharedMat;
+                sr.sortingOrder = 15;
+
+                CircleCollider2D col = starObj.AddComponent<CircleCollider2D>();
+                col.isTrigger = true;
+                col.radius = 0.45f;
+
                 starObj.AddComponent<StarCollectible>();
             }
 
@@ -257,9 +271,9 @@ namespace CutFreePets.Editor
             config.bendingStiffness = 0.04f;
             config.elasticity = 0.012f;
             config.slackMultiplier = 1.06f;
-            config.baseWidth = 0.075f;
-            config.minStretchWidthFactor = 0.65f;
-            config.normalColor = new Color(0.94f, 0.79f, 0.58f);
+            config.baseWidth = 0.18f;
+            config.minStretchWidthFactor = 0.72f;
+            config.normalColor = new Color(0.95f, 0.82f, 0.62f);
             config.highTensionColor = new Color(1f, 0.38f, 0.26f);
             config.splineSubdivisions = 6;
             config.enableCollision = true;
