@@ -87,48 +87,61 @@ namespace CutFreePets.Rope
 
         private void LoadDefaultAssetsIfMissing()
         {
-#if UNITY_EDITOR
-            if (bodyKnotSprite == null)
-            {
-                bodyKnotSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Rope_Body_Knot.png");
-            }
-#endif
             if (bodyKnotSprite == null)
             {
                 bodyKnotSprite = Resources.Load<Sprite>("Rope_Body_Knot");
+#if UNITY_EDITOR
+                if (bodyKnotSprite == null)
+                {
+                    bodyKnotSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Rope_Body_Knot.png");
+                }
+#endif
             }
 
-            // Create dedicated 2D unlit rope material that renders transparent and vibrant
+            // Always prioritize precompiled, serialized Rope_Material asset for 100% cross-platform parity
+            if (ropeMaterial == null)
+            {
+                ropeMaterial = Resources.Load<Material>("Rope_Material");
+#if UNITY_EDITOR
+                if (ropeMaterial == null)
+                {
+                    ropeMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Settings/Rope_Material.mat");
+                }
+#endif
+            }
+
             if (lineRenderer != null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                             ?? Shader.Find("Sprites/Default")
-                             ?? Shader.Find("Universal Render Pipeline/Unlit");
-
                 Material mat = null;
-                if (shader != null)
+                if (ropeMaterial != null)
                 {
-                    mat = new Material(shader);
-                    Texture2D ropeTex = null;
-#if UNITY_EDITOR
-                    ropeTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Rope/Rope_Braided_Albedo.png");
-#endif
-                    if (ropeTex == null) ropeTex = Resources.Load<Texture2D>("Rope_Braided_Albedo");
+                    mat = new Material(ropeMaterial);
+                }
+                else
+                {
+                    Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                                 ?? Shader.Find("Universal Render Pipeline/Unlit")
+                                 ?? Shader.Find("Sprites/Default");
+                    if (shader != null) mat = new Material(shader);
+                }
 
+                Texture2D ropeTex = Resources.Load<Texture2D>("Rope_Braided_Albedo");
+#if UNITY_EDITOR
+                if (ropeTex == null)
+                {
+                    ropeTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Rope/Rope_Braided_Albedo.png");
+                }
+#endif
+                if (mat != null)
+                {
                     if (ropeTex != null)
                     {
                         ropeTex.wrapMode = TextureWrapMode.Repeat;
                         mat.mainTexture = ropeTex;
+                        if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", ropeTex);
                     }
                     mat.color = Color.white;
-                }
-                else if (ropeMaterial != null)
-                {
-                    mat = ropeMaterial;
-                }
-
-                if (mat != null)
-                {
+                    if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
                     lineRenderer.material = mat;
                 }
             }
@@ -194,9 +207,11 @@ namespace CutFreePets.Rope
                 sr.sprite = bodyKnotSprite;
                 sr.sortingOrder = 9;
                 sr.color = Color.white;
-                if (lineRenderer != null && lineRenderer.sharedMaterial != null)
+                Shader spriteShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                                   ?? Shader.Find("Sprites/Default");
+                if (spriteShader != null)
                 {
-                    sr.material = new Material(lineRenderer.sharedMaterial.shader);
+                    sr.material = new Material(spriteShader);
                 }
 
                 bodyKnots.Add(new BodyKnot
