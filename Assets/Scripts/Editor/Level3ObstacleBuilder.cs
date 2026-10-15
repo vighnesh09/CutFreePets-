@@ -6,16 +6,16 @@ using CutFreePets.Gameplay;
 namespace CutFreePets.Editor
 {
     [InitializeOnLoad]
-    public static class Level2ObstacleBuilder
+    public static class Level3ObstacleBuilder
     {
-        private const string SESSION_KEY = "Level2Obstacle_Applied_v6";
+        private const string SESSION_KEY = "Level3Obstacle_Applied_v1";
 
-        static Level2ObstacleBuilder()
+        static Level3ObstacleBuilder()
         {
             EditorApplication.delayCall += ApplyObstacleSetup;
         }
 
-        [MenuItem("Tools/Rebuild Level 2 Obstacle Ramp")]
+        [MenuItem("Tools/Rebuild Level 3 Obstacle Ramp")]
         public static void ForceApply()
         {
             SessionState.SetBool(SESSION_KEY, false);
@@ -27,7 +27,7 @@ namespace CutFreePets.Editor
             if (SessionState.GetBool(SESSION_KEY, false)) return;
             SessionState.SetBool(SESSION_KEY, true);
 
-            string scenePath = "Assets/Scenes/Level_2.unity";
+            string scenePath = "Assets/Scenes/Level_3.unity";
             var currentScene = EditorSceneManager.GetActiveScene();
             bool needToReopenOrig = false;
             string originalScenePath = currentScene.path;
@@ -130,7 +130,7 @@ namespace CutFreePets.Editor
 
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
-            Debug.Log("<color=green>[Level2ObstacleBuilder]</color> Obstacle_Hinged_Ramp successfully created, configured, and saved in Level 2!");
+            Debug.Log("<color=green>[Level3ObstacleBuilder]</color> Obstacle_Hinged_Ramp successfully created, configured, and saved in Level 3!");
 
             if (needToReopenOrig && !string.IsNullOrEmpty(originalScenePath))
             {

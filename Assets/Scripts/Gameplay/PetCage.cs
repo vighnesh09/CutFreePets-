@@ -66,6 +66,14 @@ namespace CutFreePets.Gameplay
 
         private void Awake()
         {
+            // Remove any stale serialized DistanceJoint2D components from scene editing
+            var staleJoints = GetComponents<DistanceJoint2D>();
+            for (int i = 0; i < staleJoints.Length; i++)
+            {
+                if (Application.isPlaying) Destroy(staleJoints[i]);
+                else DestroyImmediate(staleJoints[i]);
+            }
+
             rb2D = GetComponent<Rigidbody2D>();
             col2D = GetComponent<Collider2D>();
             hangingPhysics = GetComponent<CageHangingPhysics>() ?? gameObject.AddComponent<CageHangingPhysics>();
@@ -189,11 +197,27 @@ namespace CutFreePets.Gameplay
                 hangingPhysics.UpdateSway(isLanded, isFreeFalling, connectedRopes.Count);
             }
 
-            // Abyss failsafe: if cage misses platforms and drops into the void below -5.50f, fail and restart
-            if (isFreeFalling && !isLanded && transform.position.y <= -5.50f)
+            // Out of bounds / screen failsafe: if cage swings out of screen or drops into abyss, fail and restart
+            bool isOffScreen = false;
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Vector3 vp = cam.WorldToViewportPoint(transform.position);
+                // When cage center exits horizontal screen boundaries or drops below bottom
+                if (vp.x < -0.05f || vp.x > 1.05f || vp.y < -0.15f)
+                {
+                    isOffScreen = true;
+                }
+            }
+            if (Mathf.Abs(transform.position.x) >= 2.75f || transform.position.y <= -5.50f)
+            {
+                isOffScreen = true;
+            }
+
+            if (!isLanded && isOffScreen)
             {
                 isLanded = true;
-                Debug.Log("<color=orange>[PetCage]</color> Cage dropped into abyss! Level Failed. Restarting...");
+                Debug.Log("<color=orange>[PetCage]</color> Cage went out of screen bounds! Level Failed. Restarting level...");
                 StartCoroutine(RestartAfterDelay(0.65f));
             }
         }
@@ -235,9 +259,32 @@ namespace CutFreePets.Gameplay
 
             StartCoroutine(FadeAndRemoveSeveredRopes(rope));
 
-            if (connectedRopes.Count == 0 && !isFreeFalling && !isLanded)
+            if (connectedRopes.Count == 1 && !isLanded && rb2D != null)
+            {
+                // Multi-rope suspension release physics:
+                // When 1 rope is cut in a dual-rope setup, the remaining rope swings the cage naturally like a real pendulum.
+                // We let Box2D DistanceJoint2D + gravity accelerate the swing smoothly and gracefully without instant velocity snaps.
+                var remainingRope = connectedRopes[0];
+                if (remainingRope != null)
+                {
+                    Vector3 anchorPos = remainingRope.StartPosition;
+                    float dirX = Mathf.Sign(anchorPos.x - transform.position.x);
+                    if (Mathf.Abs(anchorPos.x - transform.position.x) > 0.15f)
+                    {
+                        // Gentle natural tension release: a subtle impulse that lets gravity build velocity smoothly
+                        rb2D.AddForce(new Vector2(dirX * 0.6f, -0.1f), ForceMode2D.Impulse);
+                        Debug.Log($"<color=cyan>[PetCage]</color> Rope cut! Cage swinging smoothly towards anchor at x={anchorPos.x:F2} (dir={dirX})");
+                    }
+                }
+            }
+            else if (connectedRopes.Count == 0 && !isFreeFalling && !isLanded)
             {
                 isFreeFalling = true;
+                // If both ropes severed (quick cut across both), dampen any leftover lateral kick
+                if (rb2D != null)
+                {
+                    rb2D.linearVelocity = new Vector2(rb2D.linearVelocity.x * 0.10f, rb2D.linearVelocity.y);
+                }
                 OnAllRopesCut?.Invoke();
                 Debug.Log("<color=cyan>[PetCage]</color> ALL ROPES CUT! Cage dropped into free-fall.");
             }

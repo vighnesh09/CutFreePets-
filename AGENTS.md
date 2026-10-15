@@ -24,3 +24,6 @@
      - You MUST verify that NO existing working levels or features are broken or altered by that change.
      - **Scale & Visual Preservation**: The pet's visual size, proportions, and scale must remain consistent before and after the cage breaks. The pet must never unexpectedly balloon, pop, or grow bigger when landing.
      - **Cross-Level Verification**: Always check all working levels (especially Level 1) to ensure zero regressions in layout, gameplay mechanics, visual sizing, and celebration sequences.
+
+6. **Screen Boundary Fail Condition**:
+   - Anytime the pet cage goes outside of the screen boundaries horizontally or drops into the abyss without successfully landing on the goal platform, the level is considered failed and must automatically restart cleanly.

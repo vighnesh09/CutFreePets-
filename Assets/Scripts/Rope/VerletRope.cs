@@ -186,6 +186,7 @@ namespace CutFreePets.Rope
         /// </summary>
         public void SetupDistanceJoint()
         {
+            if (!Application.isPlaying) return;
             if (isCut || endRb2D == null || endRb2D.bodyType != RigidbodyType2D.Dynamic) return;
 
             if (distanceJoint != null)
@@ -196,7 +197,7 @@ namespace CutFreePets.Rope
 
             distanceJoint = endRb2D.gameObject.AddComponent<DistanceJoint2D>();
             distanceJoint.enableCollision = false;
-            distanceJoint.maxDistanceOnly = true;
+            distanceJoint.maxDistanceOnly = false;
             distanceJoint.autoConfigureDistance = false;
 
             // Anchor local to end body
@@ -570,12 +571,6 @@ namespace CutFreePets.Rope
                 SpawnSeveredPiece(cutB, bottomHalf);
             }
 
-            // Transfer release kinetic kick to connected 2D body (e.g. multi-rope swing)
-            if (endRb2D != null && endRb2D.bodyType == RigidbodyType2D.Dynamic)
-            {
-                Vector2 releaseImpulse = (Vector2)(-cutDirection * 0.85f);
-                endRb2D.AddForceAtPosition(releaseImpulse, cutPoint, ForceMode2D.Impulse);
-            }
 
             initialTotalRestLength = segmentRestLength * Mathf.Max(1, particles.Count - 1);
         }
