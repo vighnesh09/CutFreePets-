@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using System.IO;
@@ -19,7 +20,7 @@ namespace CutFreePets.Editor
             }
 
             // 2. Set Bundle Identifier & App Name
-            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.cutfreegames.cutfreepets");
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.cutfreegames.cutfreepets");
             PlayerSettings.productName = "Cut Free Pets";
             PlayerSettings.companyName = "CutFreeGames";
 
