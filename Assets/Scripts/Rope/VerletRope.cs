@@ -368,8 +368,10 @@ namespace CutFreePets.Rope
                 {
                     Collider col = colliders3D[h];
                     if (col == null) continue;
-                    if (startAnchor != null && col.transform.IsChildOf(startAnchor)) continue;
-                    if (endAnchor != null && col.transform.IsChildOf(endAnchor)) continue;
+                    if (startAnchor != null && (col.transform == startAnchor || col.transform.IsChildOf(startAnchor) || startAnchor.IsChildOf(col.transform))) continue;
+                    if (endAnchor != null && (col.transform == endAnchor || col.transform.IsChildOf(endAnchor) || endAnchor.IsChildOf(col.transform))) continue;
+                    if (startRb3D != null && col.attachedRigidbody == startRb3D) continue;
+                    if (endRb3D != null && col.attachedRigidbody == endRb3D) continue;
 
                     Vector3 closest = col.ClosestPoint(p.Position);
                     Vector3 pushDir = p.Position - closest;
@@ -395,8 +397,10 @@ namespace CutFreePets.Rope
                 {
                     Collider2D col2D = colliders2D[h];
                     if (col2D == null) continue;
-                    if (startAnchor != null && col2D.transform.IsChildOf(startAnchor)) continue;
-                    if (endAnchor != null && col2D.transform.IsChildOf(endAnchor)) continue;
+                    if (startAnchor != null && (col2D.transform == startAnchor || col2D.transform.IsChildOf(startAnchor) || startAnchor.IsChildOf(col2D.transform))) continue;
+                    if (endAnchor != null && (col2D.transform == endAnchor || col2D.transform.IsChildOf(endAnchor) || endAnchor.IsChildOf(col2D.transform))) continue;
+                    if (startRb2D != null && col2D.attachedRigidbody == startRb2D) continue;
+                    if (endRb2D != null && col2D.attachedRigidbody == endRb2D) continue;
 
                     Vector2 closest2D = col2D.ClosestPoint(p.Position);
                     Vector2 pushDir2D = (Vector2)p.Position - closest2D;

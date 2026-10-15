@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DefaultRopeConfig
   m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.Rope.RopeConfig
   segmentCount: 24
-  slackMultiplier: 1.06
+  slackMultiplier: 1.0
   physicsSubsteps: 3
   constraintIterations: 18
   damping: 0.992
