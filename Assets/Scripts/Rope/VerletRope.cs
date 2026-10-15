@@ -437,12 +437,8 @@ namespace CutFreePets.Rope
         {
             if (distanceJoint != null)
             {
-                // DistanceJoint2D provides authentic inelastic pendulum constraint; apply subtle damping to avoid perpetual oscillation
-                if (endRb2D != null && endRb2D.bodyType == RigidbodyType2D.Dynamic)
-                {
-                    Vector2 dampForce2D = -endRb2D.linearVelocity * (springDamping * 0.12f);
-                    endRb2D.AddForce(dampForce2D, ForceMode2D.Force);
-                }
+                // DistanceJoint2D provides authentic inelastic pendulum constraint natively
+                // Rigidbody2D linear and angular damping handle natural stabilization smoothly
                 return;
             }
 
