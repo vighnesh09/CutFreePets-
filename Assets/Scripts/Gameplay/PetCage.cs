@@ -158,6 +158,23 @@ namespace CutFreePets.Gameplay
             }
         }
 
+        private void Start()
+        {
+            // Auto-discover ropes attached to this cage or its hook in the scene
+            if (connectedRopes.Count == 0)
+            {
+                VerletRope[] allRopes = FindObjectsByType<VerletRope>(FindObjectsInactive.Exclude);
+                foreach (var rope in allRopes)
+                {
+                    if (rope == null || rope.IsCut) continue;
+                    if (rope.EndAnchor != null && (rope.EndAnchor == transform || rope.EndAnchor.IsChildOf(transform)))
+                    {
+                        AttachRope(rope);
+                    }
+                }
+            }
+        }
+
         private void Update()
         {
             if (isLanded) return;
@@ -167,8 +184,8 @@ namespace CutFreePets.Gameplay
                 hangingPhysics.UpdateSway(isLanded, isFreeFalling, connectedRopes.Count);
             }
 
-            // Proximity landing failsafe for Ground_Platform at ~ -3.60f
-            if (isFreeFalling && transform.position.y <= -2.10f)
+            // Abyss safety failsafe only if cage misses all platforms and drops into the void below -5.50f
+            if (isFreeFalling && transform.position.y <= -5.50f)
             {
                 BreakAndFreePet();
             }
@@ -208,6 +225,14 @@ namespace CutFreePets.Gameplay
             if (connectedRopes.Count == 0 && !isFreeFalling && !isLanded)
             {
                 isFreeFalling = true;
+
+                // Subtle natural angular impulse on cut so it drops with organic weight
+                if (rb2D != null && rb2D.bodyType == RigidbodyType2D.Dynamic)
+                {
+                    float cutTorque = UnityEngine.Random.Range(-1.2f, 1.2f);
+                    rb2D.AddTorque(cutTorque, ForceMode2D.Impulse);
+                }
+
                 OnAllRopesCut?.Invoke();
                 Debug.Log("<color=cyan>[PetCage]</color> ALL ROPES CUT! Cage dropped into free-fall.");
             }

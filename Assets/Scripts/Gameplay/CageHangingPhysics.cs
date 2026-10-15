@@ -15,9 +15,10 @@ namespace CutFreePets.Gameplay
     {
         [Header("Idle Hanging Sway (Organic Pendulum)")]
         [SerializeField] private bool enableIdleSway = true;
-        [SerializeField] private float idleSwayAngle = 2.4f; // +/- 2.4 degrees
-        [SerializeField] private float idleSwaySpeed = 1.35f;
-        [SerializeField] private float inAirTiltFactor = 4.0f; // Tilt based on horizontal velocity
+        [SerializeField] private float idleSwayAngle = 3.2f; // +/- 3.2 degrees
+        [SerializeField] private float idleSwaySpeed = 1.45f;
+        [SerializeField] private float idleSwayForce = 2.2f; // Gentle harmonic breathing push
+        [SerializeField] private float inAirTiltFactor = 4.2f; // Tilt based on horizontal velocity
 
         private Rigidbody2D rb2D;
         private float swayTimer = 0f;
@@ -39,35 +40,49 @@ namespace CutFreePets.Gameplay
         /// </summary>
         public void UpdateSway(bool isLanded, bool isFreeFalling, int activeRopeCount)
         {
-            if (isLanded) return;
+            if (isLanded || rb2D == null) return;
 
             if (!isFreeFalling && enableIdleSway && activeRopeCount > 0)
             {
-                // Organic breathing pendulum sway while hanging
                 swayTimer += Time.deltaTime * idleSwaySpeed;
-                float targetAngle = (Mathf.Sin(swayTimer) * 0.75f + Mathf.Sin(swayTimer * 0.5f) * 0.25f) * idleSwayAngle;
-                currentSwayZ = Mathf.Lerp(currentSwayZ, targetAngle, Time.deltaTime * 3.5f);
-                transform.rotation = Quaternion.Euler(0f, 0f, currentSwayZ);
+                float speed = Mathf.Abs(rb2D.linearVelocity.x);
+
+                if (speed < 1.0f)
+                {
+                    // Gentle living harmonic breathing tilt when hanging in equilibrium
+                    float breatheAngle = Mathf.Sin(swayTimer) * idleSwayAngle;
+                    float targetAngle = Mathf.Clamp(-rb2D.linearVelocity.x * 2.2f + breatheAngle, -idleSwayAngle * 1.5f, idleSwayAngle * 1.5f);
+                    currentSwayZ = Mathf.Lerp(currentSwayZ, targetAngle, Time.deltaTime * 3.5f);
+                    rb2D.rotation = currentSwayZ;
+                }
+                else
+                {
+                    // Dynamic pendulum swing tilt (e.g. when 1 rope of a 2-rope setup is severed)
+                    float swingTilt = Mathf.Clamp(-rb2D.linearVelocity.x * 4.2f, -28f, 28f);
+                    currentSwayZ = Mathf.Lerp(currentSwayZ, swingTilt, Time.deltaTime * 6f);
+                    rb2D.rotation = currentSwayZ;
+                }
             }
-            else if (isFreeFalling && rb2D != null)
+            else if (isFreeFalling)
             {
-                // In free-fall: aerodynamic tilting based on horizontal drift
-                float targetFallTilt = Mathf.Clamp(-rb2D.linearVelocity.x * inAirTiltFactor, -10f, 10f);
-                currentSwayZ = Mathf.Lerp(currentSwayZ, targetFallTilt, Time.deltaTime * 4.5f);
-                transform.rotation = Quaternion.Euler(0f, 0f, currentSwayZ);
+                // In free-fall: natural aerodynamic tilting based on horizontal drift and slight tumble
+                float targetFallTilt = Mathf.Clamp(-rb2D.linearVelocity.x * inAirTiltFactor, -18f, 18f);
+                currentSwayZ = Mathf.Lerp(currentSwayZ, targetFallTilt, Time.deltaTime * 5.0f);
+                rb2D.rotation = currentSwayZ;
             }
         }
 
         /// <summary>
-        /// FixedUpdate lateral micro-push to keep rope chain dynamic.
+        /// FixedUpdate lateral micro-push to keep rope chain dynamic and alive.
         /// </summary>
         public void FixedUpdatePush(bool isLanded, bool isFreeFalling, int activeRopeCount)
         {
-            if (isLanded) return;
+            if (isLanded || rb2D == null) return;
 
-            if (!isFreeFalling && enableIdleSway && rb2D != null && activeRopeCount > 0)
+            if (!isFreeFalling && enableIdleSway && activeRopeCount > 0)
             {
-                float lateralPush = Mathf.Cos(swayTimer) * 0.18f;
+                // Gentle periodic harmonic impulse produces living left-right movement
+                float lateralPush = (Mathf.Sin(swayTimer) * 0.75f + Mathf.Sin(swayTimer * 0.45f) * 0.25f) * idleSwayForce;
                 rb2D.AddForce(new Vector2(lateralPush, 0f), ForceMode2D.Force);
             }
         }

@@ -55,6 +55,7 @@ namespace CutFreePets.Rope
         private Rigidbody endRb3D;
         private Rigidbody2D startRb2D;
         private Rigidbody2D endRb2D;
+        private DistanceJoint2D distanceJoint;
         private RopeRenderer ropeRenderer;
 
         // Non-alloc collision buffer
@@ -71,6 +72,7 @@ namespace CutFreePets.Rope
         public Transform StartAnchor { get => startAnchor; set => startAnchor = value; }
         public Transform EndAnchor { get => endAnchor; set => endAnchor = value; }
         public bool IsCut => isCut;
+        public DistanceJoint2D Joint => distanceJoint;
         public float CurrentTensionRatio => currentTensionRatio;
         public float CurrentTotalLength => currentTotalLength;
         public float InitialTotalRestLength => initialTotalRestLength;
@@ -100,6 +102,11 @@ namespace CutFreePets.Rope
             if (particles.Count == 0 && (startAnchor != null || endAnchor != null))
             {
                 InitializeRope();
+            }
+            else if (distanceJoint == null && !isCut)
+            {
+                CacheConnectedBodies();
+                SetupDistanceJoint();
             }
         }
 
@@ -169,10 +176,58 @@ namespace CutFreePets.Rope
 
             if (ropeRenderer == null) ropeRenderer = GetComponent<RopeRenderer>();
             ropeRenderer?.Initialize(this);
+
+            SetupDistanceJoint();
+        }
+
+        /// <summary>
+        /// Configures native 2D DistanceJoint with maxDistanceOnly for authentic rigid pendulum swing.
+        /// When one of two ropes is severed, this joint allows Box2D to swing the cage along a true circular arc.
+        /// </summary>
+        public void SetupDistanceJoint()
+        {
+            if (isCut || endRb2D == null || endRb2D.bodyType != RigidbodyType2D.Dynamic) return;
+
+            if (distanceJoint != null)
+            {
+                Destroy(distanceJoint);
+                distanceJoint = null;
+            }
+
+            distanceJoint = endRb2D.gameObject.AddComponent<DistanceJoint2D>();
+            distanceJoint.enableCollision = false;
+            distanceJoint.maxDistanceOnly = true;
+            distanceJoint.autoConfigureDistance = false;
+
+            // Anchor local to end body
+            Vector3 endWorldPos = EndPosition;
+            Vector2 localAnchor = endRb2D.transform.InverseTransformPoint(endWorldPos);
+            distanceJoint.anchor = localAnchor;
+
+            // Connected body or world anchor
+            Vector3 startWorldPos = StartPosition;
+            if (startRb2D != null)
+            {
+                distanceJoint.connectedBody = startRb2D;
+                distanceJoint.connectedAnchor = startRb2D.transform.InverseTransformPoint(startWorldPos);
+            }
+            else
+            {
+                distanceJoint.connectedBody = null;
+                distanceJoint.connectedAnchor = (Vector2)startWorldPos;
+            }
+
+            float dist = Vector2.Distance(startWorldPos, endWorldPos);
+            distanceJoint.distance = Mathf.Max(0.1f, dist);
         }
 
         private void FixedUpdate()
         {
+            if (distanceJoint != null && startAnchor != null && startRb2D == null)
+            {
+                distanceJoint.connectedAnchor = (Vector2)StartPosition;
+            }
+
             if (particles.Count < 2) return;
 
             int substeps = config != null ? Mathf.Max(1, config.physicsSubsteps) : 3;
@@ -376,6 +431,17 @@ namespace CutFreePets.Rope
 
         private void ApplyConnectedForces()
         {
+            if (distanceJoint != null)
+            {
+                // DistanceJoint2D provides authentic inelastic pendulum constraint; apply subtle damping to avoid perpetual oscillation
+                if (endRb2D != null && endRb2D.bodyType == RigidbodyType2D.Dynamic)
+                {
+                    Vector2 dampForce2D = -endRb2D.linearVelocity * (springDamping * 0.12f);
+                    endRb2D.AddForce(dampForce2D, ForceMode2D.Force);
+                }
+                return;
+            }
+
             float stretch = currentTotalLength - initialTotalRestLength;
             if (stretch <= 0.001f || particles.Count < 2) return;
 
@@ -462,6 +528,12 @@ namespace CutFreePets.Rope
         public void CutSegment(int segmentIndex, Vector3 cutPoint)
         {
             if (isCut || segmentIndex < 0 || segmentIndex >= particles.Count - 1) return;
+
+            if (distanceJoint != null)
+            {
+                Destroy(distanceJoint);
+                distanceJoint = null;
+            }
 
             isCut = true;
             OnCut?.Invoke(this, segmentIndex, cutPoint);
@@ -569,6 +641,31 @@ namespace CutFreePets.Rope
             }
 
             return false;
+        }
+
+        private void OnDestroy()
+        {
+            if (distanceJoint != null)
+            {
+                Destroy(distanceJoint);
+                distanceJoint = null;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (distanceJoint != null)
+            {
+                distanceJoint.enabled = false;
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (distanceJoint != null)
+            {
+                distanceJoint.enabled = true;
+            }
         }
 
         private void OnDrawGizmos()
