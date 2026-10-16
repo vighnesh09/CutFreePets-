@@ -34,6 +34,7 @@ namespace CutFreePets.Editor
 
         private static void ApplyLevel2Setup()
         {
+            if (BuildPipeline.isBuildingPlayer) return;
             if (SessionState.GetBool(SESSION_KEY, false)) return;
             SessionState.SetBool(SESSION_KEY, true);
 

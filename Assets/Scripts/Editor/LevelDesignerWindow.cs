@@ -618,11 +618,7 @@ namespace CutFreePets.Editor
             string levelSelect = "Assets/Scenes/LevelSelect.unity";
             if (File.Exists(levelSelect)) scenes.Add(new EditorBuildSettingsScene(levelSelect, true));
 
-            // Level 1 / SampleScene
-            string sampleScene = "Assets/Scenes/SampleScene.unity";
-            if (File.Exists(sampleScene)) scenes.Add(new EditorBuildSettingsScene(sampleScene, true));
-
-            // Discover all Level_*.unity scenes and add them in order
+            // Discover all Level_*.unity scenes and add them in order (Level_1, Level_2, Level_3, etc.)
             for (int i = 1; i <= 30; i++)
             {
                 string path = $"Assets/Scenes/Level_{i}.unity";
@@ -630,6 +626,13 @@ namespace CutFreePets.Editor
                 {
                     scenes.Add(new EditorBuildSettingsScene(path, true));
                 }
+            }
+
+            // Include SampleScene as fallback/legacy
+            string sampleScene = "Assets/Scenes/SampleScene.unity";
+            if (File.Exists(sampleScene) && !scenes.Exists(s => s.path == sampleScene))
+            {
+                scenes.Add(new EditorBuildSettingsScene(sampleScene, true));
             }
 
             EditorBuildSettings.scenes = scenes.ToArray();

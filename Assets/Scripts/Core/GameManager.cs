@@ -17,6 +17,11 @@ namespace CutFreePets.Core
 
         public static int CurrentLevelIndex { get; private set; } = 1;
 
+        static GameManager()
+        {
+            MobileOptimizationBootstrapper.InitializeMobileSettings();
+        }
+
         /// <summary>
         /// Loads the designated Level (e.g. Level 1).
         /// If a specific scene "Level_X" does not exist yet in Build Settings,

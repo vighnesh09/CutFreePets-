@@ -538,6 +538,7 @@ namespace CutFreePets.Rope
 
             isCut = true;
             OnCut?.Invoke(this, segmentIndex, cutPoint);
+            CutFreePets.Core.HapticManager.PlayRopeCutHaptic();
 
             // Separate into top half (retained) and bottom half (spawned as severed piece)
             List<RopeParticle> bottomHalf = new List<RopeParticle>();

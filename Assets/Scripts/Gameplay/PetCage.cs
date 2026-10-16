@@ -345,6 +345,7 @@ namespace CutFreePets.Gameplay
             breakEffect.PlayBreakSequence(transform.position, transform.rotation, platformTopY, petSlot, hitCollider);
 
             OnLandedOnGoal?.Invoke(collision);
+            CutFreePets.Core.HapticManager.PlayGoalLandingHaptic();
         }
 
         public void OpenAndDisappear()

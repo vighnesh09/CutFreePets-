@@ -218,7 +218,14 @@ namespace CutFreePets.UI
                 if (goldenStars != null && i < goldenStars.Length && goldenStars[i] != null)
                 {
                     StartCoroutine(PopStarAnimation(goldenStars[i]));
+                    CutFreePets.Core.HapticManager.PlayStarPickupHaptic();
                 }
+            }
+
+            if (starsEarned >= 3)
+            {
+                yield return new WaitForSeconds(0.15f);
+                CutFreePets.Core.HapticManager.PlayVictoryFanfareHaptic();
             }
         }
 

@@ -103,6 +103,7 @@ namespace CutFreePets.Gameplay
 
             if (col2D != null) col2D.enabled = false;
             OnStarCollected?.Invoke(this);
+            CutFreePets.Core.HapticManager.PlayStarPickupHaptic();
 
             StartCoroutine(CollectAnimation());
         }

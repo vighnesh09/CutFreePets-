@@ -34,24 +34,79 @@ namespace CutFreePets.Editor
             // 4. Ensure we build standalone APK (not Google Play App Bundle .aab)
             EditorUserBuildSettings.buildAppBundle = false;
 
-            // 5. Gather Scenes in Build Settings
-            // Ensure SampleScene has freshly constructed stars, ropes, and materials
+            // 4b. Ensure Active Input Handling is set to 1 (Input System Package)
+            // In Unity 6 Android Player, setting "Both" (2) triggers a fatal build exception.
             try
             {
-                var curScene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
-                if (curScene.path == "Assets/Scenes/SampleScene.unity")
+                var settingsAssets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+                if (settingsAssets != null && settingsAssets.Length > 0)
                 {
-                    CutFreePets.Editor.RopeSceneSetupMenu.SetupHangingBoxDemoInternal(false);
+                    SerializedObject playerSettingsObj = new SerializedObject(settingsAssets[0]);
+                    SerializedProperty inputProp = playerSettingsObj.FindProperty("activeInputHandler");
+                    if (inputProp != null && inputProp.intValue != 1)
+                    {
+                        Debug.Log($"<color=yellow>[Build]</color> Setting activeInputHandler from {inputProp.intValue} to 1 (Input System Package) for Android build compatibility.");
+                        inputProp.intValue = 1;
+                        playerSettingsObj.ApplyModifiedProperties();
+                        AssetDatabase.SaveAssets();
+                    }
                 }
             }
-            catch (System.Exception) {}
-
-            string[] scenes = new string[]
+            catch (System.Exception ex)
             {
-                "Assets/Scenes/HomeScreen.unity",
-                "Assets/Scenes/LevelSelect.unity",
-                "Assets/Scenes/SampleScene.unity"
-            };
+                Debug.LogWarning($"[Build] Note on activeInputHandler check: {ex.Message}");
+            }
+
+            // 5. Gather All Scenes Dynamically (Ensure Level 1, Level 2, Level 3 and all future levels are included)
+            System.Collections.Generic.List<string> sceneList = new System.Collections.Generic.List<string>();
+
+            // Always Home first (index 0) so the APK launches directly into HomeScreen
+            string homeScene = "Assets/Scenes/HomeScreen.unity";
+            if (File.Exists(homeScene)) sceneList.Add(homeScene);
+
+            // Level Select second (index 1)
+            string levelSelectScene = "Assets/Scenes/LevelSelect.unity";
+            if (File.Exists(levelSelectScene)) sceneList.Add(levelSelectScene);
+
+            // Level 1
+            string level1Scene = "Assets/Scenes/Level_1.unity";
+            if (File.Exists(level1Scene)) sceneList.Add(level1Scene);
+
+            // Numbered Levels (Level_2, Level_3, etc.)
+            for (int i = 2; i <= 30; i++)
+            {
+                string levelPath = $"Assets/Scenes/Level_{i}.unity";
+                if (File.Exists(levelPath) && !sceneList.Contains(levelPath))
+                {
+                    sceneList.Add(levelPath);
+                }
+            }
+
+            // Include SampleScene for backward compatibility / fallback
+            string sampleScene = "Assets/Scenes/SampleScene.unity";
+            if (File.Exists(sampleScene) && !sceneList.Contains(sampleScene))
+            {
+                sceneList.Add(sampleScene);
+            }
+
+            // Any other enabled scenes from EditorBuildSettings
+            foreach (var s in EditorBuildSettings.scenes)
+            {
+                if (s.enabled && !string.IsNullOrEmpty(s.path) && File.Exists(s.path) && !sceneList.Contains(s.path))
+                {
+                    sceneList.Add(s.path);
+                }
+            }
+
+            // Synchronize EditorBuildSettings so the Editor's Build Settings window always stays 100% updated
+            System.Collections.Generic.List<EditorBuildSettingsScene> buildSettingsScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+            foreach (var p in sceneList)
+            {
+                buildSettingsScenes.Add(new EditorBuildSettingsScene(p, true));
+            }
+            EditorBuildSettings.scenes = buildSettingsScenes.ToArray();
+
+            Debug.Log($"<color=cyan>[Build]</color> Packaging {sceneList.Count} scenes into Android APK: {string.Join(", ", sceneList)}");
 
             // 6. Target Output Directory
             string projectRoot = Path.GetDirectoryName(Application.dataPath);
@@ -65,7 +120,7 @@ namespace CutFreePets.Editor
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
-                scenes = scenes,
+                scenes = sceneList.ToArray(),
                 locationPathName = apkPath,
                 target = BuildTarget.Android,
                 options = BuildOptions.None
