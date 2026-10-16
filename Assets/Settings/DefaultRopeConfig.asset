@@ -24,9 +24,9 @@ MonoBehaviour:
   collisionMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  particleRadius: 0.025
+  particleRadius: 0.02
   skinWidth: 0.008
-  baseWidth: 0.18
+  baseWidth: 0.135
   minStretchWidthFactor: 0.72
   maxTensionThreshold: 1.2
   normalColor: {r: 1, g: 1, b: 1, a: 1}

@@ -31,7 +31,7 @@ namespace CutFreePets.Rope
 
         [Header("Braided Texture & Width")]
         [Tooltip("Base thickness of the rope when relaxed.")]
-        [SerializeField] private float baseThickness = 0.18f;
+        [SerializeField] private float baseThickness = 0.135f;
 
         [Tooltip("Thickness ratio when under maximum tension (gets thinner under tension).")]
         [Range(0.3f, 1f)]
@@ -46,7 +46,7 @@ namespace CutFreePets.Rope
         [SerializeField] private Sprite bodyKnotSprite;
 
         [Tooltip("Scale multiplier for the tied knots.")]
-        [SerializeField] private float knotScale = 0.36f;
+        [SerializeField] private float knotScale = 0.27f;
 
         [Header("Spline Smoothing")]
         [Range(2, 10)]
@@ -168,8 +168,9 @@ namespace CutFreePets.Rope
             rope = targetRope;
             if (rope != null && rope.Config != null)
             {
-                baseThickness = Mathf.Max(0.14f, rope.Config.baseWidth);
+                baseThickness = Mathf.Max(0.06f, rope.Config.baseWidth);
                 minStretchThicknessRatio = rope.Config.minStretchWidthFactor;
+                knotScale = baseThickness * 2.0f;
             }
             LoadDefaultAssetsIfMissing();
 

@@ -101,6 +101,13 @@ namespace CutFreePets.Cut
             if (mainCamera == null) mainCamera = Camera.main;
             if (mainCamera == null) return;
 
+            // Do not swipe or slice when game is paused
+            if (Time.timeScale <= 0f)
+            {
+                if (isSwiping) EndSwipe();
+                return;
+            }
+
             bool isPressed = false;
             bool wasPressedThisFrame = false;
             bool wasReleasedThisFrame = false;
