@@ -27,3 +27,21 @@
 
 6. **Screen Boundary Fail Condition**:
    - Anytime the pet cage goes outside of the screen boundaries horizontally or drops into the abyss without successfully landing on the goal platform, the level is considered failed and must automatically restart cleanly.
+
+7. **Visual Theme & Art Consistency Rule ("The Secret Garden & Treehouse Adventure")**:
+   - **Unified World Narrative**:
+     - All screens and gameplay levels exist in one continuous, vibrant cartoon world.
+     - **Home Screen**: Cozy sunlit treehouse veranda/porch with warm honey-oak flooring looking out through an open pergola onto the garden stone path, flower meadow, and rustic gate.
+     - **Level Select (Adventure Map)**: Winding stepping-stone path ascending from the garden flower beds up through sunny green hills, wooden footbridges, and leafy canopies toward the great tree.
+     - **In-Game Levels**: Sunlit open-air tree canopy with leafy branch anchors at the top, warm honey-oak platforms/obstacles, and sunny meadow vistas below.
+     - **Strict Prohibition**: Never use dark, gloomy, windowless dungeon or dimly lit room backgrounds. The game must always feel bright, cheerful, warm, and inviting.
+   - **Official Color Palette**:
+     - **Sky & Camera Clear**: Sunny daylight sky blue (`#85CCFA` / `{r: 0.52, g: 0.80, b: 0.98, a: 1}`). All scene cameras must clear to this color to eliminate dark borders on tall phone displays (19.5:9, 20:9).
+     - **Foliage & Meadows**: Vibrant apple green (`#8BC34A`), lawn green (`#4CAF50`), and fresh spring lime (`#AEEA00`).
+     - **Woodwork & Obstacles**: Warm honey oak (`#D2691E` / `#B87333`) and rich caramel timber (`#8D5B28`). All platforms, ramps, and obstacle slides must share this warm golden-wood tone.
+     - **Collectibles & Accents**: Sunny golden yellow (`#FFD54F` / `#FFA000`) with bright cartoon sparkle effects.
+   - **Lighting & Rendering**:
+     - Cheerful 2:00 PM afternoon sunlight with warm golden highlights and soft shadows.
+     - Backgrounds must have gentle depth-of-field separation so foreground ropes, blades, cages, and collectibles maintain razor-sharp visual clarity.
+   - **Mandatory Rule for All Future Assets**:
+     - Any future asset, pet model/spritesheet (e.g. Dog, Puppy, Bunny), obstacle mechanism, UI screen, or new world expansion MUST strictly adhere to this color theme, warm daylight lighting, and treehouse/garden aesthetic.
