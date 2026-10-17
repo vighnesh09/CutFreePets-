@@ -19,7 +19,7 @@ namespace CutFreePets.Cut
     {
         [Header("Blade Slash Trail")]
         [SerializeField] private TrailRenderer trailRenderer;
-        [SerializeField] private float minSwipeDistance = 0.04f;
+        [SerializeField] private float minSwipeDistance = 0.08f;
 
         [Header("Colors & Glow")]
         [SerializeField] private Color bladeCoreColor = new Color(1f, 1f, 0.85f, 1f); // Bright white-gold core
@@ -33,6 +33,7 @@ namespace CutFreePets.Cut
         {
             if (trailRenderer == null) trailRenderer = GetComponent<TrailRenderer>();
             mainCamera = Camera.main;
+            minSwipeDistance = Mathf.Max(0.08f, minSwipeDistance);
             ConfigureBladeTrail();
         }
 
@@ -115,22 +116,24 @@ namespace CutFreePets.Cut
 
             // 1. Try New Input System
 #if ENABLE_INPUT_SYSTEM
-            if (Touchscreen.current != null && Touchscreen.current.touches.Count > 0)
-            {
-                var touch = Touchscreen.current.touches[0];
-                screenPosition = touch.position.ReadValue();
-                isPressed = touch.press.isPressed;
-                wasPressedThisFrame = touch.press.wasPressedThisFrame;
-                wasReleasedThisFrame = touch.press.wasReleasedThisFrame;
-            }
-            else if (Mouse.current != null)
+            // Priority 1: Mouse (Desktop & Editor)
+            if (Mouse.current != null && (Mouse.current.leftButton.isPressed || Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.leftButton.wasReleasedThisFrame))
             {
                 screenPosition = Mouse.current.position.ReadValue();
                 isPressed = Mouse.current.leftButton.isPressed;
                 wasPressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
                 wasReleasedThisFrame = Mouse.current.leftButton.wasReleasedThisFrame;
             }
-            else if (Pointer.current != null)
+            // Priority 2: Touchscreen (Mobile device / active touch)
+            else if (Touchscreen.current != null && (Touchscreen.current.primaryTouch.press.isPressed || Touchscreen.current.primaryTouch.press.wasPressedThisFrame || Touchscreen.current.primaryTouch.press.wasReleasedThisFrame))
+            {
+                screenPosition = Touchscreen.current.primaryTouch.position.ReadValue();
+                isPressed = Touchscreen.current.primaryTouch.press.isPressed;
+                wasPressedThisFrame = Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+                wasReleasedThisFrame = Touchscreen.current.primaryTouch.press.wasReleasedThisFrame;
+            }
+            // Priority 3: Pointer fallback (Stylus/Pen)
+            else if (Pointer.current != null && (Pointer.current.press.isPressed || Pointer.current.press.wasPressedThisFrame || Pointer.current.press.wasReleasedThisFrame))
             {
                 screenPosition = Pointer.current.position.ReadValue();
                 isPressed = Pointer.current.press.isPressed;
@@ -191,6 +194,8 @@ namespace CutFreePets.Cut
                 trailRenderer.Clear();
                 trailRenderer.emitting = true;
             }
+            // Deliberately do NOT cut on initial touch/click.
+            // Slicing requires an active swipe motion across the rope to prevent accidental cuts when clicking beside or near the rope.
         }
 
         private void ContinueSwipe(Vector3 worldPos)
@@ -223,7 +228,7 @@ namespace CutFreePets.Cut
                 VerletRope rope = ropes[i];
                 if (rope == null || rope.IsCut) continue;
 
-                // Authentic Cut the Rope slicing: Requires swipe line segment to geometrically cross the rope
+                // Authentic Cut the Rope slicing: requires an actual swipe cutting across the rope
                 if (rope.CutBetweenPoints(pStart, pEnd))
                 {
                     SpawnSnipSparks(pEnd);

@@ -2276,7 +2276,7 @@ MonoBehaviour:
   trailTime: 0.2
   startWidth: 0.22
   endWidth: 0.02
-  minSwipeDistance: 0.015
+  minSwipeDistance: 0.08
   bladeCoreColor: {r: 1, g: 1, b: 0.85, a: 1}
   bladeGlowColor: {r: 1, g: 0.55, b: 0.1, a: 0.85}
 --- !u!96 &1094026539

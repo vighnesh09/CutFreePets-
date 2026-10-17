@@ -137,6 +137,11 @@ namespace CutFreePets.Gameplay
                 targetCatX = platformCollider.bounds.center.x;
             }
 
+            // Get URP 2D sprite material to avoid magenta artifacts
+            Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            Material unlitMat = unlitShader != null ? new Material(unlitShader) : null;
+            Transform levelContainer = transform.parent;
+
             // 3. Ground contact shadow on landing platform
             if (groundShadowSprite != null)
             {
@@ -144,9 +149,11 @@ namespace CutFreePets.Gameplay
                 shadowObj.transform.position = new Vector3(targetCatX, platformTopY + 0.02f, 0f);
                 shadowObj.transform.rotation = Quaternion.identity;
                 shadowObj.transform.localScale = new Vector3(1.25f, 0.32f, 1f);
+                if (levelContainer != null) shadowObj.transform.SetParent(levelContainer, true);
 
                 SpriteRenderer srShadow = shadowObj.AddComponent<SpriteRenderer>();
                 srShadow.sprite = groundShadowSprite;
+                if (unlitMat != null) srShadow.material = unlitMat;
                 srShadow.color = new Color(0f, 0f, 0f, 0.45f);
                 srShadow.sortingOrder = 5;
             }
@@ -156,7 +163,8 @@ namespace CutFreePets.Gameplay
             {
                 // Preserve exact world scale from inside the cage so the cat never unexpectedly balloons or pops larger
                 Vector3 savedWorldScale = petSlot.lossyScale;
-                petSlot.SetParent(null, true);
+                // Parent to level container (NOT null/scene root) so it is cleaned up on level transition!
+                petSlot.SetParent(levelContainer, true);
                 petSlot.localScale = savedWorldScale;
 
                 float targetCatY = platformTopY + 0.60f;
@@ -189,9 +197,12 @@ namespace CutFreePets.Gameplay
             debObj.transform.position = startPos;
             debObj.transform.rotation = startRot;
             debObj.transform.localScale = Vector3.one * scale;
+            if (transform.parent != null) debObj.transform.SetParent(transform.parent, true);
 
             SpriteRenderer sr = debObj.AddComponent<SpriteRenderer>();
             sr.sprite = spr;
+            Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            if (unlitShader != null) sr.material = new Material(unlitShader);
             // Sorting order 6: Always behind the cat (14), in front of background (0)
             sr.sortingOrder = 6;
 
@@ -210,9 +221,12 @@ namespace CutFreePets.Gameplay
             GameObject sparkObj = new GameObject("Debris_Spark");
             sparkObj.transform.position = startPos;
             sparkObj.transform.localScale = Vector3.one * 0.55f;
+            if (transform.parent != null) sparkObj.transform.SetParent(transform.parent, true);
 
             SpriteRenderer ssr = sparkObj.AddComponent<SpriteRenderer>();
             ssr.sprite = spr;
+            Shader unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            if (unlitShader != null) ssr.material = new Material(unlitShader);
             ssr.sortingOrder = 11;
             ssr.color = new Color(1f, 0.92f, 0.35f, 1f);
 

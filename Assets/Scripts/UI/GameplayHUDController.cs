@@ -234,6 +234,23 @@ namespace CutFreePets.UI
             if (pauseModalRoot != null) pauseModalRoot.SetActive(false);
         }
 
+        public void ResetHUD()
+        {
+            isLevelCompleted = false;
+            isPaused = false;
+            Time.timeScale = 1f;
+            if (btnQuickRestart != null) btnQuickRestart.gameObject.SetActive(true);
+            if (btnPause != null) btnPause.gameObject.SetActive(true);
+            if (pauseModalRoot != null) pauseModalRoot.SetActive(false);
+
+            PetCage cage = FindAnyObjectByType<PetCage>();
+            if (cage != null)
+            {
+                cage.OnLandedOnGoal -= HandleCageLanded;
+                cage.OnLandedOnGoal += HandleCageLanded;
+            }
+        }
+
         private void WireButtons()
         {
             if (btnQuickRestart != null)

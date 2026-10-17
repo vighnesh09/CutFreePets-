@@ -67,7 +67,7 @@ namespace CutFreePets.Rope
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
             ConfigureLineRenderer();
             LoadDefaultAssetsIfMissing();
-            CleanupLegacyEndKnots();
+            CleanupLegacyKnots();
         }
 
         private void Start()
@@ -78,11 +78,26 @@ namespace CutFreePets.Rope
             }
         }
 
-        private void CleanupLegacyEndKnots()
+        private void CleanupLegacyKnots()
         {
-            // Remove legacy Knot_Ring_Albedo end accessories if any exist
-            Transform legacyKnot = transform.Find($"{gameObject.name}_EndKnot");
-            if (legacyKnot != null) Destroy(legacyKnot.gameObject);
+            // Destroy any legacy static child knots saved in scene/prefab editing
+            // All active knots are generated procedurally along the physical rope at runtime!
+            List<GameObject> toDestroy = new List<GameObject>();
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.name.Contains("_Knot") || child.name.Contains("_EndKnot"))
+                {
+                    toDestroy.Add(child.gameObject);
+                }
+            }
+
+            for (int i = 0; i < toDestroy.Count; i++)
+            {
+                toDestroy[i].SetActive(false);
+                if (Application.isPlaying) Destroy(toDestroy[i]);
+                else DestroyImmediate(toDestroy[i]);
+            }
         }
 
         private void LoadDefaultAssetsIfMissing()

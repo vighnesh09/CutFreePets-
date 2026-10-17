@@ -724,9 +724,7 @@ Transform:
   m_LocalPosition: {x: -2.7, y: 5.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1588875076}
-  - {fileID: 2033174783}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &347464767
@@ -1643,9 +1641,7 @@ Transform:
   m_LocalPosition: {x: 2.7, y: 5.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 760113835}
-  - {fileID: 1029593669}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &644722004
@@ -2910,7 +2906,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.Cut.SwipeCutBlade
   trailRenderer: {fileID: 0}
-  minSwipeDistance: 0.015
+  minSwipeDistance: 0.08
   bladeCoreColor: {r: 1, g: 1, b: 0.85, a: 1}
   bladeGlowColor: {r: 1, g: 0.55, b: 0.1, a: 0.85}
 --- !u!96 &1094026539

@@ -39,10 +39,14 @@ namespace CutFreePets.UI
         [SerializeField] private float starPopDelay = 0.25f;
         [SerializeField] private float starPopDuration = 0.35f;
 
+        public static VictoryPopupUI Instance { get; private set; }
+
         private bool isShowing = false;
 
         private void Awake()
         {
+            Instance = this;
+
             // Start hidden
             if (popupRoot != null)
             {
@@ -50,6 +54,38 @@ namespace CutFreePets.UI
             }
 
             SetupButtons();
+        }
+
+        public void ResetPopup(PetCage explicitCage = null)
+        {
+            StopAllCoroutines();
+            isShowing = false;
+            if (popupRoot != null)
+            {
+                popupRoot.SetActive(false);
+            }
+            if (boardTransform != null)
+            {
+                boardTransform.localScale = Vector3.zero;
+            }
+            if (goldenStars != null)
+            {
+                for (int i = 0; i < goldenStars.Length; i++)
+                {
+                    if (goldenStars[i] != null)
+                    {
+                        goldenStars[i].gameObject.SetActive(false);
+                        goldenStars[i].transform.localScale = Vector3.zero;
+                    }
+                }
+            }
+
+            PetCage cage = explicitCage != null ? explicitCage : FindAnyObjectByType<PetCage>();
+            if (cage != null)
+            {
+                cage.OnLandedOnGoal -= HandleDirectCageLanded;
+                cage.OnLandedOnGoal += HandleDirectCageLanded;
+            }
         }
 
         private void OnEnable()
@@ -155,7 +191,7 @@ namespace CutFreePets.UI
             isShowing = true;
 
             // 1. Wait a moment for the cat landing bounce and cage break debris to complete cleanly
-            yield return new WaitForSeconds(0.45f);
+            yield return new WaitForSecondsRealtime(0.35f);
 
             if (popupRoot != null)
             {
@@ -191,7 +227,7 @@ namespace CutFreePets.UI
             float elapsed = 0f;
             while (elapsed < boardBounceDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / boardBounceDuration);
 
                 // Overshoot bounce (0 -> 1.15 -> 1.0)
@@ -213,7 +249,7 @@ namespace CutFreePets.UI
             int starsToReveal = Mathf.Clamp(starsEarned, 0, 3);
             for (int i = 0; i < starsToReveal; i++)
             {
-                yield return new WaitForSeconds(starPopDelay);
+                yield return new WaitForSecondsRealtime(starPopDelay);
 
                 if (goldenStars != null && i < goldenStars.Length && goldenStars[i] != null)
                 {
@@ -224,7 +260,7 @@ namespace CutFreePets.UI
 
             if (starsEarned >= 3)
             {
-                yield return new WaitForSeconds(0.15f);
+                yield return new WaitForSecondsRealtime(0.15f);
                 CutFreePets.Core.HapticManager.PlayVictoryFanfareHaptic();
             }
         }
@@ -240,7 +276,7 @@ namespace CutFreePets.UI
             float elapsed = 0f;
             while (elapsed < starPopDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / starPopDuration);
 
                 // Elastic pop bounce (expands up to 1.35x then settles to 1.0x)

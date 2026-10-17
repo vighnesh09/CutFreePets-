@@ -13,9 +13,10 @@ namespace CutFreePets.Core
     {
         public const string HOME_SCENE_NAME = "HomeScreen";
         public const string LEVEL_SELECT_SCENE_NAME = "LevelSelect";
+        public const string GAME_SCENE_NAME = "GameScene";
         public const string LEVEL_SCENE_PREFIX = "Level_";
 
-        public static int CurrentLevelIndex { get; private set; } = 1;
+        public static int CurrentLevelIndex { get; set; } = 0;
 
         static GameManager()
         {
@@ -24,14 +25,32 @@ namespace CutFreePets.Core
 
         /// <summary>
         /// Loads the designated Level (e.g. Level 1).
-        /// If a specific scene "Level_X" does not exist yet in Build Settings,
-        /// gracefully falls back to SampleScene or the current active level scene.
+        /// If GameScene (Architecture 2) is active, swaps level prefab in 0.01s.
+        /// Otherwise loads GameScene or falls back to legacy scenes gracefully.
         /// </summary>
         public static void LoadLevel(int levelIndex)
         {
             CurrentLevelIndex = levelIndex;
-            string targetScene = $"{LEVEL_SCENE_PREFIX}{levelIndex}";
 
+            // 1. If GameScene is already active, instant 0.01s swap!
+            if (SceneManager.GetActiveScene().name == GAME_SCENE_NAME)
+            {
+                if (LevelSystem.LevelLoader.Instance != null)
+                {
+                    LevelSystem.LevelLoader.Instance.LoadLevel(levelIndex);
+                    return;
+                }
+            }
+
+            // 2. If GameScene is available in build, load GameScene
+            if (Application.CanStreamedLevelBeLoaded(GAME_SCENE_NAME))
+            {
+                SceneManager.LoadScene(GAME_SCENE_NAME);
+                return;
+            }
+
+            // 3. Fallback to legacy scene if GameScene not in build
+            string targetScene = $"{LEVEL_SCENE_PREFIX}{levelIndex}";
             if (Application.CanStreamedLevelBeLoaded(targetScene))
             {
                 SceneManager.LoadScene(targetScene);
@@ -40,13 +59,9 @@ namespace CutFreePets.Core
             {
                 SceneManager.LoadScene("SampleScene");
             }
-            else
+            else if (SceneManager.sceneCountInBuildSettings > 1)
             {
-                // Fallback to scene index 1
-                if (SceneManager.sceneCountInBuildSettings > 1)
-                {
-                    SceneManager.LoadScene(1);
-                }
+                SceneManager.LoadScene(1);
             }
         }
 
@@ -81,11 +96,18 @@ namespace CutFreePets.Core
         }
 
         /// <summary>
-        /// Restarts the currently active scene.
+        /// Restarts the currently active level (0.01s instant restart in Architecture 2).
         /// </summary>
         public static void RestartCurrentLevel()
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (LevelSystem.LevelLoader.Instance != null)
+            {
+                LevelSystem.LevelLoader.Instance.RestartCurrentLevel();
+            }
+            else
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
         }
 
         /// <summary>

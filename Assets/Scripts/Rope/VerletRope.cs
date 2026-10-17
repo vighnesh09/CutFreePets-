@@ -467,20 +467,33 @@ namespace CutFreePets.Rope
         }
 
         /// <summary>
-        /// Cuts the rope when a swipe intersection passes through segment (a, b).
+        /// Cuts the rope when a swipe stroke actually slices through or crosses segment (a, b).
         /// </summary>
-        public bool CutBetweenPoints(Vector2 swipeStart, Vector2 swipeEnd)
+        public bool CutBetweenPoints(Vector2 swipeStart, Vector2 swipeEnd, float cutRadius = -1f)
         {
             if (isCut || particles.Count < 2) return false;
+
+            if (cutRadius < 0f)
+            {
+                cutRadius = config != null ? config.baseWidth * 0.5f : 0.0675f;
+            }
 
             for (int i = 0; i < particles.Count - 1; i++)
             {
                 Vector2 pA = particles[i].Position;
                 Vector2 pB = particles[i + 1].Position;
 
+                // 1. Direct mathematical segment intersection (exact geometric slice)
                 if (LineSegmentsIntersect(swipeStart, swipeEnd, pA, pB, out Vector2 intersection))
                 {
                     CutSegment(i, intersection);
+                    return true;
+                }
+
+                // 2. Physical blade edge proximity to rope cylinder during a swipe (tight tolerance within rope radius)
+                if (cutRadius > 0f && SegmentToSegmentDistance(swipeStart, swipeEnd, pA, pB, out Vector2 closestPoint) <= cutRadius)
+                {
+                    CutSegment(i, closestPoint);
                     return true;
                 }
             }
@@ -489,9 +502,9 @@ namespace CutFreePets.Rope
         }
 
         /// <summary>
-        /// Cuts the rope at nearest point to world position within cut tolerance.
+        /// Cuts the rope at nearest point to world position within strict cut tolerance.
         /// </summary>
-        public bool CutAtPoint(Vector3 worldPoint, float tolerance = 0.35f)
+        public bool CutAtPoint(Vector3 worldPoint, float tolerance = 0.0675f)
         {
             if (isCut || particles.Count < 2) return false;
 
@@ -619,6 +632,45 @@ namespace CutFreePets.Rope
             if (sqr < 0.0001f) return a;
             float t = Mathf.Clamp01(Vector3.Dot(p - a, ab) / sqr);
             return a + t * ab;
+        }
+
+        private Vector2 ClosestPointOnSegment(Vector2 a, Vector2 b, Vector2 p)
+        {
+            Vector2 ab = b - a;
+            float sqr = ab.sqrMagnitude;
+            if (sqr < 0.00001f) return a;
+            float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / sqr);
+            return a + t * ab;
+        }
+
+        private float SegmentToSegmentDistance(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 closestOnRope)
+        {
+            if (LineSegmentsIntersect(p1, p2, p3, p4, out Vector2 inter))
+            {
+                closestOnRope = inter;
+                return 0f;
+            }
+
+            Vector2 c1 = ClosestPointOnSegment(p3, p4, p1);
+            float d1 = Vector2.Distance(p1, c1);
+
+            Vector2 c2 = ClosestPointOnSegment(p3, p4, p2);
+            float d2 = Vector2.Distance(p2, c2);
+
+            Vector2 pOnSwipe3 = ClosestPointOnSegment(p1, p2, p3);
+            float d3 = Vector2.Distance(p3, pOnSwipe3);
+
+            Vector2 pOnSwipe4 = ClosestPointOnSegment(p1, p2, p4);
+            float d4 = Vector2.Distance(p4, pOnSwipe4);
+
+            float minD = d1;
+            closestOnRope = c1;
+
+            if (d2 < minD) { minD = d2; closestOnRope = c2; }
+            if (d3 < minD) { minD = d3; closestOnRope = p3; }
+            if (d4 < minD) { minD = d4; closestOnRope = p4; }
+
+            return minD;
         }
 
         private bool LineSegmentsIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)

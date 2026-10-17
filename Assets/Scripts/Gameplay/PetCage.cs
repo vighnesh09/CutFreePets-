@@ -346,6 +346,12 @@ namespace CutFreePets.Gameplay
 
             OnLandedOnGoal?.Invoke(collision);
             CutFreePets.Core.HapticManager.PlayGoalLandingHaptic();
+
+            // Guaranteed direct trigger to LevelScoreTracker
+            if (LevelScoreTracker.Instance != null)
+            {
+                LevelScoreTracker.Instance.NotifyCageLanded();
+            }
         }
 
         public void OpenAndDisappear()
@@ -379,6 +385,23 @@ namespace CutFreePets.Gameplay
                 OnLandedOnHazard?.Invoke(collision);
             }
             else if (collision.contactCount > 0 && collision.GetContact(0).normal.y > 0.45f)
+            {
+                BreakAndFreePet(collision);
+            }
+        }
+
+        private void OnCollisionStay2D(Collision2D collision)
+        {
+            if (isLanded) return;
+            if (collision.gameObject.name.Contains("Ramp") || 
+                collision.gameObject.name.Contains("Slope") || 
+                collision.gameObject.name.Contains("Slide") ||
+                collision.gameObject.name.Contains("Obstacle"))
+            {
+                return;
+            }
+
+            if (collision.gameObject.name.Contains("Platform") || collision.gameObject.CompareTag("Finish") || collision.gameObject.name.Contains("Ground"))
             {
                 BreakAndFreePet(collision);
             }

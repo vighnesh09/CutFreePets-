@@ -142,12 +142,19 @@ namespace CutFreePets.Gameplay
 
         private void SpawnStarSparks()
         {
+            Shader unlit = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            Material sparkMat = unlit != null ? new Material(unlit) : null;
+            Transform parentContainer = transform.parent;
+
             for (int i = 0; i < 6; i++)
             {
                 GameObject spark = new GameObject("StarSpark");
                 spark.transform.position = transform.position;
+                if (parentContainer != null) spark.transform.SetParent(parentContainer, true);
+
                 SpriteRenderer sr = spark.AddComponent<SpriteRenderer>();
                 sr.sprite = starSprite;
+                if (sparkMat != null) sr.material = sparkMat;
                 sr.color = new Color(1f, 0.95f, 0.4f, 0.9f);
                 sr.sortingOrder = 10;
                 spark.transform.localScale = Vector3.one * 0.18f;
