@@ -82,9 +82,22 @@ namespace CutFreePets.Gameplay
             float offset = Mathf.Sin((Time.time * bobSpeed) + seed) * bobAmplitude;
             transform.position = startPos + new Vector3(0f, offset, 0f);
             transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin((Time.time * 1.5f) + seed) * (rotateSpeed * 0.5f));
+
+            // Continuous overlap check (catches fast pendulum swings and edge overlaps)
+            CheckContactFailsafe();
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
+        {
+            TryHandleCollision(collision);
+        }
+
+        private void OnTriggerStay2D(Collider2D collision)
+        {
+            TryHandleCollision(collision);
+        }
+
+        private void TryHandleCollision(Collider2D collision)
         {
             if (isCollected) return;
 
@@ -93,6 +106,21 @@ namespace CutFreePets.Gameplay
             if (cage != null)
             {
                 Collect();
+            }
+        }
+
+        private void CheckContactFailsafe()
+        {
+            if (isCollected) return;
+
+            Collider2D hit = Physics2D.OverlapCircle(transform.position, 0.55f);
+            if (hit != null)
+            {
+                PetCage cage = hit.GetComponentInParent<PetCage>();
+                if (cage != null)
+                {
+                    Collect();
+                }
             }
         }
 

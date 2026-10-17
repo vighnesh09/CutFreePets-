@@ -120,43 +120,47 @@ Every Chapter of 25 levels follows this exact 4-phase rhythm:
 * **Solution**: Swipe horizontally across both ropes in 1 fluid stroke $\rightarrow$ cage drops straight down, collecting all 3 stars.
 * **Player Hook**: The thrill of a double-cut combo!
 
-#### Level 3 — "The Big Swing" (Pendulum Momentum)
-* **Visual**: Asymmetrical tension with the cage pulled slightly to the right.
-* **Cage Position**: $(+1.0, 1.2, 0)$
-* **Hangers**: Hanger 1 at $(-1.8, 3.5, 0)$, Hanger 2 at $(+1.6, 3.5, 0)$
-* **Platform**: Ground Platform at $(0.0, -3.85, 0)$
-* **Stars**: Placed along the left swing arc: $(+0.3, 0.9)$, $(-0.5, 0.5)$, $(-1.2, 0.0)$
-* **Solution**: Cut right rope $\rightarrow$ cage swoops left along the arc collecting stars $\rightarrow$ cut left rope as it swings back toward center $\rightarrow$ drops on platform.
-* **Player Hook**: Feeling kinetic inertia for the first time!
+#### Level 3 — "The Great Slide Debut" (Introduction to Wooden Ramps)
+* **Visual**: Cozy honey-oak canopy, sunshine illuminating a sturdy wooden ramp on the left.
+* **Cage Position**: $(-1.15, 2.35, 0)$
+* **Hanger**: 1 anchor at $(-1.15, 5.80, 0)$
+* **Obstacles**: `Obstacle_Hinged_Ramp` at $(-2.55, -2.10, 0)$ sloping downward from left to right.
+* **Platform**: Ground Platform at $(+1.35, -3.85, 0)$
+* **Stars**: $(-1.15, 0.15, 0)$ [drop star], $(-0.10, -2.10, 0)$ [mid-slide star], $(+1.35, -2.85, 0)$ [landing star].
+* **Solution**: Snip rope $\rightarrow$ cage drops onto slide ramp $\rightarrow$ rolls smoothly down collecting stars $\rightarrow$ settles onto platform with celebratory fanfare!
+* **Player Hook**: Introduces rolling physics and the satisfying kinetic wood slide sound.
 
-#### Level 4 — "Wooden Slide Debut" (Introduction to Ramps)
-* **Visual**: Warm honey-oak sloped slide positioned on the left.
-* **Cage Position**: $(-1.4, 1.8, 0)$
-* **Hanger**: 1 anchor at $(-1.4, 3.7, 0)$
-* **Obstacles**: `Obstacle_Sloped_Slide` (Left-to-Right, $25^\circ$) at $(-0.6, -1.8, 0)$, scale $(0.75, 0.75, 1)$
-* **Platform**: Ground Platform at $(+0.8, -3.85, 0)$
-* **Stars**: Placed along the slide surface: $(-1.2, 0.0)$, $(-0.5, -1.4)$, $(+0.2, -2.6)$
-* **Solution**: Snip rope $\rightarrow$ cage lands gently on slide $\rightarrow$ rolls smoothly downward collecting stars $\rightarrow$ settles onto platform!
-* **Player Hook**: Tactile rolling sound and natural slope momentum.
+#### Level 4 — "The Big Swing" (Pendulum Momentum & Timing - No Slides!)
+* **Visual**: Asymmetrical two-rope suspension with wide open sky for aerial swinging.
+* **Cage Position**: $(+0.90, 1.10, 0)$
+* **Hangers**:
+  * Hanger 1 (Main High Pivot): $(-0.45, 3.85, 0)$ (Center-Left)
+  * Hanger 2 (Right Pull Anchor): $(+1.85, 2.90, 0)$ (Long, clear, comfortable cuttable rope!)
+* **Platform**: Ground Platform at $(-0.45, -3.85, 0)$ (Shifted slightly left, perfectly aligned under the pivot!).
+* **Obstacles**: None (Pure aerial pendulum swing puzzle!).
+* **Stars**: Placed along the safe visible arc (completely clear of resting cage at start):
+  * Star 1: $(-0.15, -0.65, 0)$ [bottom curve of swing descent — 2.0+ units away from cage!]
+  * Star 2: $(-1.25, 0.40, 0)$ [leftward swing apex — high in the air!]
+  * Star 3: $(-0.45, -2.15, 0)$ [direct drop trajectory directly above goal platform]
+* **Solution**: Cut right rope $\rightarrow$ cage swoops down and left in a smooth pendulum arc, collecting Star 1 and Star 2 $\rightarrow$ as it swings back through center, cut main rope $\rightarrow$ cage drops straight down through Star 3 and lands upright, perfectly centered on the platform!
+* **Player Hook**: Dynamic pendulum velocity, long swipeable ropes, and safe screen boundaries.
 
-#### Level 5 — "Opposite Slide" (Right-to-Left Ramp)
-* **Visual**: Mirror layout of Level 4 with ramp on the right.
-* **Cage Position**: $(+1.4, 1.8, 0)$
-* **Hanger**: 1 anchor at $(+1.4, 3.7, 0)$
-* **Obstacles**: `Obstacle_Sloped_Slide` (Right-to-Left, $25^\circ$) at $(+0.6, -1.8, 0)$
-* **Platform**: Ground Platform at $(-0.8, -3.85, 0)$
-* **Stars**: $(+1.2, 0.0)$, $(+0.5, -1.4)$, $(-0.2, -2.6)$
-* **Solution**: Cut rope $\rightarrow$ rolls left down ramp into goal platform.
-* **Player Hook**: Reinforces ramp mechanics in both directions.
+#### Level 5 — "Triple Tension Web" (Strategic Cut Order)
+* **Visual**: Intricate three-rope spiderweb holding the cage in high tension.
+* **Cage Position**: $(0.00, 0.50, 0)$
+* **Hangers**: Left Anchor $(-2.00, 2.80, 0)$, Top Anchor $(0.00, 3.80, 0)$, Right Anchor $(+2.00, 2.80, 0)$.
+* **Platform**: Ground Platform at $(0.00, -3.85, 0)$
+* **Stars**: Left Star $(-1.20, 0.50, 0)$, Right Star $(+1.20, 0.50, 0)$, Drop Star $(0.00, -1.80, 0)$.
+* **Solution**: Cut Left rope (swings right into Star 2) $\rightarrow$ cut Right rope (swings back through Star 1) $\rightarrow$ cut Top rope (drops through Star 3 onto platform).
+* **Player Hook**: Teaches multi-rope tension release and deliberate cut sequencing.
 
 ---
 
 ### Phase 2: Develop (Levels 6–15)
 
-#### Level 6 — "The Pendulum Catch"
-* **Cage**: $(+1.4, 0.6, 0)$ held by rope from $(-1.6, 3.8, 0)$ and $(+1.8, 2.0, 0)$
-* **Stars**: 2 stars on the left swing arc $(-0.5, 0.8), (-1.4, 0.5)$, 1 star at center drop $(0, -2.2)$.
-* **Solution**: Cut right rope $\rightarrow$ cage swoops left collecting 2 stars $\rightarrow$ snip left rope at the apex to drop straight onto center platform.
+#### Level 6 — "Swing & Slide Handoff" (Combo Mechanic)
+* **Setup**: High pendulum swing on the left swinging into an elevated slide ramp on the right.
+* **Solution**: Cut pull rope $\rightarrow$ cage swings across screen, drops onto slide ramp, rolls smoothly into goal platform.
 
 #### Level 7 — "Triple Tension Web"
 * **Cage**: $(0.0, 0.5, 0)$ suspended by 3 ropes: Left $(-2.0, 2.8)$, Top $(0.0, 3.8)$, Right $(+2.0, 2.8)$.

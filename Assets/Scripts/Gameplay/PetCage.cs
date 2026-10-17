@@ -249,13 +249,13 @@ namespace CutFreePets.Gameplay
             if (cam != null)
             {
                 Vector3 vp = cam.WorldToViewportPoint(transform.position);
-                // When cage center exits horizontal screen boundaries or drops below bottom
-                if (vp.x < -0.05f || vp.x > 1.05f || vp.y < -0.15f)
+                // When cage center completely exits horizontal screen boundaries with a generous 15% buffer
+                if (vp.x < -0.15f || vp.x > 1.15f || vp.y < -0.20f)
                 {
                     isOffScreen = true;
                 }
             }
-            if (Mathf.Abs(transform.position.x) >= 2.75f || transform.position.y <= -5.50f)
+            if (Mathf.Abs(transform.position.x) >= 3.45f || transform.position.y <= -5.50f)
             {
                 isOffScreen = true;
             }

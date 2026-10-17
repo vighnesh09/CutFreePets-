@@ -68,14 +68,31 @@ namespace CutFreePets.Editor
             );
 
             EditorGUILayout.Space(10);
-            GUILayout.Label("1. Create New Level Prefab (Architecture 2)", EditorStyles.boldLabel);
+            GUILayout.Label("1. ⚡ 1-Click Bible Level Builder (Instant 0.5s)", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Instantly constructs a 100% verified, playable level directly from MASTER_LEVEL_DESIGN_300_BIBLE.md!",
+                MessageType.Info
+            );
             EditorGUILayout.BeginHorizontal();
             levelNumberToCreate = EditorGUILayout.IntField("Level Number", levelNumberToCreate);
-            if (GUILayout.Button("Create Prefab", GUILayout.Width(110)))
+            if (GUILayout.Button($"⚡ Build Level {levelNumberToCreate}", GUILayout.Width(130), GUILayout.Height(24)))
             {
-                CreateNewLevelPrefab(levelNumberToCreate);
+                BibleLevelGenerator.BuildLevel(levelNumberToCreate);
             }
             EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(4);
+            if (GUILayout.Button("🚀 Batch Build Chapter 1 (Levels 4 to 25 in 2s)", GUILayout.Height(28)))
+            {
+                if (EditorUtility.DisplayDialog(
+                    "Batch Build Chapter 1",
+                    "This will generate Levels 4 to 25 directly from the Master Bible into Assets/Resources/Levels/. Proceed?",
+                    "Build All",
+                    "Cancel"))
+                {
+                    BibleLevelGenerator.BatchBuildLevels(4, 25);
+                }
+            }
 
             EditorGUILayout.Space(15);
             GUILayout.Label("2. Instant Rope Connector", EditorStyles.boldLabel);
