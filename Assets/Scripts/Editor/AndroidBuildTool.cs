@@ -57,7 +57,7 @@ namespace CutFreePets.Editor
                 Debug.LogWarning($"[Build] Note on activeInputHandler check: {ex.Message}");
             }
 
-            // 5. Gather All Scenes Dynamically (Ensure Level 1, Level 2, Level 3 and all future levels are included)
+            // 5. Gather All Scenes Dynamically (Architecture 2: 3 Persistent Stage Scenes; all 300+ levels are modular prefabs in Resources)
             System.Collections.Generic.List<string> sceneList = new System.Collections.Generic.List<string>();
 
             // Always Home first (index 0) so the APK launches directly into HomeScreen
@@ -68,35 +68,9 @@ namespace CutFreePets.Editor
             string levelSelectScene = "Assets/Scenes/LevelSelect.unity";
             if (File.Exists(levelSelectScene)) sceneList.Add(levelSelectScene);
 
-            // Level 1
-            string level1Scene = "Assets/Scenes/Level_1.unity";
-            if (File.Exists(level1Scene)) sceneList.Add(level1Scene);
-
-            // Numbered Levels (Level_2, Level_3, etc.)
-            for (int i = 2; i <= 30; i++)
-            {
-                string levelPath = $"Assets/Scenes/Level_{i}.unity";
-                if (File.Exists(levelPath) && !sceneList.Contains(levelPath))
-                {
-                    sceneList.Add(levelPath);
-                }
-            }
-
-            // Include SampleScene for backward compatibility / fallback
-            string sampleScene = "Assets/Scenes/SampleScene.unity";
-            if (File.Exists(sampleScene) && !sceneList.Contains(sampleScene))
-            {
-                sceneList.Add(sampleScene);
-            }
-
-            // Any other enabled scenes from EditorBuildSettings
-            foreach (var s in EditorBuildSettings.scenes)
-            {
-                if (s.enabled && !string.IsNullOrEmpty(s.path) && File.Exists(s.path) && !sceneList.Contains(s.path))
-                {
-                    sceneList.Add(s.path);
-                }
-            }
+            // GameScene third (index 2: persistent stage that dynamically loads all level prefabs)
+            string gameScene = "Assets/Scenes/GameScene.unity";
+            if (File.Exists(gameScene)) sceneList.Add(gameScene);
 
             // Synchronize EditorBuildSettings so the Editor's Build Settings window always stays 100% updated
             System.Collections.Generic.List<EditorBuildSettingsScene> buildSettingsScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
@@ -106,7 +80,7 @@ namespace CutFreePets.Editor
             }
             EditorBuildSettings.scenes = buildSettingsScenes.ToArray();
 
-            Debug.Log($"<color=cyan>[Build]</color> Packaging {sceneList.Count} scenes into Android APK: {string.Join(", ", sceneList)}");
+            Debug.Log($"<color=cyan>[Build]</color> Packaging {sceneList.Count} Architecture 2 scenes into Android APK: {string.Join(", ", sceneList)}");
 
             // 6. Target Output Directory
             string projectRoot = Path.GetDirectoryName(Application.dataPath);

@@ -14,7 +14,6 @@ namespace CutFreePets.Core
         public const string HOME_SCENE_NAME = "HomeScreen";
         public const string LEVEL_SELECT_SCENE_NAME = "LevelSelect";
         public const string GAME_SCENE_NAME = "GameScene";
-        public const string LEVEL_SCENE_PREFIX = "Level_";
 
         public static int CurrentLevelIndex { get; set; } = 0;
         public static bool IsExplicitlySelectedFromMenu { get; private set; } = false;
@@ -51,27 +50,14 @@ namespace CutFreePets.Core
                 }
             }
 
-            // 2. If GameScene is available in build, load GameScene
+            // 2. Load master GameScene (Architecture 2)
             if (Application.CanStreamedLevelBeLoaded(GAME_SCENE_NAME))
             {
                 SceneManager.LoadScene(GAME_SCENE_NAME);
                 return;
             }
 
-            // 3. Fallback to legacy scene if GameScene not in build
-            string targetScene = $"{LEVEL_SCENE_PREFIX}{levelIndex}";
-            if (Application.CanStreamedLevelBeLoaded(targetScene))
-            {
-                SceneManager.LoadScene(targetScene);
-            }
-            else if (Application.CanStreamedLevelBeLoaded("SampleScene"))
-            {
-                SceneManager.LoadScene("SampleScene");
-            }
-            else if (SceneManager.sceneCountInBuildSettings > 1)
-            {
-                SceneManager.LoadScene(1);
-            }
+            Debug.LogError($"<color=red>[GameManager]</color> Master stage '{GAME_SCENE_NAME}' not found in Build Settings!");
         }
 
         /// <summary>

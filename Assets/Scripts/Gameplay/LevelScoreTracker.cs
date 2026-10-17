@@ -37,15 +37,7 @@ namespace CutFreePets.Gameplay
             Instance = this;
 
             SaveManager.Load();
-            string activeSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            if (activeSceneName.StartsWith("Level_") && int.TryParse(activeSceneName.Substring(6), out int parsedLevel))
-            {
-                currentLevel = parsedLevel;
-            }
-            else if (CutFreePets.Core.GameManager.CurrentLevelIndex > 0)
-            {
-                currentLevel = CutFreePets.Core.GameManager.CurrentLevelIndex;
-            }
+            currentLevel = CutFreePets.Core.GameManager.CurrentLevelIndex > 0 ? CutFreePets.Core.GameManager.CurrentLevelIndex : 1;
             starsCollectedThisRun = 0;
         }
 

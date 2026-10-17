@@ -44,10 +44,10 @@ namespace CutFreePets.Editor
             EditorSceneManager.OpenScene("Assets/Scenes/LevelSelect.unity", OpenSceneMode.Single);
         }
 
-        [MenuItem("Cut Free Pets/Open Scene/3. Level 1 (Completed Gameplay)", false, 12)]
-        public static void OpenLevel1Scene()
+        [MenuItem("Cut Free Pets/Open Scene/3. Game Stage (Single-Scene Architecture)", false, 12)]
+        public static void OpenGameScene()
         {
-            EditorSceneManager.OpenScene("Assets/Scenes/Level_1.unity", OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Scenes/GameScene.unity", OpenSceneMode.Single);
         }
 
         [MenuItem("Cut Free Pets/Level Designer Suite", false, 20)]
@@ -63,17 +63,17 @@ namespace CutFreePets.Editor
             EditorGUILayout.Space(10);
             GUILayout.Label("🎮 Cut Free Pets - Level Designer", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Design levels in seconds! Create new level scenes, connect ropes between hangers and cages, or drop prefabs with a single click.",
+                "Design levels in seconds! Create new level prefabs, connect ropes between hangers and cages, or drop gameplay elements with a single click.",
                 MessageType.Info
             );
 
             EditorGUILayout.Space(10);
-            GUILayout.Label("1. Create New Level Scene", EditorStyles.boldLabel);
+            GUILayout.Label("1. Create New Level Prefab (Architecture 2)", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();
             levelNumberToCreate = EditorGUILayout.IntField("Level Number", levelNumberToCreate);
-            if (GUILayout.Button("Create Level", GUILayout.Width(110)))
+            if (GUILayout.Button("Create Prefab", GUILayout.Width(110)))
             {
-                CreateNewLevelScene(levelNumberToCreate);
+                CreateNewLevelPrefab(levelNumberToCreate);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -128,141 +128,33 @@ namespace CutFreePets.Editor
             }
 
             EditorGUILayout.Space(15);
-            GUILayout.Label("4. Clean & Optimize Level 1 Scene", EditorStyles.boldLabel);
-            if (GUILayout.Button("✨ Rebuild Level 1 from Modular Prefabs", GUILayout.Height(30)))
+            GUILayout.Label("4. Master Game Stage", EditorStyles.boldLabel);
+            if (GUILayout.Button("🎮 Open Game Scene (Play Mode & Preview)", GUILayout.Height(30)))
             {
-                RebuildLevel1Clean();
+                OpenGameScene();
             }
 
             EditorGUILayout.Space(15);
             GUILayout.Label("5. Build Settings Sync", EditorStyles.boldLabel);
-            if (GUILayout.Button("🔄 Sync All Levels into Build Settings", GUILayout.Height(30)))
+            if (GUILayout.Button("🔄 Sync Architecture 2 Scenes into Build Settings", GUILayout.Height(30)))
             {
                 SyncBuildSettings();
             }
         }
 
-        [MenuItem("Cut Free Pets/Rebuild Level 1 from Modular Prefabs", false, 3)]
-        public static void RebuildLevel1Clean()
+        [MenuItem("Cut Free Pets/Select Level 1 Prefab", false, 3)]
+        public static void SelectLevel1Prefab()
         {
-            string targetPath = "Assets/Scenes/Level_1.unity";
-
-            // Open or create Level_1.unity
-            var scene = EditorSceneManager.OpenScene(targetPath, OpenSceneMode.Single);
-
-            // Clean old objects
-            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include))
+            GameObject level1Prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Levels/Level_001.prefab");
+            if (level1Prefab != null)
             {
-                Undo.DestroyObjectImmediate(go);
+                Selection.activeObject = level1Prefab;
+                EditorGUIUtility.PingObject(level1Prefab);
             }
-
-            // 1. Mobile Portrait Camera (9:16)
-            GameObject camObj = new GameObject("Main Camera");
-            camObj.tag = "MainCamera";
-            Camera cam = camObj.AddComponent<Camera>();
-            cam.orthographic = true;
-            cam.orthographicSize = 5.0f;
-            cam.transform.position = new Vector3(0f, 0.6f, -10f);
-            cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.12f, 0.16f, 0.20f);
-            camObj.AddComponent<AudioListener>();
-
-            // 2. Global 2D Light
-            GameObject lightObj = new GameObject("Global 2D Light");
-            var light2D = lightObj.AddComponent<Light2D>();
-            if (light2D != null)
+            else
             {
-                light2D.lightType = Light2D.LightType.Global;
-                light2D.intensity = 1.0f;
+                Debug.LogWarning("[LevelDesigner] Level_001.prefab not found in Assets/Resources/Levels/");
             }
-
-            // 3. Level 01 Elements Root
-            GameObject levelRoot = new GameObject("Level_01_Root");
-
-            // 4. Cozy Forest Theme Background (Fills 9:16 vertical screen)
-            GameObject bgObj = new GameObject("Level_Background");
-            bgObj.transform.parent = levelRoot.transform;
-            bgObj.transform.position = new Vector3(0f, 0.6f, 0f);
-            SpriteRenderer bgRend = bgObj.AddComponent<SpriteRenderer>();
-            bgRend.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/Level_BG_CozyForest.jpg");
-            bgRend.sortingOrder = -50;
-            // 9:16 Camera with size 5 has height 10 and width ~5.625
-            bgObj.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
-
-            // 5. Ground Platform (Sleek, slightly smaller width & height)
-            GameObject platformPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Ground_Platform.prefab");
-            GameObject platformObj = platformPrefab != null 
-                ? (GameObject)PrefabUtility.InstantiatePrefab(platformPrefab)
-                : CreateDefaultGroundPlatform();
-            platformObj.name = "Ground_Platform";
-            platformObj.transform.parent = levelRoot.transform;
-            platformObj.transform.position = new Vector3(0f, -3.85f, 0f);
-            platformObj.transform.localScale = new Vector3(0.92f, 0.92f, 1f); // Slightly smaller platform
-
-            // 6. Rope Hanger Peg Prefab Instance
-            GameObject hangerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Rope/Rope_Hanger.prefab");
-            GameObject hangerObj = hangerPrefab != null
-                ? (GameObject)PrefabUtility.InstantiatePrefab(hangerPrefab)
-                : CreateDefaultHanger();
-            hangerObj.name = "TopMiddle_Hanger";
-            hangerObj.transform.parent = levelRoot.transform;
-            hangerObj.transform.position = new Vector3(0f, 4.3f, 0f);
-            RopeHanger hangerComp = hangerObj.GetComponent<RopeHanger>() ?? hangerObj.AddComponent<RopeHanger>();
-
-            // 7. Pet Cage Prefab Instance (Slightly smaller, refined scale 0.85)
-            GameObject cagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Pet_Cage.prefab");
-            GameObject cageObj = cagePrefab != null
-                ? (GameObject)PrefabUtility.InstantiatePrefab(cagePrefab)
-                : CreateDefaultPetCage();
-            cageObj.name = "Pet_Cage";
-            cageObj.transform.parent = levelRoot.transform;
-            cageObj.transform.position = new Vector3(0f, 2.35f, 0f);
-            cageObj.transform.localScale = new Vector3(0.85f, 0.85f, 1f); // Refined, slightly smaller cage & cat
-            PetCage petCageComp = cageObj.GetComponent<PetCage>() ?? cageObj.AddComponent<PetCage>();
-
-            // 8. Rope connection
-            ConnectRope(hangerComp, petCageComp);
-
-            // 9. 3 Collectible Star Prefab Instances
-            Vector3[] starPositions = new Vector3[] {
-                new Vector3(0f, 0.15f, 0f),
-                new Vector3(0f, -1.05f, 0f),
-                new Vector3(0f, -2.25f, 0f)
-            };
-
-            for (int s = 0; s < 3; s++)
-            {
-                GameObject starObj = CreateStarInstance();
-                starObj.name = $"Star_Collectible_0{s + 1}";
-                starObj.transform.parent = levelRoot.transform;
-                starObj.transform.position = starPositions[s];
-            }
-
-            // 9. Swipe Blade
-            GameObject bladeObj = new GameObject("SwipeCutBlade");
-            bladeObj.transform.parent = levelRoot.transform;
-            bladeObj.AddComponent<SwipeCutBlade>();
-
-            // 10. LevelScoreTracker
-            GameObject trackerObj = new GameObject("LevelScoreTracker");
-            trackerObj.transform.parent = levelRoot.transform;
-            LevelScoreTracker tracker = trackerObj.AddComponent<LevelScoreTracker>();
-            tracker.SetCurrentLevel(1);
-
-            // 11. Victory Popup Canvas (Prefab Instance)
-            VictoryPopupBuilder.CreateOrUpdateVictoryPopup(levelRoot.transform);
-
-            EditorSceneManager.SaveScene(scene, targetPath);
-            SyncBuildSettings();
-
-            EditorUtility.DisplayDialog(
-                "Level 1 Clean & Optimized",
-                "Level_1.unity has been cleanly rebuilt using linked Prefab instances!\n\n" +
-                "• All elements linked to Assets/Prefabs/\n" +
-                "• Completely modular and lightweight\n" +
-                "• Changing any prefab updates Level 1 instantly!",
-                "Great!"
-            );
         }
 
         private void AutoDetectSelection()
@@ -336,124 +228,54 @@ namespace CutFreePets.Editor
             Debug.Log($"<color=lime>[LevelDesigner]</color> Successfully connected rope between '{hanger.name}' and '{cage.name}'!");
         }
 
-        public static void CreateNewLevelScene(int levelIndex)
+        public static void CreateNewLevelPrefab(int levelIndex)
         {
-            string targetPath = $"Assets/Scenes/Level_{levelIndex}.unity";
+            string targetPath = $"Assets/Resources/Levels/Level_{levelIndex:D3}.prefab";
+            string targetPrefabsPath = $"Assets/Prefabs/Levels/Level_{levelIndex:D3}.prefab";
 
             if (File.Exists(targetPath))
             {
-                bool overwrite = EditorUtility.DisplayDialog(
-                    "Level Scene Exists",
-                    $"Level scene '{targetPath}' already exists. Open it instead?",
-                    "Open Scene",
+                bool openIt = EditorUtility.DisplayDialog(
+                    "Level Prefab Exists",
+                    $"Level prefab '{targetPath}' already exists. Select it?",
+                    "Select Prefab",
                     "Cancel"
                 );
-                if (overwrite)
+                if (openIt)
                 {
-                    EditorSceneManager.OpenScene(targetPath, OpenSceneMode.Single);
+                    GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(targetPath);
+                    Selection.activeObject = existing;
+                    EditorGUIUtility.PingObject(existing);
                 }
                 return;
             }
 
-            // Create a clean new scene
-            var newScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-
-            // 1. Mobile Portrait Camera (9:16)
-            GameObject camObj = new GameObject("Main Camera");
-            camObj.tag = "MainCamera";
-            Camera cam = camObj.AddComponent<Camera>();
-            cam.orthographic = true;
-            cam.orthographicSize = 5.0f;
-            cam.transform.position = new Vector3(0f, 0.6f, -10f);
-            cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.12f, 0.16f, 0.20f);
-            camObj.AddComponent<AudioListener>();
-
-            // 2. Light for 2D URP
-            GameObject lightObj = new GameObject("Global 2D Light");
-            var light2D = lightObj.AddComponent<Light2D>();
-            if (light2D != null)
+            string templatePath = "Assets/Resources/Levels/Level_001.prefab";
+            if (File.Exists(templatePath))
             {
-                light2D.lightType = Light2D.LightType.Global;
-                light2D.intensity = 1.0f;
+                AssetDatabase.CopyAsset(templatePath, targetPath);
+                AssetDatabase.CopyAsset(templatePath, targetPrefabsPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(targetPath);
+                Selection.activeObject = obj;
+                EditorGUIUtility.PingObject(obj);
+                Debug.Log($"<color=lime>[LevelDesigner]</color> Created new modular Level prefab: {targetPath} (Level {levelIndex})!");
+
+                EditorUtility.DisplayDialog(
+                    "Level Prefab Created!",
+                    $"Successfully created '{targetPath}'!\n\n" +
+                    "• Double-click it to open and edit in Unity's Prefab Mode\n" +
+                    $"• In GameScene, press Play and enter {levelIndex} in [LevelLoader] to playtest instantly\n" +
+                    "• No Build Settings registration required!",
+                    "Awesome"
+                );
             }
-
-            // 3. Level Elements Root
-            GameObject levelRoot = new GameObject($"Level_{levelIndex:D2}_Root");
-
-            // 4. Ground Platform (Prefab or Component)
-            GameObject platformPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Ground_Platform.prefab");
-            GameObject platformObj = platformPrefab != null 
-                ? (GameObject)PrefabUtility.InstantiatePrefab(platformPrefab)
-                : CreateDefaultGroundPlatform();
-            platformObj.name = "Ground_Platform";
-            platformObj.transform.parent = levelRoot.transform;
-            platformObj.transform.position = new Vector3(0f, -3.85f, 0f);
-
-            // 5. Rope Hanger Peg
-            GameObject hangerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Rope/Rope_Hanger.prefab");
-            GameObject hangerObj = hangerPrefab != null
-                ? (GameObject)PrefabUtility.InstantiatePrefab(hangerPrefab)
-                : CreateDefaultHanger();
-            hangerObj.name = "TopMiddle_Hanger";
-            hangerObj.transform.parent = levelRoot.transform;
-            hangerObj.transform.position = new Vector3(0f, 4.5f, 0f);
-            RopeHanger hangerComp = hangerObj.GetComponent<RopeHanger>() ?? hangerObj.AddComponent<RopeHanger>();
-
-            // 6. Pet Cage with Cat
-            GameObject cagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Pet_Cage.prefab");
-            GameObject cageObj = cagePrefab != null
-                ? (GameObject)PrefabUtility.InstantiatePrefab(cagePrefab)
-                : CreateDefaultPetCage();
-            cageObj.name = "Pet_Cage";
-            cageObj.transform.parent = levelRoot.transform;
-            cageObj.transform.position = new Vector3(0f, 2.4f, 0f);
-            PetCage petCageComp = cageObj.GetComponent<PetCage>() ?? cageObj.AddComponent<PetCage>();
-
-            // 7. Connect Default Rope
-            ConnectRope(hangerComp, petCageComp);
-
-            // 8. 3 Collectible Stars with perfect spacing
-            Vector3[] starPositions = new Vector3[] {
-                new Vector3(0f, 0.10f, 0f),
-                new Vector3(0f, -1.15f, 0f),
-                new Vector3(0f, -2.40f, 0f)
-            };
-
-            for (int s = 0; s < 3; s++)
+            else
             {
-                GameObject starObj = CreateStarInstance();
-                starObj.name = $"Star_Collectible_0{s + 1}";
-                starObj.transform.parent = levelRoot.transform;
-                starObj.transform.position = starPositions[s];
+                Debug.LogError($"[LevelDesigner] Base template '{templatePath}' not found.");
             }
-
-            // 9. Swipe Cut Blade
-            GameObject bladeObj = new GameObject("SwipeCutBlade");
-            bladeObj.transform.parent = levelRoot.transform;
-            bladeObj.AddComponent<SwipeCutBlade>();
-
-            // 10. LevelScoreTracker configured for this level index
-            GameObject trackerObj = new GameObject("LevelScoreTracker");
-            trackerObj.transform.parent = levelRoot.transform;
-            LevelScoreTracker tracker = trackerObj.AddComponent<LevelScoreTracker>();
-            tracker.SetCurrentLevel(levelIndex);
-
-            // 11. Victory Popup Canvas
-            VictoryPopupBuilder.CreateOrUpdateVictoryPopup(levelRoot.transform);
-
-            // Save and sync scene
-            EditorSceneManager.SaveScene(newScene, targetPath);
-            SyncBuildSettings();
-
-            EditorUtility.DisplayDialog(
-                "Level Created!",
-                $"Successfully created and configured '{targetPath}'!\n\n" +
-                "• All prefabs and mechanics connected\n" +
-                "• Added automatically to Build Settings\n" +
-                "• Ready for instant play or repositioning!",
-                "Awesome"
-            );
         }
 
         public static GameObject CreateStarInstance()
@@ -606,37 +428,23 @@ namespace CutFreePets.Editor
             Selection.activeGameObject = plank;
         }
 
-        [MenuItem("Cut Free Pets/Sync All Level Scenes in Build Settings", false, 30)]
+        [MenuItem("Cut Free Pets/Sync Architecture 2 Scenes in Build Settings", false, 30)]
         public static void SyncBuildSettings()
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>();
 
-            // Always Home first (0), LevelSelect second (1)
+            // Always Home first (0), LevelSelect second (1), GameScene third (2)
             string home = "Assets/Scenes/HomeScreen.unity";
             if (File.Exists(home)) scenes.Add(new EditorBuildSettingsScene(home, true));
 
             string levelSelect = "Assets/Scenes/LevelSelect.unity";
             if (File.Exists(levelSelect)) scenes.Add(new EditorBuildSettingsScene(levelSelect, true));
 
-            // Discover all Level_*.unity scenes and add them in order (Level_1, Level_2, Level_3, etc.)
-            for (int i = 1; i <= 30; i++)
-            {
-                string path = $"Assets/Scenes/Level_{i}.unity";
-                if (File.Exists(path))
-                {
-                    scenes.Add(new EditorBuildSettingsScene(path, true));
-                }
-            }
-
-            // Include SampleScene as fallback/legacy
-            string sampleScene = "Assets/Scenes/SampleScene.unity";
-            if (File.Exists(sampleScene) && !scenes.Exists(s => s.path == sampleScene))
-            {
-                scenes.Add(new EditorBuildSettingsScene(sampleScene, true));
-            }
+            string gameScene = "Assets/Scenes/GameScene.unity";
+            if (File.Exists(gameScene)) scenes.Add(new EditorBuildSettingsScene(gameScene, true));
 
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log($"<color=lime>[LevelDesigner]</color> Synchronized {scenes.Count} scenes into Unity Build Settings!");
+            Debug.Log($"<color=lime>[LevelDesigner]</color> Synchronized {scenes.Count} core scenes into Unity Build Settings (Architecture 2)!");
         }
     }
 }

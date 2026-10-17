@@ -33,9 +33,13 @@ namespace CutFreePets.Gameplay
         [Tooltip("Top ring local position where ropes hook onto the cage.")]
         [SerializeField] private Vector3 topRingAttachOffset = new Vector3(0f, 1.65f, 0f);
 
-        [Header("Pet Slot")]
+        [Header("Pet Slot & Master Pet Character")]
         [Tooltip("Slot inside the cage where the animated pet sits.")]
         [SerializeField] private Transform petSlot;
+        [Tooltip("Optional pet prefab override. If unassigned, dynamically spawns Resources/Pets/Pet_Cat into Pet_Slot.")]
+        [SerializeField] private GameObject petPrefabOverride;
+        [Tooltip("When true, synchronizes the pet character from the master Pet_Cat prefab so changing the pet in one file updates all 300+ levels.")]
+        [SerializeField] private bool syncWithMasterPetPrefab = true;
 
         [Header("Visuals")]
         [SerializeField] private SpriteRenderer cageRenderer;
@@ -168,6 +172,48 @@ namespace CutFreePets.Gameplay
             else if (!isLanded)
             {
                 petSlot.localPosition = new Vector3(0f, -0.21f, 0f);
+            }
+
+            // Single Source of Truth for Pets across 300+ Levels:
+            // Synchronize with the master pet prefab so editing Resources/Pets/Pet_Cat.prefab updates all levels!
+            if (petSlot != null && Application.isPlaying && syncWithMasterPetPrefab)
+            {
+                // Clear any pre-baked placeholder pet so the live master Pet prefab is always used
+                if (petSlot.childCount > 0)
+                {
+                    for (int i = petSlot.childCount - 1; i >= 0; i--)
+                    {
+                        Destroy(petSlot.GetChild(i).gameObject);
+                    }
+                }
+
+                GameObject template = petPrefabOverride != null 
+                    ? petPrefabOverride 
+                    : Resources.Load<GameObject>("Pets/Pet_Cat");
+
+                if (template != null)
+                {
+                    GameObject spawnedPet = Instantiate(template, petSlot);
+                    spawnedPet.name = "Cat_Character";
+                    spawnedPet.transform.localPosition = Vector3.zero;
+                    spawnedPet.transform.localRotation = Quaternion.identity;
+                    spawnedPet.transform.localScale = new Vector3(0.90f, 0.90f, 1f);
+                }
+            }
+            else if (petSlot != null && petSlot.childCount == 0)
+            {
+                GameObject template = petPrefabOverride != null 
+                    ? petPrefabOverride 
+                    : Resources.Load<GameObject>("Pets/Pet_Cat");
+
+                if (template != null)
+                {
+                    GameObject spawnedPet = Instantiate(template, petSlot);
+                    spawnedPet.name = "Cat_Character";
+                    spawnedPet.transform.localPosition = Vector3.zero;
+                    spawnedPet.transform.localRotation = Quaternion.identity;
+                    spawnedPet.transform.localScale = new Vector3(0.90f, 0.90f, 1f);
+                }
             }
         }
 

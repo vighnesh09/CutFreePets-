@@ -518,20 +518,14 @@ namespace CutFreePets.Editor
                 scenes.Add(new EditorBuildSettingsScene(levelSelectPath, true)); // Index 1: LevelSelect
             }
 
-            string level1Path = "Assets/Scenes/Level_1.unity";
-            if (File.Exists(level1Path))
+            string gameScenePath = "Assets/Scenes/GameScene.unity";
+            if (File.Exists(gameScenePath))
             {
-                scenes.Add(new EditorBuildSettingsScene(level1Path, true)); // Index 2: Level_1
-            }
-
-            string sampleScenePath = "Assets/Scenes/SampleScene.unity";
-            if (File.Exists(sampleScenePath))
-            {
-                scenes.Add(new EditorBuildSettingsScene(sampleScenePath, true));
+                scenes.Add(new EditorBuildSettingsScene(gameScenePath, true)); // Index 2: GameScene
             }
 
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log("<color=cyan>[HomeScreenSceneBuilder]</color> Build Settings updated with HomeScreen (0), LevelSelect (1), Level_1 (2), and SampleScene.");
+            Debug.Log("<color=cyan>[HomeScreenSceneBuilder]</color> Build Settings updated with Architecture 2 scenes: HomeScreen (0), LevelSelect (1), and GameScene (2).");
         }
     }
 }
