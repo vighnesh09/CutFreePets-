@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.LevelSystem.LevelLoader
   levelContainer: {fileID: 0}
-  testLevelIndex: 1
+  testLevelIndex: 2
   autoLoadOnStart: 1
   levelPrefabs: []
 --- !u!4 &293899760
@@ -733,6 +733,7 @@ GameObject:
   - component: {fileID: 677470437}
   - component: {fileID: 677470436}
   - component: {fileID: 677470435}
+  - component: {fileID: 677470439}
   m_Layer: 0
   m_Name: VictoryCanvas
   m_TagString: Untagged
@@ -853,6 +854,30 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 100
   m_TargetDisplay: 0
+--- !u!114 &677470439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 677470433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f047522b675d7624ca9dfb32fd81309c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.UI.GameplayHUDController
+  btnQuickRestart: {fileID: 0}
+  btnPause: {fileID: 0}
+  pauseModalRoot: {fileID: 0}
+  pauseBoardTransform: {fileID: 0}
+  btnResume: {fileID: 0}
+  btnModalRestart: {fileID: 0}
+  btnModalMenu: {fileID: 0}
+  spritePause: {fileID: 0}
+  spriteRestart: {fileID: 0}
+  spriteResume: {fileID: 0}
+  spriteMenu: {fileID: 0}
+  spriteBoard: {fileID: 0}
 --- !u!1 &713883546
 GameObject:
   m_ObjectHideFlags: 0

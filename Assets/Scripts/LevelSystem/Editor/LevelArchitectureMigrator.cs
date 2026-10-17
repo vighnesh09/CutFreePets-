@@ -45,11 +45,10 @@ namespace CutFreePets.EditorTools
             EnsureFolder("Assets/Resources/Levels");
             EnsureFolder("Assets/Prefabs/Levels");
 
-            // 2. Export Level Prefabs for Levels 1, 2, 3, 4
+            // 2. Export Level Prefabs for Levels 1, 2, 3
             ExportLevelPrefab("Assets/Scenes/Level_1.unity", "HangingBox_Level", 1);
             ExportLevelPrefab("Assets/Scenes/Level_2.unity", "HangingBox_Level", 2);
             ExportLevelPrefab("Assets/Scenes/Level_3.unity", "HangingBox_Level", 3);
-            ExportLevelPrefab("Assets/Scenes/Level_4.unity", "Level_04_Root", 4);
 
             // 3. Build unified GameScene.unity
             BuildMasterGameScene();
@@ -163,9 +162,11 @@ namespace CutFreePets.EditorTools
             levelRoot.name = $"Level_{levelIndex:D3}";
 
             string resPath = $"Assets/Resources/Levels/Level_{levelIndex:D3}.prefab";
+            string prefabsPath = $"Assets/Prefabs/Levels/Level_{levelIndex:D3}.prefab";
             PrefabUtility.SaveAsPrefabAsset(levelRoot, resPath);
+            PrefabUtility.SaveAsPrefabAsset(levelRoot, prefabsPath);
 
-            Debug.Log($"<color=lime>[Architecture Migrator]</color> Exported Clean Level {levelIndex} to {resPath}");
+            Debug.Log($"<color=lime>[Architecture Migrator]</color> Exported Clean Level {levelIndex} to {resPath} and {prefabsPath}");
         }
 
         private static void BuildMasterGameScene()
@@ -224,25 +225,41 @@ namespace CutFreePets.EditorTools
 
         private static void UpdateBuildSettingsWithGameScene()
         {
+            string homeScenePath = "Assets/Scenes/HomeScreen.unity";
+            string levelSelectScenePath = "Assets/Scenes/LevelSelect.unity";
             string gameScenePath = "Assets/Scenes/GameScene.unity";
+
             var scenes = EditorBuildSettings.scenes.ToList();
 
-            if (!scenes.Any(s => s.path == gameScenePath))
+            // Set legacy scenes to disabled
+            for (int i = 0; i < scenes.Count; i++)
             {
-                int insertIndex = scenes.Count;
-                for (int i = 0; i < scenes.Count; i++)
+                if (scenes[i].path.Contains("Level_") || scenes[i].path.Contains("SampleScene"))
                 {
-                    if (scenes[i].path.Contains("Level_1"))
-                    {
-                        insertIndex = i;
-                        break;
-                    }
+                    scenes[i].enabled = false;
                 }
-
-                scenes.Insert(insertIndex, new EditorBuildSettingsScene(gameScenePath, true));
-                EditorBuildSettings.scenes = scenes.ToArray();
-                Debug.Log($"<color=cyan>[Architecture Migrator]</color> Added {gameScenePath} to EditorBuildSettings!");
             }
+
+            // Ensure GameScene is present and enabled
+            var gameSceneEntry = scenes.FirstOrDefault(s => s.path == gameScenePath);
+            if (gameSceneEntry == null)
+            {
+                scenes.Add(new EditorBuildSettingsScene(gameScenePath, true));
+            }
+            else
+            {
+                gameSceneEntry.enabled = true;
+            }
+
+            // Ensure HomeScreen is present and enabled at index 0 if possible
+            var homeSceneEntry = scenes.FirstOrDefault(s => s.path == homeScenePath);
+            if (homeSceneEntry != null) homeSceneEntry.enabled = true;
+
+            var levelSelectEntry = scenes.FirstOrDefault(s => s.path == levelSelectScenePath);
+            if (levelSelectEntry != null) levelSelectEntry.enabled = true;
+
+            EditorBuildSettings.scenes = scenes.ToArray();
+            Debug.Log("<color=cyan>[Architecture Migrator]</color> Configured EditorBuildSettings strictly for Architecture 2!");
         }
 
         private static void EnsureFolder(string path)

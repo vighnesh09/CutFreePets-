@@ -65,13 +65,13 @@ namespace CutFreePets.LevelSystem
             int targetLevel = 1;
 #if UNITY_EDITOR
             // If testing GameScene directly in Unity Editor without coming from menu:
-            if (GameManager.CurrentLevelIndex <= 0)
+            if (!GameManager.IsExplicitlySelectedFromMenu)
             {
                 targetLevel = Mathf.Max(1, testLevelIndex);
             }
             else
             {
-                targetLevel = GameManager.CurrentLevelIndex;
+                targetLevel = GameManager.CurrentLevelIndex > 0 ? GameManager.CurrentLevelIndex : Mathf.Max(1, testLevelIndex);
             }
 #else
             targetLevel = GameManager.CurrentLevelIndex > 0 ? GameManager.CurrentLevelIndex : 1;
@@ -81,7 +81,16 @@ namespace CutFreePets.LevelSystem
 
         private void Update()
         {
-#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
+#if UNITY_EDITOR
+            // Instant real-time inspector test index swap during Play Mode:
+            // Whenever developer edits 'Test Level Index' in Inspector while game is running, swap immediately on next frame!
+            if (testLevelIndex != currentLevelIndex && testLevelIndex > 0)
+            {
+                Debug.Log($"<color=cyan>[LevelLoader]</color> Test Level Index changed to {testLevelIndex} in Inspector ➔ Swapping level instantly in 0.01s!");
+                LoadLevel(testLevelIndex);
+            }
+
+#if ENABLE_INPUT_SYSTEM
             if (UnityEngine.InputSystem.Keyboard.current != null)
             {
                 if (UnityEngine.InputSystem.Keyboard.current.nKey.wasPressedThisFrame)
@@ -94,8 +103,20 @@ namespace CutFreePets.LevelSystem
                     Debug.Log("<color=cyan>[LevelLoader]</color> Shortcut 'P' pressed ➔ Loading Previous Level!");
                     LoadLevel(currentLevelIndex - 1);
                 }
+                else if (UnityEngine.InputSystem.Keyboard.current.digit1Key.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.numpad1Key.wasPressedThisFrame)
+                {
+                    LoadLevel(1);
+                }
+                else if (UnityEngine.InputSystem.Keyboard.current.digit2Key.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.numpad2Key.wasPressedThisFrame)
+                {
+                    LoadLevel(2);
+                }
+                else if (UnityEngine.InputSystem.Keyboard.current.digit3Key.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.numpad3Key.wasPressedThisFrame)
+                {
+                    LoadLevel(3);
+                }
             }
-#elif UNITY_EDITOR && ENABLE_LEGACY_INPUT_MANAGER
+#elif ENABLE_LEGACY_INPUT_MANAGER
             if (Input.GetKeyDown(KeyCode.N))
             {
                 LoadNextLevel();
@@ -104,19 +125,21 @@ namespace CutFreePets.LevelSystem
             {
                 LoadLevel(currentLevelIndex - 1);
             }
-#endif
-        }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            // If developer changes Test Level Index in Inspector while playing, swap instantly!
-            if (Application.isPlaying && currentLevelInstance != null && testLevelIndex != currentLevelIndex && testLevelIndex > 0)
+            else if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1))
             {
-                LoadLevel(testLevelIndex);
+                LoadLevel(1);
             }
-        }
+            else if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2))
+            {
+                LoadLevel(2);
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3))
+            {
+                LoadLevel(3);
+            }
 #endif
+#endif
+        }
 
         /// <summary>
         /// Loads and spawns the target level prefab instantly in 0.01 seconds.
@@ -125,6 +148,7 @@ namespace CutFreePets.LevelSystem
         {
             if (levelIndex < 1) levelIndex = 1;
             currentLevelIndex = levelIndex;
+            testLevelIndex = levelIndex; // Keep inspector field synchronized with active level
 
             // 1. Destroy currently spawned level immediately so old objects are removed before instantiating new ones
             if (currentLevelInstance != null)
@@ -220,11 +244,20 @@ namespace CutFreePets.LevelSystem
         }
 
         /// <summary>
-        /// Advances to the next level index.
+        /// Advances to the next level index. If no further levels exist, returns to Level Select.
         /// </summary>
         public void LoadNextLevel()
         {
-            LoadLevel(currentLevelIndex + 1);
+            int nextLevel = currentLevelIndex + 1;
+            if (GetLevelPrefab(nextLevel) != null)
+            {
+                LoadLevel(nextLevel);
+            }
+            else
+            {
+                Debug.Log($"<color=lime>[LevelLoader]</color> Level {nextLevel} is not yet available. Returning to Level Select!");
+                GameManager.LoadLevelSelect();
+            }
         }
 
         /// <summary>

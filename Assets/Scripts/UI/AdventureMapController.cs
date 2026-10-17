@@ -425,6 +425,13 @@ namespace CutFreePets.UI
 
         private void OnLevelSelected(int levelIndex)
         {
+            if (Resources.Load<GameObject>($"Levels/Level_{levelIndex:D3}") == null &&
+                Resources.Load<GameObject>($"Levels/Level_{levelIndex}") == null)
+            {
+                ShowLockedMessage("More adventurous levels coming soon! 🌟");
+                return;
+            }
+
             Debug.Log($"<color=lime>[AdventureMap]</color> Launching Level {levelIndex}!");
             GameManager.LoadLevel(levelIndex);
         }

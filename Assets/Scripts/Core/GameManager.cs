@@ -17,6 +17,14 @@ namespace CutFreePets.Core
         public const string LEVEL_SCENE_PREFIX = "Level_";
 
         public static int CurrentLevelIndex { get; set; } = 0;
+        public static bool IsExplicitlySelectedFromMenu { get; private set; } = false;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticDomain()
+        {
+            CurrentLevelIndex = 0;
+            IsExplicitlySelectedFromMenu = false;
+        }
 
         static GameManager()
         {
@@ -31,6 +39,7 @@ namespace CutFreePets.Core
         public static void LoadLevel(int levelIndex)
         {
             CurrentLevelIndex = levelIndex;
+            IsExplicitlySelectedFromMenu = true;
 
             // 1. If GameScene is already active, instant 0.01s swap!
             if (SceneManager.GetActiveScene().name == GAME_SCENE_NAME)
