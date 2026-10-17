@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutFreePets.LevelSystem.LevelLoader
   levelContainer: {fileID: 0}
-  testLevelIndex: 2
+  testLevelIndex: 3
   autoLoadOnStart: 1
   levelPrefabs: []
 --- !u!4 &293899760

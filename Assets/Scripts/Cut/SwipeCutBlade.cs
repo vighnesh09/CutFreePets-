@@ -14,26 +14,43 @@ namespace CutFreePets.Cut
     /// - High visual priority glowing blade trail (always visible on top)
     /// - Immediate and path-based slice triggers
     /// </summary>
+    public enum BladeTrailTheme
+    {
+        GoldenSunlight,  // Cut the Rope iconic warm golden sparkle (Treehouse & Secret Garden theme)
+        ElectricCyan,    // Cut the Rope vibrant luminous cyan glow
+        PrismEmerald     // Secret Garden fresh lime-emerald glow
+    }
+
     [RequireComponent(typeof(TrailRenderer))]
     public class SwipeCutBlade : MonoBehaviour
     {
-        [Header("Blade Slash Trail")]
+        [Header("Cut the Rope Blade Trail")]
         [SerializeField] private TrailRenderer trailRenderer;
-        [SerializeField] private float minSwipeDistance = 0.08f;
+        [SerializeField] private BladeTrailTheme trailTheme = BladeTrailTheme.GoldenSunlight;
+        [Tooltip("Lifetime of the glowing blade trail. Cut the Rope standard is 0.20s.")]
+        [SerializeField] private float trailLifetime = 0.20f;
+        [Tooltip("Leading width of the blade trail at the finger/cursor.")]
+        [SerializeField] private float bladeWidth = 0.28f;
+        [SerializeField] private float minSwipeDistance = 0.06f;
 
-        [Header("Colors & Glow")]
-        [SerializeField] private Color bladeCoreColor = new Color(1f, 1f, 0.85f, 1f); // Bright white-gold core
-        [SerializeField] private Color bladeGlowColor = new Color(1f, 0.55f, 0.1f, 0.85f); // Warm orange glow
+        [Header("Swipe Sparkles")]
+        [Tooltip("Emit luminous micro-sparks along the swipe trajectory.")]
+        [SerializeField] private bool emitSwipeSparks = true;
 
         private Camera mainCamera;
         private Vector3 lastInputPos;
         private bool isSwiping = false;
+        private float lastSparkSpawnTime = 0f;
+
+        private static Texture2D cachedSoftGlowTexture;
+        private static Sprite cachedSparkSprite;
+        private static Material cachedSparkMaterial;
 
         private void Awake()
         {
             if (trailRenderer == null) trailRenderer = GetComponent<TrailRenderer>();
             mainCamera = Camera.main;
-            minSwipeDistance = Mathf.Max(0.08f, minSwipeDistance);
+            minSwipeDistance = Mathf.Max(0.04f, minSwipeDistance);
             ConfigureBladeTrail();
         }
 
@@ -42,31 +59,38 @@ namespace CutFreePets.Cut
             ConfigureBladeTrail();
         }
 
+        public void SetTrailTheme(BladeTrailTheme newTheme)
+        {
+            trailTheme = newTheme;
+            ConfigureBladeTrail();
+        }
+
         private void ConfigureBladeTrail()
         {
             if (trailRenderer == null) return;
 
-            // Fruit Ninja style: very fast, sleek, clean katana slash
-            trailRenderer.time = 0.12f; // Snappy, clean cut lifetime
+            // Cut the Rope style: 0.20s smooth luminous fading trail with high-resolution vertex sampling
+            trailRenderer.time = trailLifetime;
             trailRenderer.emitting = false;
             trailRenderer.alignment = LineAlignment.View;
             trailRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             trailRenderer.receiveShadows = false;
-            trailRenderer.sortingOrder = 50; // Ensure trail renders above backgrounds, ropes, and UI
-            trailRenderer.numCornerVertices = 10;
-            trailRenderer.numCapVertices = 10;
+            trailRenderer.sortingOrder = 70; // Always render on top of ropes, platforms, and backgrounds
+            trailRenderer.numCornerVertices = 16;
+            trailRenderer.numCapVertices = 16;
+            trailRenderer.minVertexDistance = 0.025f; // Silky smooth curves during fast swipes
 
-            // Fruit Ninja Katana Blade Width Profile:
-            // Razor leading tip (0.0), quick slender sharp blade body, fading to needle tip (1.0)
+            // Cut the Rope Blade Tapering Profile:
+            // Bold leading head at finger touch (1.0), gentle body curve (0.85 -> 0.45), tapering to fine needle tip (0.0)
             AnimationCurve curve = new AnimationCurve();
-            curve.AddKey(new Keyframe(0.00f, 0.40f, 0.0f, 0.0f));  // Crisp sharp cutting point
-            curve.AddKey(new Keyframe(0.15f, 0.70f, 0.0f, 0.0f));  // Slender blade edge
-            curve.AddKey(new Keyframe(0.50f, 0.40f, -0.6f, -0.6f));// Thinning taper
-            curve.AddKey(new Keyframe(1.00f, 0.00f, -0.4f, 0.0f)); // Vanishing needle point
+            curve.AddKey(new Keyframe(0.00f, 1.00f, 0.0f, -0.4f));   // Bold leading cut head
+            curve.AddKey(new Keyframe(0.20f, 0.85f, -0.6f, -0.6f));  // Smooth body
+            curve.AddKey(new Keyframe(0.55f, 0.45f, -0.9f, -0.9f));  // Tapering tail
+            curve.AddKey(new Keyframe(1.00f, 0.00f, -0.5f, 0.0f));   // Pinpoint needle tail
             trailRenderer.widthCurve = curve;
-            trailRenderer.widthMultiplier = 0.14f; // Sleek, thin professional blade (not chunky)
+            trailRenderer.widthMultiplier = bladeWidth;
 
-            // Assign high quality 2D Unlit shader for URP to prevent any magenta/pink artifacts
+            // Assign URP 2D Unlit Shader with procedural soft feathered glow texture
             Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
                          ?? Shader.Find("Sprites/Default")
                          ?? Shader.Find("Universal Render Pipeline/Unlit");
@@ -74,27 +98,108 @@ namespace CutFreePets.Cut
             if (shader != null)
             {
                 Material bladeMat = new Material(shader);
+                Texture2D softTexture = GetOrCreateSoftGlowTexture();
+                bladeMat.mainTexture = softTexture;
+                if (bladeMat.HasProperty("_BaseMap")) bladeMat.SetTexture("_BaseMap", softTexture);
                 bladeMat.color = Color.white;
                 trailRenderer.material = bladeMat;
             }
 
-            // Fruit Ninja authentic gleaming katana steel / ice slash:
-            // Pure piercing white blade edge -> Crisp ice-silver glow -> Translucent cyan-silver fade (zero fire/orange)
+            // Build Cut the Rope Luminous Glowing Gradients
             Gradient gradient = new Gradient();
-            gradient.SetKeys(
-                new GradientColorKey[] {
-                    new GradientColorKey(new Color(1f, 1f, 1f), 0.0f),         // Pure bright white blade core
-                    new GradientColorKey(new Color(0.92f, 0.98f, 1f), 0.35f),  // Crisp polished silver-white
-                    new GradientColorKey(new Color(0.70f, 0.88f, 1f), 0.75f),  // Cool steel katana tint
-                    new GradientColorKey(new Color(0.50f, 0.75f, 0.98f), 1.0f) // Soft fading edge
-                },
-                new GradientAlphaKey[] {
-                    new GradientAlphaKey(1.0f, 0.0f),
-                    new GradientAlphaKey(0.85f, 0.4f),
-                    new GradientAlphaKey(0.0f, 1.0f)
-                }
-            );
+            switch (trailTheme)
+            {
+                case BladeTrailTheme.ElectricCyan:
+                    gradient.SetKeys(
+                        new GradientColorKey[] {
+                            new GradientColorKey(new Color(1.00f, 1.00f, 1.00f), 0.00f), // Brilliant white core
+                            new GradientColorKey(new Color(0.40f, 0.95f, 1.00f), 0.25f), // Electric neon cyan (#66F2FF)
+                            new GradientColorKey(new Color(0.00f, 0.70f, 0.95f), 0.65f), // Luminous azure (#00B2F2)
+                            new GradientColorKey(new Color(0.00f, 0.40f, 0.85f), 1.00f)  // Deep sapphire fade
+                        },
+                        new GradientAlphaKey[] {
+                            new GradientAlphaKey(1.00f, 0.00f),
+                            new GradientAlphaKey(0.88f, 0.35f),
+                            new GradientAlphaKey(0.45f, 0.75f),
+                            new GradientAlphaKey(0.00f, 1.00f)
+                        }
+                    );
+                    break;
+
+                case BladeTrailTheme.PrismEmerald:
+                    gradient.SetKeys(
+                        new GradientColorKey[] {
+                            new GradientColorKey(new Color(1.00f, 1.00f, 1.00f), 0.00f), // White core
+                            new GradientColorKey(new Color(0.85f, 1.00f, 0.40f), 0.25f), // Fresh lime sparkle
+                            new GradientColorKey(new Color(0.46f, 0.85f, 0.15f), 0.65f), // Vibrant apple green
+                            new GradientColorKey(new Color(0.20f, 0.65f, 0.10f), 1.00f)  // Soft meadow green
+                        },
+                        new GradientAlphaKey[] {
+                            new GradientAlphaKey(1.00f, 0.00f),
+                            new GradientAlphaKey(0.88f, 0.35f),
+                            new GradientAlphaKey(0.45f, 0.75f),
+                            new GradientAlphaKey(0.00f, 1.00f)
+                        }
+                    );
+                    break;
+
+                default: // GoldenSunlight (Official Cut the Rope / Secret Garden Palette)
+                    gradient.SetKeys(
+                        new GradientColorKey[] {
+                            new GradientColorKey(new Color(1.00f, 1.00f, 1.00f), 0.00f), // Pure bright white core
+                            new GradientColorKey(new Color(1.00f, 0.92f, 0.40f), 0.20f), // Radiant sunny yellow (#FFEA66)
+                            new GradientColorKey(new Color(1.00f, 0.65f, 0.10f), 0.60f), // Warm golden honey amber (#FFA61A)
+                            new GradientColorKey(new Color(1.00f, 0.38f, 0.05f), 1.00f)  // Sunset orange edge (#FF610D)
+                        },
+                        new GradientAlphaKey[] {
+                            new GradientAlphaKey(1.00f, 0.00f), // Crisp leading head
+                            new GradientAlphaKey(0.92f, 0.35f), // Luminous body
+                            new GradientAlphaKey(0.45f, 0.75f), // Soft fading tail
+                            new GradientAlphaKey(0.00f, 1.00f)  // Smooth dissipation at 0.20s
+                        }
+                    );
+                    break;
+            }
+
             trailRenderer.colorGradient = gradient;
+        }
+
+        private static Texture2D GetOrCreateSoftGlowTexture()
+        {
+            if (cachedSoftGlowTexture != null) return cachedSoftGlowTexture;
+
+            int width = 64;
+            int height = 32;
+            cachedSoftGlowTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            cachedSoftGlowTexture.name = "BladeSoftGlow_Procedural";
+            cachedSoftGlowTexture.wrapMode = TextureWrapMode.Clamp;
+            cachedSoftGlowTexture.filterMode = FilterMode.Bilinear;
+
+            Color[] pixels = new Color[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                // Distance from center along vertical axis [-1, 1]
+                float v = (y / (float)(height - 1)) * 2f - 1f;
+                // Cosine gaussian bell curve for feathered glowing edges (no polygonal quad lines)
+                float alpha = Mathf.Clamp01(1f - Mathf.Abs(v));
+                alpha = Mathf.Pow(alpha, 1.5f);
+
+                for (int x = 0; x < width; x++)
+                {
+                    float u = x / (float)(width - 1);
+                    float capAlpha = 1f;
+                    if (u < 0.12f)
+                    {
+                        capAlpha = Mathf.SmoothStep(0f, 1f, u / 0.12f);
+                    }
+
+                    pixels[y * width + x] = new Color(1f, 1f, 1f, alpha * capAlpha);
+                }
+            }
+
+            cachedSoftGlowTexture.SetPixels(pixels);
+            cachedSoftGlowTexture.Apply();
+            return cachedSoftGlowTexture;
         }
 
         private void Update()
@@ -207,8 +312,89 @@ namespace CutFreePets.Cut
             if (distance >= minSwipeDistance)
             {
                 SliceRopesInPath(lastInputPos, worldPos);
+                TrySpawnSwipeSpark(worldPos);
                 lastInputPos = worldPos;
             }
+        }
+
+        private void TrySpawnSwipeSpark(Vector3 pos)
+        {
+            if (!emitSwipeSparks) return;
+            if (Time.unscaledTime - lastSparkSpawnTime < 0.038f) return;
+            lastSparkSpawnTime = Time.unscaledTime;
+
+            GameObject spark = new GameObject("SwipeSpark");
+            spark.transform.position = pos + (Vector3)(UnityEngine.Random.insideUnitCircle * 0.04f);
+            SpriteRenderer sr = spark.AddComponent<SpriteRenderer>();
+
+            sr.sprite = GetSparkSprite();
+            Material mat = GetSparkMaterial();
+            if (mat != null) sr.material = mat;
+
+            Color sparkCol;
+            switch (trailTheme)
+            {
+                case BladeTrailTheme.ElectricCyan:
+                    sparkCol = new Color(0.40f, 0.95f, 1.00f, 0.95f);
+                    break;
+                case BladeTrailTheme.PrismEmerald:
+                    sparkCol = new Color(0.75f, 1.00f, 0.30f, 0.95f);
+                    break;
+                default:
+                    sparkCol = new Color(1.00f, 0.92f, 0.45f, 0.95f);
+                    break;
+            }
+
+            sr.color = sparkCol;
+            sr.sortingOrder = 75;
+            spark.transform.localScale = Vector3.one * UnityEngine.Random.Range(0.09f, 0.15f);
+
+            StartCoroutine(AnimateSwipeSpark(spark));
+        }
+
+        private System.Collections.IEnumerator AnimateSwipeSpark(GameObject spark)
+        {
+            if (spark == null) yield break;
+            Transform t = spark.transform;
+            SpriteRenderer sr = spark.GetComponent<SpriteRenderer>();
+            Vector3 startScale = t != null ? t.localScale : Vector3.zero;
+            Color startColor = sr != null ? sr.color : Color.white;
+            float dur = 0.22f;
+            float elapsed = 0f;
+
+            while (elapsed < dur)
+            {
+                elapsed += Time.deltaTime;
+                float p = elapsed / dur;
+                if (t != null) t.localScale = Vector3.Lerp(startScale, Vector3.zero, p);
+                if (sr != null) sr.color = new Color(startColor.r, startColor.g, startColor.b, Mathf.Lerp(startColor.a, 0f, p));
+                yield return null;
+            }
+
+            if (spark != null) Destroy(spark);
+        }
+
+        private static Sprite GetSparkSprite()
+        {
+            if (cachedSparkSprite != null) return cachedSparkSprite;
+            cachedSparkSprite = Resources.Load<Sprite>("Debris/Snip_Spark")
+                             ?? Resources.Load<Sprite>("Snip_Spark");
+#if UNITY_EDITOR
+            if (cachedSparkSprite == null)
+            {
+                cachedSparkSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Snip_Spark.png")
+                                 ?? UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Resources/Debris/Snip_Spark.png");
+            }
+#endif
+            return cachedSparkSprite;
+        }
+
+        private static Material GetSparkMaterial()
+        {
+            if (cachedSparkMaterial != null) return cachedSparkMaterial;
+            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            if (shader != null) cachedSparkMaterial = new Material(shader);
+            return cachedSparkMaterial;
         }
 
         private void EndSwipe()
@@ -240,15 +426,8 @@ namespace CutFreePets.Cut
         private void SpawnSnipSparks(Vector3 position)
         {
             // Cut the Rope iconic burst of golden scissor sparks at the severed point
-            Sprite sparkSprite = Resources.Load<Sprite>("Snip_Spark");
-#if UNITY_EDITOR
-            if (sparkSprite == null)
-            {
-                sparkSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Rope/Snip_Spark.png");
-            }
-#endif
-            Shader sparkShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
-            Material sparkMat = sparkShader != null ? new Material(sparkShader) : null;
+            Sprite sparkSprite = GetSparkSprite();
+            Material sparkMat = GetSparkMaterial();
 
             for (int i = 0; i < 7; i++)
             {
