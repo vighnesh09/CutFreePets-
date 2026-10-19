@@ -82,6 +82,12 @@ namespace CutFreePets.Editor
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(4);
+            if (GUILayout.Button("⚡ Batch Build Levels 5 to 10 (Instant)", GUILayout.Height(28)))
+            {
+                BibleLevelGenerator.BatchBuildLevels(5, 10);
+            }
+
+            EditorGUILayout.Space(2);
             if (GUILayout.Button("🚀 Batch Build Chapter 1 (Levels 4 to 25 in 2s)", GUILayout.Height(28)))
             {
                 if (EditorUtility.DisplayDialog(

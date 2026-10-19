@@ -146,12 +146,19 @@ Every Chapter of 25 levels follows this exact 4-phase rhythm:
 * **Player Hook**: Dynamic pendulum velocity, long swipeable ropes, and safe screen boundaries.
 
 #### Level 5 — "Triple Tension Web" (Strategic Cut Order)
-* **Visual**: Intricate three-rope spiderweb holding the cage in high tension.
-* **Cage Position**: $(0.00, 0.50, 0)$
-* **Hangers**: Left Anchor $(-2.00, 2.80, 0)$, Top Anchor $(0.00, 3.80, 0)$, Right Anchor $(+2.00, 2.80, 0)$.
-* **Platform**: Ground Platform at $(0.00, -3.85, 0)$
-* **Stars**: Left Star $(-1.20, 0.50, 0)$, Right Star $(+1.20, 0.50, 0)$, Drop Star $(0.00, -1.80, 0)$.
-* **Solution**: Cut Left rope (swings right into Star 2) $\rightarrow$ cut Right rope (swings back through Star 1) $\rightarrow$ cut Top rope (drops through Star 3 onto platform).
+* **Visual**: Intricate three-rope spiderweb holding the cage in high tension between two branches.
+* **Cage Position**: $(0.00, 1.20, 0)$
+* **Hangers**:
+  * Hanger 1 (Left Pull Anchor): $(-1.90, 2.90, 0)$
+  * Hanger 2 (Top Center Pivot): $(0.00, 3.85, 0)$
+  * Hanger 3 (Right Pull Anchor): $(+1.90, 2.90, 0)$
+* **Platform**: Ground Platform at $(0.00, -3.85, 0)$ (Centered!).
+* **Obstacles**: None.
+* **Stars**: Cleanly spaced away from resting cage ($1.9\text{u}+$ away):
+  * Star 1: $(+1.55, 0.10, 0)$ [right swing arc]
+  * Star 2: $(-1.55, 0.10, 0)$ [left return swing arc]
+  * Star 3: $(0.00, -2.10, 0)$ [direct drop trajectory into platform]
+* **Solution**: Cut Left rope $\rightarrow$ cage swoops right through Star 1 $\rightarrow$ cut Right rope $\rightarrow$ cage swoops left through Star 2 $\rightarrow$ cut Top rope as it crosses center $\rightarrow$ drops straight down through Star 3 onto the platform!
 * **Player Hook**: Teaches multi-rope tension release and deliberate cut sequencing.
 
 ---
@@ -159,25 +166,67 @@ Every Chapter of 25 levels follows this exact 4-phase rhythm:
 ### Phase 2: Develop (Levels 6–15)
 
 #### Level 6 — "Swing & Slide Handoff" (Combo Mechanic)
-* **Setup**: High pendulum swing on the left swinging into an elevated slide ramp on the right.
-* **Solution**: Cut pull rope $\rightarrow$ cage swings across screen, drops onto slide ramp, rolls smoothly into goal platform.
+* **Visual**: High pendulum rope on the left, sunny honey-oak slide ramp on the right.
+* **Cage Position**: $(-1.60, 1.50, 0)$
+* **Hangers**: Main Pivot $(-0.90, 3.85, 0)$, Left Pull Anchor $(-2.10, 2.80, 0)$.
+* **Obstacles**: `Obstacle_Sloped_Slide` (Left-to-Right, $25^\circ$) at $(+0.40, -1.80, 0)$, scale $(0.75, 0.75, 1)$.
+* **Platform**: Ground Platform at $(+1.40, -3.85, 0)$ (At the foot of the slide).
+* **Stars**:
+  * Star 1: $(0.00, -0.10, 0)$ [mid-air swing descent - clear of resting cage]
+  * Star 2: $(+0.55, -1.25, 0)$ [slide entry lip]
+  * Star 3: $(+1.40, -2.60, 0)$ [slide exit into platform]
+* **Solution**: Cut pull rope $\rightarrow$ cage swoops down through Star 1 $\rightarrow$ cut main rope $\rightarrow$ drops onto slide through Star 2 $\rightarrow$ rolls down through Star 3 onto platform!
 
-#### Level 7 — "Triple Tension Web"
-* **Cage**: $(0.0, 0.5, 0)$ suspended by 3 ropes: Left $(-2.0, 2.8)$, Top $(0.0, 3.8)$, Right $(+2.0, 2.8)$.
-* **Stars**: Left star $(-1.2, 0.5)$, Right star $(+1.2, 0.5)$, Bottom star $(0, -1.8)$.
-* **Solution**: Cut Left rope (swings right for star), Cut Right rope (swings center for star), Cut Top rope (drops into final star and platform).
+#### Level 7 — "Reverse Slide & Swing" (Opposite Slope Mastery)
+* **Visual**: Mirror setup of Level 6 with slide sloping down to the left.
+* **Cage Position**: $(+1.60, 1.50, 0)$
+* **Hangers**: Main Pivot $(+0.90, 3.85, 0)$, Right Pull Anchor $(+2.10, 2.80, 0)$.
+* **Obstacles**: `Obstacle_Sloped_Slide` (Right-to-Left, $25^\circ$) at $(-0.40, -1.80, 0)$, scale $(0.75, 0.75, 1)$.
+* **Platform**: Ground Platform at $(-1.40, -3.85, 0)$ (At the foot of the slide).
+* **Stars**:
+  * Star 1: $(0.00, -0.10, 0)$ [mid-air swing descent - clear of resting cage]
+  * Star 2: $(-0.55, -1.25, 0)$ [slide entry lip]
+  * Star 3: $(-1.40, -2.60, 0)$ [slide exit into platform]
+* **Solution**: Cut pull rope $\rightarrow$ swoops left through Star 1 $\rightarrow$ cut main rope $\rightarrow$ drops onto slide through Star 2 $\rightarrow$ rolls left through Star 3 onto platform!
 
-#### Level 8 — "High Slide Leap"
-* **Setup**: High elevated slide on top-left $(-1.2, 0.2)$.
-* **Solution**: Cage rolls down high slide, leaps off the ramp lip, grabs mid-air star, and lands on ground platform below.
+#### Level 8 — "The Double Plank Funnel" (Guide Planks Drop)
+* **Visual**: Two symmetrical honey-oak ramps forming a wide funnel channeling down toward the platform.
+* **Cage Position**: $(0.00, 2.30, 0)$ (High centered suspension).
+* **Hangers**: Hanger 1 $(-1.30, 3.85, 0)$, Hanger 2 $(+1.30, 3.85, 0)$.
+* **Obstacles**:
+  * Left Funnel Guide at $(-2.60, -1.00, 0)$, scale $(0.55, 0.55, 1)$ sloping Left-to-Right.
+  * Right Funnel Guide at $(+2.60, -1.00, 0)$, scale $(0.55, 0.55, 1)$ sloping Right-to-Left.
+* **Platform**: Ground Platform centered at $(0.00, -3.85, 0)$.
+* **Stars**:
+  * Star 1: $(0.00, 0.60, 0)$ [high drop path - clear of resting cage]
+  * Star 2: $(0.00, -1.00, 0)$ [funnel entry channel]
+  * Star 3: $(0.00, -2.40, 0)$ [funnel exit onto platform]
+* **Solution**: Swipe horizontally through both ropes in one cut $\rightarrow$ cage drops through Star 1, enters funnel channel through Star 2, channeled through Star 3 onto platform!
 
-#### Level 9 — "The Double Plank Funnel"
-* **Setup**: Two guide planks angled inward at $15^\circ$ creating a wide funnel above the platform.
-* **Solution**: Asymmetric swing through stars; the guide planks catch the swinging cage and funnel it cleanly onto the platform.
+#### Level 9 — "Apex Snip" (Precision Height Timing)
+* **Visual**: High ceiling hanger allowing a sweeping swing arc across the sunny sky.
+* **Cage Position**: $(+1.45, 0.60, 0)$
+* **Hangers**: Main High Pivot $(0.00, 3.90, 0)$, Right Pull Anchor $(+1.95, 2.20, 0)$.
+* **Platform**: Ground Platform centered at $(0.00, -3.85, 0)$.
+* **Stars**:
+  * Star 1: $(-0.20, -0.70, 0)$ [bottom curve of right swing - clear of resting cage]
+  * Star 2: $(-1.45, 0.35, 0)$ [peak apex of the leftward swing arc!]
+  * Star 3: $(0.00, -2.15, 0)$ [vertical drop path above platform]
+* **Solution**: Cut right anchor rope $\rightarrow$ cage sweeps down through Star 1 and soars up to the left peak through Star 2 $\rightarrow$ as it swings back across center, snip main rope $\rightarrow$ drops straight down through Star 3 onto platform!
 
-#### Level 10 — "Apex Snip"
-* **Setup**: High hanger at $(0.0, 4.0)$, cage pulled far left to $(-1.8, 1.0)$. Star 3 placed at high right apex $(+1.8, 1.0)$.
-* **Solution**: Cut pull rope $\rightarrow$ cage swings across to exact right apex grabbing high star $\rightarrow$ snip main rope at peak to drop safely!
+#### Level 10 — "The Zig-Zag Pinball Slide" (Chapter 1 Milestone!)
+* **Visual**: Two stacked honey-oak slide ramps in a kinetic zig-zag path!
+* **Cage Position**: $(-1.30, 2.30, 0)$
+* **Hangers**: Hanger at $(-1.30, 3.90, 0)$.
+* **Obstacles**:
+  * Top Slide: $(-0.60, 0.60, 0)$, Left-to-Right slope ($25^\circ$), scale $(0.65, 0.65, 1)$.
+  * Bottom Slide: $(+0.60, -1.50, 0)$, Right-to-Left slope ($25^\circ$), scale $(0.65, 0.65, 1)$.
+* **Platform**: Ground Platform at $(-0.60, -3.85, 0)$ (At foot of bottom slide).
+* **Stars**:
+  * Star 1: $(-0.40, 0.65, 0)$ [top slide entry surface - clear of resting cage]
+  * Star 2: $(+0.95, -0.40, 0)$ [airborne drop transition between slides!]
+  * Star 3: $(-0.60, -2.50, 0)$ [bottom slide exit into platform]
+* **Solution**: Snip rope $\rightarrow$ cage drops onto Top Slide through Star 1 $\rightarrow$ rolls right, leaps off edge through Star 2 onto Bottom Slide $\rightarrow$ rolls left through Star 3 onto goal platform with joyous celebration!
 
 #### Level 11 — "Delayed Release"
 * **Setup**: 1 tight rope holding cage horizontally, 1 long loose slack rope attached to ceiling.

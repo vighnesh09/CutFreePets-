@@ -72,114 +72,165 @@ namespace CutFreePets.Editor
                     {
                         LevelIndex = 5,
                         Title = "Triple Tension Web",
-                        CagePos = new Vector3(0.00f, 0.50f, 0f),
+                        CagePos = new Vector3(0.00f, 1.20f, 0f),
                         PlatformPos = new Vector3(0.00f, -3.85f, 0f),
                         Hangers = new Vector3[]
                         {
-                            new Vector3(-2.00f, 2.80f, 0f),
-                            new Vector3(0.00f, 3.80f, 0f),
-                            new Vector3(2.00f, 2.80f, 0f)
+                            new Vector3(-1.90f, 2.90f, 0f), // Left Anchor
+                            new Vector3(0.00f, 3.85f, 0f),  // Top Pivot
+                            new Vector3(1.90f, 2.90f, 0f)   // Right Anchor
                         },
                         Stars = new Vector3[]
                         {
-                            new Vector3(-1.20f, 0.50f, 0f),
-                            new Vector3(1.20f, 0.50f, 0f),
-                            new Vector3(0.00f, -1.80f, 0f)
+                            new Vector3(1.55f, 0.10f, 0f),   // Star 1 (Right swing arc - 1.9u clear of resting cage)
+                            new Vector3(-1.55f, 0.10f, 0f),  // Star 2 (Left return swing arc - 1.9u clear of resting cage)
+                            new Vector3(0.00f, -2.10f, 0f)   // Star 3 (Direct vertical drop into platform)
                         },
                         Slides = null
                     };
 
-                case 6: // Level 6: "The Pendulum Catch"
+                case 6: // Level 6: "The Swing & Slide Handoff"
                     return new LevelRecipe
                     {
                         LevelIndex = 6,
-                        Title = "The Pendulum Catch",
-                        CagePos = new Vector3(1.40f, 0.60f, 0f),
-                        PlatformPos = new Vector3(0.00f, -3.85f, 0f),
+                        Title = "The Swing & Slide Handoff",
+                        CagePos = new Vector3(-1.60f, 1.50f, 0f),
+                        PlatformPos = new Vector3(1.40f, -3.85f, 0f), // Foot of slide on right
                         Hangers = new Vector3[]
                         {
-                            new Vector3(-1.60f, 3.80f, 0f),
-                            new Vector3(1.80f, 2.00f, 0f)
+                            new Vector3(-0.90f, 3.85f, 0f), // Main Pivot
+                            new Vector3(-2.10f, 2.80f, 0f)  // Left Pull Anchor
                         },
                         Stars = new Vector3[]
                         {
-                            new Vector3(-0.50f, 0.80f, 0f),
-                            new Vector3(-1.40f, 0.50f, 0f),
-                            new Vector3(0.00f, -2.20f, 0f)
-                        }
-                    };
-
-                case 7: // Level 7: "Triple Tension Web"
-                    return new LevelRecipe
-                    {
-                        LevelIndex = 7,
-                        Title = "Triple Tension Web",
-                        CagePos = new Vector3(0.00f, 0.50f, 0f),
-                        PlatformPos = new Vector3(0.00f, -3.85f, 0f),
-                        Hangers = new Vector3[]
-                        {
-                            new Vector3(-2.00f, 2.80f, 0f),
-                            new Vector3(0.00f, 3.80f, 0f),
-                            new Vector3(2.00f, 2.80f, 0f)
-                        },
-                        Stars = new Vector3[]
-                        {
-                            new Vector3(-1.20f, 0.50f, 0f),
-                            new Vector3(1.20f, 0.50f, 0f),
-                            new Vector3(0.00f, -1.80f, 0f)
-                        }
-                    };
-
-                case 8: // Level 8: "High Slide Leap"
-                    return new LevelRecipe
-                    {
-                        LevelIndex = 8,
-                        Title = "High Slide Leap",
-                        CagePos = new Vector3(-1.60f, 2.60f, 0f),
-                        PlatformPos = new Vector3(0.80f, -3.85f, 0f),
-                        Hangers = new Vector3[] { new Vector3(-1.60f, 4.00f, 0f) },
-                        Stars = new Vector3[]
-                        {
-                            new Vector3(-1.40f, 1.40f, 0f),
-                            new Vector3(-0.50f, -0.60f, 0f),
-                            new Vector3(0.80f, -2.20f, 0f)
+                            new Vector3(0.00f, -0.10f, 0f),  // Star 1 (Airborne swing descent - clear of resting cage)
+                            new Vector3(0.55f, -1.25f, 0f),  // Star 2 (Slide entry lip)
+                            new Vector3(1.40f, -2.60f, 0f)   // Star 3 (Slide exit into platform)
                         },
                         Slides = new SlideConfig[]
                         {
                             new SlideConfig
                             {
-                                Position = new Vector3(-0.90f, 0.00f, 0f),
-                                Scale = new Vector3(0.72f, 0.72f, 1f),
+                                Position = new Vector3(0.40f, -1.80f, 0f),
+                                Scale = new Vector3(0.75f, 0.75f, 1f),
                                 Direction = SlopeDirection.LeftToRight
                             }
                         }
                     };
 
-                case 17: // Level 17: "Zig-Zag Pinball Slide"
+                case 7: // Level 7: "Reverse Slide & Swing"
                     return new LevelRecipe
                     {
-                        LevelIndex = 17,
-                        Title = "Zig-Zag Pinball Slide",
-                        CagePos = new Vector3(-1.20f, 2.20f, 0f),
-                        PlatformPos = new Vector3(0.00f, -3.85f, 0f),
-                        Hangers = new Vector3[] { new Vector3(-1.20f, 3.90f, 0f) },
+                        LevelIndex = 7,
+                        Title = "Reverse Slide & Swing",
+                        CagePos = new Vector3(1.60f, 1.50f, 0f),
+                        PlatformPos = new Vector3(-1.40f, -3.85f, 0f), // Foot of slide on left
+                        Hangers = new Vector3[]
+                        {
+                            new Vector3(0.90f, 3.85f, 0f),  // Main Pivot
+                            new Vector3(2.10f, 2.80f, 0f)   // Right Pull Anchor
+                        },
                         Stars = new Vector3[]
                         {
-                            new Vector3(-0.80f, 0.50f, 0f),
-                            new Vector3(0.60f, -0.70f, 0f),
-                            new Vector3(0.00f, -2.40f, 0f)
+                            new Vector3(0.00f, -0.10f, 0f),   // Star 1 (Airborne swing descent - clear of resting cage)
+                            new Vector3(-0.55f, -1.25f, 0f),  // Star 2 (Slide entry lip)
+                            new Vector3(-1.40f, -2.60f, 0f)   // Star 3 (Slide exit into platform)
                         },
                         Slides = new SlideConfig[]
                         {
                             new SlideConfig
                             {
-                                Position = new Vector3(-0.70f, 0.50f, 0f),
+                                Position = new Vector3(-0.40f, -1.80f, 0f),
+                                Scale = new Vector3(0.75f, 0.75f, 1f),
+                                Direction = SlopeDirection.RightToLeft
+                            }
+                        }
+                    };
+
+                case 8: // Level 8: "The Double Plank Funnel"
+                    return new LevelRecipe
+                    {
+                        LevelIndex = 8,
+                        Title = "The Double Plank Funnel",
+                        CagePos = new Vector3(0.00f, 2.30f, 0f),
+                        PlatformPos = new Vector3(0.00f, -3.85f, 0f), // Centered under funnel
+                        Hangers = new Vector3[]
+                        {
+                            new Vector3(-1.30f, 3.85f, 0f),
+                            new Vector3(1.30f, 3.85f, 0f)
+                        },
+                        Stars = new Vector3[]
+                        {
+                            new Vector3(0.00f, 0.60f, 0f),   // Star 1 (Drop path - clear of resting cage)
+                            new Vector3(0.00f, -1.00f, 0f),  // Star 2 (Funnel entry channel)
+                            new Vector3(0.00f, -2.40f, 0f)   // Star 3 (Funnel exit onto platform)
+                        },
+                        Slides = new SlideConfig[]
+                        {
+                            new SlideConfig
+                            {
+                                Position = new Vector3(-2.60f, -1.00f, 0f),
+                                Scale = new Vector3(0.55f, 0.55f, 1f),
+                                Direction = SlopeDirection.LeftToRight
+                            },
+                            new SlideConfig
+                            {
+                                Position = new Vector3(2.60f, -1.00f, 0f),
+                                Scale = new Vector3(0.55f, 0.55f, 1f),
+                                Direction = SlopeDirection.RightToLeft
+                            }
+                        }
+                    };
+
+                case 9: // Level 9: "Apex Snip"
+                    return new LevelRecipe
+                    {
+                        LevelIndex = 9,
+                        Title = "Apex Snip",
+                        CagePos = new Vector3(1.45f, 0.60f, 0f),
+                        PlatformPos = new Vector3(0.00f, -3.85f, 0f),
+                        Hangers = new Vector3[]
+                        {
+                            new Vector3(0.00f, 3.90f, 0f),  // High Center Pivot
+                            new Vector3(1.95f, 2.20f, 0f)   // Right Pull Anchor
+                        },
+                        Stars = new Vector3[]
+                        {
+                            new Vector3(-0.20f, -0.70f, 0f),  // Star 1 (Bottom of leftward swing arc - clear of resting cage)
+                            new Vector3(-1.45f, 0.35f, 0f),   // Star 2 (Peak apex of leftward swing)
+                            new Vector3(0.00f, -2.15f, 0f)    // Star 3 (Direct vertical drop into platform)
+                        },
+                        Slides = null
+                    };
+
+                case 10: // Level 10: "The Zig-Zag Pinball Slide"
+                    return new LevelRecipe
+                    {
+                        LevelIndex = 10,
+                        Title = "The Zig-Zag Pinball Slide",
+                        CagePos = new Vector3(-1.30f, 2.30f, 0f),
+                        PlatformPos = new Vector3(-0.60f, -3.85f, 0f), // Foot of second slide
+                        Hangers = new Vector3[]
+                        {
+                            new Vector3(-1.30f, 3.90f, 0f)
+                        },
+                        Stars = new Vector3[]
+                        {
+                            new Vector3(-0.40f, 0.65f, 0f),  // Star 1 (Top slide entry surface - clear of resting cage)
+                            new Vector3(0.95f, -0.40f, 0f),   // Star 2 (Airborne drop transition between slides)
+                            new Vector3(-0.60f, -2.50f, 0f)  // Star 3 (Bottom slide exit into platform)
+                        },
+                        Slides = new SlideConfig[]
+                        {
+                            new SlideConfig
+                            {
+                                Position = new Vector3(-0.60f, 0.60f, 0f),
                                 Scale = new Vector3(0.65f, 0.65f, 1f),
                                 Direction = SlopeDirection.LeftToRight
                             },
                             new SlideConfig
                             {
-                                Position = new Vector3(0.70f, -1.30f, 0f),
+                                Position = new Vector3(0.60f, -1.50f, 0f),
                                 Scale = new Vector3(0.65f, 0.65f, 1f),
                                 Direction = SlopeDirection.RightToLeft
                             }
@@ -198,7 +249,34 @@ namespace CutFreePets.Editor
             BuildLevel(4, true);
         }
 
-        [MenuItem("Cut Free Pets/Batch Build Chapter 1 (Levels 4-25)", false, 6)]
+        [MenuItem("Cut Free Pets/Build Bible Levels 5 to 10 (Instant)", false, 6)]
+        public static void BuildLevels5To10Menu()
+        {
+            BatchBuildLevels(5, 10);
+        }
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/⚡ Build All (5 to 10)", false, 10)]
+        public static void BuildAll5To10SubMenu() => BatchBuildLevels(5, 10);
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/Level 5 (Triple Tension Web)", false, 11)]
+        public static void BuildLevel5Menu() => BuildLevel(5, true);
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/Level 6 (Swing & Slide Handoff)", false, 12)]
+        public static void BuildLevel6Menu() => BuildLevel(6, true);
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/Level 7 (Reverse Slide & Swing)", false, 13)]
+        public static void BuildLevel7Menu() => BuildLevel(7, true);
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/Level 8 (Double Plank Funnel)", false, 14)]
+        public static void BuildLevel8Menu() => BuildLevel(8, true);
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/Level 9 (Apex Snip)", false, 15)]
+        public static void BuildLevel9Menu() => BuildLevel(9, true);
+
+        [MenuItem("Cut Free Pets/Build Levels 5 to 10/Level 10 (The Zig-Zag Pinball Slide)", false, 16)]
+        public static void BuildLevel10Menu() => BuildLevel(10, true);
+
+        [MenuItem("Cut Free Pets/Batch Build Chapter 1 (Levels 4-25)", false, 20)]
         public static void BatchBuildChapter1Menu()
         {
             BatchBuildLevels(4, 25);
@@ -437,6 +515,17 @@ namespace CutFreePets.Editor
             PetCage petCage = cageObj.AddComponent<PetCage>();
             petCage.SetupVisuals();
             petCage.EnsureDebrisSpritesLoaded();
+
+            // Pre-bake Pet into Pet_Slot in editor mode so it's visible in prefab view
+            GameObject catPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Pets/Pet_Cat.prefab");
+            if (catPrefab != null && petCage.PetSlot != null)
+            {
+                GameObject cat = (GameObject)PrefabUtility.InstantiatePrefab(catPrefab, petCage.PetSlot);
+                cat.name = "Cat_Character";
+                cat.transform.localPosition = Vector3.zero;
+                cat.transform.localRotation = Quaternion.identity;
+                cat.transform.localScale = new Vector3(0.90f, 0.90f, 1f);
+            }
 
             GameObject hookObj = new GameObject("TopRing_Hook");
             hookObj.transform.parent = cageObj.transform;
